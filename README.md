@@ -13,7 +13,7 @@
 ## 快速安裝
 
 ```bash
-git clone <YOUR_REPOSITORY_URL>
+git clone https://github.com/JoeTheDuck-Git/ai-video-workstation.git
 cd ai-video-workstation
 ./install.sh
 ```
