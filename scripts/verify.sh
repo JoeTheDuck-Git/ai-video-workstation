@@ -76,6 +76,18 @@ if command -v dreamina-canvas >/dev/null 2>&1; then
   fi
 fi
 
+check_command canvas-video
+if command -v canvas-video >/dev/null 2>&1; then
+  printf '\n-- Canvas video runtime --\n'
+  CANVAS_DOCTOR="$(canvas-video doctor --json 2>/dev/null || true)"
+  printf '%s\n' "$CANVAS_DOCTOR"
+  if printf '%s' "$CANVAS_DOCTOR" | json_top_level_ok; then
+    ok "canvas-video runtime"
+  else
+    fail "canvas-video runtime needs attention"
+  fi
+fi
+
 QC_SCRIPT="${CODEX_HOME:-${HOME}/.codex}/skills/video-delivery-qc/scripts/video_qc.py"
 if [[ -f "$QC_SCRIPT" ]]; then
   if command -v python3 >/dev/null 2>&1 && python3 "$QC_SCRIPT" --help >/dev/null 2>&1; then
@@ -85,6 +97,13 @@ if [[ -f "$QC_SCRIPT" ]]; then
   fi
 else
   fail "video-delivery-qc is not installed"
+fi
+
+CANVAS_SKILL="${CODEX_HOME:-${HOME}/.codex}/skills/canvas-video-pipeline/SKILL.md"
+if [[ -f "$CANVAS_SKILL" ]]; then
+  ok "canvas-video-pipeline skill"
+else
+  fail "canvas-video-pipeline is not installed"
 fi
 
 printf '\n'

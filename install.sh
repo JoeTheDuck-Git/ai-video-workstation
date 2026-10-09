@@ -148,13 +148,27 @@ install_dreamina() {
   hash -r
 }
 
-install_qc_skill() {
-  log "Installing video-delivery-qc skill"
+install_canvas_video() {
+  log "Installing isolated canvas-video runtime"
   local destination
-  destination="${CODEX_HOME:-${HOME}/.codex}/skills/video-delivery-qc"
+  destination="${STATE_DIR}/canvas-video"
   mkdir -p "$destination"
-  cp -R "${ROOT_DIR}/skills/video-delivery-qc/." "$destination/"
-  find "$destination" -type d -name __pycache__ -prune -exec rm -rf {} +
+  cp -R "${ROOT_DIR}/runtime/canvas-video/." "$destination/"
+  chmod +x "${destination}/bin/canvas-video.mjs"
+  npm ci --prefix "$destination" --no-audit --no-fund
+  "${destination}/node_modules/.bin/playwright" install chromium
+  ln -sfn "${destination}/bin/canvas-video.mjs" "${LOCAL_BIN}/canvas-video"
+}
+
+install_bundled_skills() {
+  log "Installing bundled Codex skills"
+  local skill_name destination
+  for skill_name in video-delivery-qc canvas-video-pipeline; do
+    destination="${CODEX_HOME:-${HOME}/.codex}/skills/${skill_name}"
+    mkdir -p "$destination"
+    cp -R "${ROOT_DIR}/skills/${skill_name}/." "$destination/"
+    find "$destination" -type d -name __pycache__ -prune -exec rm -rf {} +
+  done
 }
 
 install_node22
@@ -164,7 +178,8 @@ npm --version
 install_ffmpeg
 install_hyperframes
 install_dreamina
-install_qc_skill
+install_canvas_video
+install_bundled_skills
 
 log "Running availability checks"
 "${ROOT_DIR}/scripts/verify.sh"

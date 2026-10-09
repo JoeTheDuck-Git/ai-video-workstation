@@ -1,0 +1,13 @@
+{
+  "name": "canvas-video-runtime",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "canvas-video": "bin/canvas-video.mjs"
+  },
+  "dependencies": {
+    "playwright": "1.56.0",
+    "three": "0.170.0"
+  }
+}

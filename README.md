@@ -6,6 +6,8 @@
 - FFmpeg／FFprobe（優先沿用既有安裝，缺少時使用系統套件管理器）
 - HyperFrames CLI 與核心 Skills
 - 即夢畫布 `dreamina-canvas` CLI／Skill（執行即夢官方安裝器）
+- 獨立的 `canvas-video` 確定性 Canvas／Three.js renderer
+- `canvas-video-pipeline` Skill，串接即夢、Canvas motion、HyperFrames 與 QC
 - 本倉庫附帶的 `video-delivery-qc` 社群影片交付檢查 Skill
 
 第三方程式與第三方 Skills 不直接收進本倉庫，而是在安裝時從官方來源取得。登入憑證、Cookie、API Key、生成素材與影片也不會進入 Git。
@@ -82,6 +84,25 @@ https://jimeng.jianying.com/canvas-cli/install.sh
 
 帳號登入刻意與安裝分開；請在自己的互動式終端執行 `./scripts/login.sh`，依瀏覽器畫面完成授權。
 
+### Canvas Video Pipeline
+
+Canvas renderer 安裝在獨立目錄，不與 HyperFrames 共用 `node_modules`：
+
+```text
+~/.local/share/ai-video-workstation/canvas-video/
+```
+
+建立原生比例專案：
+
+```bash
+canvas-video init ./motion-landscape --aspect landscape
+canvas-video init ./motion-portrait --aspect portrait
+canvas-video render ./motion-portrait --still 2.5
+canvas-video render ./motion-portrait
+```
+
+橫式模板為 1920×1080，直式模板為 1080×1920；兩者具有各自的排版，不以裁切冒充直式構圖。Canvas 輸出會作為普通媒體素材交給 HyperFrames，最終成片再由 QC Skill 實測。
+
 ### 社群影片 QC Skill
 
 `skills/video-delivery-qc` 是本套件隨附的 Skill。它會檢查影片解碼、黑畫面／凍結／靜音、容器與編碼、畫面比例、字幕時間、語音同步抽查提示及社群交付音量等項目。
@@ -103,13 +124,14 @@ python3 ~/.codex/skills/video-delivery-qc/scripts/video_qc.py \
 2. npm、FFmpeg、FFprobe 是否可執行。
 3. HyperFrames 版本、`doctor` 與 Skill 狀態。
 4. 即夢 CLI 版本與登入狀態。
-5. `video-delivery-qc` 腳本是否可載入。
+5. `canvas-video` renderer 與 Playwright Chromium 是否可執行。
+6. `canvas-video-pipeline` 和 `video-delivery-qc` Skills 是否可載入。
 
 未登入即夢不會被當成安裝失敗；驗證結果會清楚提示下一步。
 
 ## 更新
 
-重新執行安裝器即可更新 Node.js 22、HyperFrames、HyperFrames Skills、即夢 CLI／Skill 與 QC Skill：
+重新執行安裝器即可更新 Node.js 22、HyperFrames、HyperFrames Skills、即夢 CLI／Skill、Canvas runtime 與 QC Skill：
 
 ```bash
 ./install.sh

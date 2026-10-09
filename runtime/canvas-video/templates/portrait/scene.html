@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Canvas Video · Portrait</title>
+  <style>html,body{margin:0;background:#050914;overflow:hidden}canvas{display:block;width:100vw;height:100vh}</style>
+</head>
+<body>
+<canvas id="stage" width="1080" height="1920"></canvas>
+<script>
+const canvas=document.getElementById('stage');
+const ctx=canvas.getContext('2d');
+const W=1080,H=1920,DURATION=5,FPS=30;
+const renderMode=new URLSearchParams(location.search).has('render');
+const clamp=(value,min=0,max=1)=>Math.min(max,Math.max(min,value));
+const ease=value=>1-Math.pow(1-clamp(value),3);
+const progress=(time,start,duration)=>clamp((time-start)/duration);
+const seeded=index=>{const value=Math.sin(index*127.1+311.7)*43758.5453;return value-Math.floor(value)};
+
+function renderFrame(time){
+  const t=clamp(time,0,DURATION);
+  const reveal=ease(progress(t,.15,.9));
+  const pulse=.5+.5*Math.sin(t*Math.PI*1.5);
+  const gradient=ctx.createLinearGradient(0,0,W,H);
+  gradient.addColorStop(0,'#07172e');gradient.addColorStop(1,'#090615');
+  ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=1;ctx.fillStyle=gradient;ctx.fillRect(0,0,W,H);
+  for(let i=0;i<110;i++){
+    const x=seeded(i)*W,y=seeded(i+140)*H,r=1+seeded(i+280)*3;
+    ctx.fillStyle=`rgba(81,226,255,${.12+.22*pulse})`;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();
+  }
+  ctx.save();ctx.translate(W/2,650);ctx.rotate(t*.35);
+  for(let ring=0;ring<5;ring++){ctx.strokeStyle=`rgba(86,229,255,${.48-ring*.075})`;ctx.lineWidth=3;ctx.beginPath();ctx.arc(0,0,120+ring*62,0,Math.PI*(1.2+reveal*.8));ctx.stroke()}
+  ctx.restore();
+  ctx.save();ctx.translate(96,1110);
+  ctx.fillStyle='#56e5ff';ctx.fillRect(0,0,Math.max(4,220*reveal),10);
+  ctx.globalAlpha=reveal;ctx.fillStyle='#eef8ff';ctx.font='800 96px system-ui,sans-serif';ctx.fillText('CANVAS',0,160);ctx.fillText('VIDEO',0,270);
+  ctx.fillStyle='#9fb2cb';ctx.font='500 38px system-ui,sans-serif';ctx.fillText('Native 9:16 coded motion',4,350);
+  ctx.restore();
+}
+window.CANVAS=canvas;window.DURATION=DURATION;window.FPS=FPS;window.seek=async t=>renderFrame(t);
+window.ready=document.fonts.ready.then(()=>window.seek(0)).then(()=>true);
+if(!renderMode){const started=performance.now();const loop=now=>{renderFrame(((now-started)/1000)%DURATION);requestAnimationFrame(loop)};window.ready.then(()=>requestAnimationFrame(loop))}
+</script>
+</body>
+</html>
