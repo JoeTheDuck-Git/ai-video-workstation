@@ -25,6 +25,10 @@ For each generated or rendered asset, preserve the useful public provenance avai
 
 Never persist access tokens, cookies, signed URLs, provider payloads, or credit-confirmation tokens.
 
+## Voice and TTS boundary
+
+For a commercial deliverable, verify that the provider and the exact voice or model permit the intended commercial use. Record the provider, voice or model identifier, version, license source, and review date in the production manifest. Do not assume an F5-TTS checkpoint or any pretrained voice model is commercially cleared. If the license cannot be verified, use it only as an explicitly marked temporary voice and replace it before final delivery.
+
 ## Dreamina boundary
 
 Use the installed Dreamina CLI schema and model catalog as the executable authority. Credit approval happens before paid generation. Download only a completed, selected result. Canvas rendering never triggers or retries Dreamina generation.

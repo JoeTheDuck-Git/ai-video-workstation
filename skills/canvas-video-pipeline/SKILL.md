@@ -61,3 +61,4 @@ canvas-video render ./motion-asset --alpha --output ./motion-asset/out/overlay.m
 - Store aspect-specific layout decisions in the scene. Letterboxing is not a substitute for portrait composition.
 - Keep generated inputs, source footage, outputs, snapshots, credentials, and provider payloads out of the Skill and Git history.
 - Keep provider identity, prompt, model, source asset, and generation timestamp in the production job record when generated media is used.
+- For a commercial deliverable, use only a voice source whose provider and selected model or voice explicitly permit the intended commercial use. Never treat an F5-TTS checkpoint or other pretrained voice model as commercially cleared by default.
