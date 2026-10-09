@@ -1,0 +1,6 @@
+interface:
+  display_name: "影片出片 QC"
+  short_description: "依社群影片標準檢查影音、字幕同步與分鏡角色連續性"
+  default_prompt: "Use $video-delivery-qc to inspect this social video before final delivery."
+policy:
+  allow_implicit_invocation: true
