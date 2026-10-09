@@ -17,7 +17,7 @@ For each generated or rendered asset, preserve the useful public provenance avai
 
 - stable business key and local filename
 - media kind, duration, dimensions, FPS, and checksum
-- source tool and tool version
+- source tool and tool version; for canvas-video renders, also the Playwright and Chromium versions, because a browser upgrade can change rasterization
 - prompt/model/source references where applicable
 - generation or render timestamp
 - user approval status

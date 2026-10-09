@@ -6,24 +6,42 @@ STATE_DIR="${HOME}/.local/share/ai-video-workstation"
 LOCAL_BIN="${HOME}/.local/bin"
 NODE_LINK="${STATE_DIR}/node22-current"
 ALL_HYPERFRAMES_SKILLS=0
+IRENE_SOURCE=""
+IRENE_STAGE2_SOURCE=""
 
 log() { printf '\n==> %s\n' "$*"; }
 die() { printf '\nERROR: %s\n' "$*" >&2; exit 1; }
 
 usage() {
   cat <<'EOF'
-Usage: ./install.sh [--all-hyperframes-skills]
+Usage: ./install.sh [--all-hyperframes-skills] [--irene-source PATH] [--irene-stage2-source PATH]
 
   --all-hyperframes-skills  Install every published HyperFrames skill.
                             The default installs/updates the core set.
+  --irene-source PATH       Import footage-sifter, caption-doctor, and
+                            subtitle-translator from a locally owned
+                            hello-irene-codex package.
+  --irene-stage2-source PATH
+                            Import beat-cut-editor plus its core dependencies
+                            from a locally owned hello-irene-codex package.
 EOF
 }
 
-for arg in "$@"; do
-  case "$arg" in
-    --all-hyperframes-skills) ALL_HYPERFRAMES_SKILLS=1 ;;
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --all-hyperframes-skills) ALL_HYPERFRAMES_SKILLS=1; shift ;;
+    --irene-source)
+      [[ $# -ge 2 ]] || die "--irene-source requires a directory path."
+      IRENE_SOURCE="$2"
+      shift 2
+      ;;
+    --irene-stage2-source)
+      [[ $# -ge 2 ]] || die "--irene-stage2-source requires a directory path."
+      IRENE_STAGE2_SOURCE="$2"
+      shift 2
+      ;;
     -h|--help) usage; exit 0 ;;
-    *) die "Unknown option: ${arg}" ;;
+    *) die "Unknown option: ${1}" ;;
   esac
 done
 
@@ -180,6 +198,14 @@ install_hyperframes
 install_dreamina
 install_canvas_video
 install_bundled_skills
+if [[ -n "$IRENE_SOURCE" ]]; then
+  log "Importing selected Irene capability skills"
+  "${ROOT_DIR}/scripts/import-irene-skills.sh" "$IRENE_SOURCE"
+fi
+if [[ -n "$IRENE_STAGE2_SOURCE" ]]; then
+  log "Importing Irene stage-two beat editing Skill"
+  "${ROOT_DIR}/scripts/import-irene-stage2.sh" "$IRENE_STAGE2_SOURCE"
+fi
 
 log "Running availability checks"
 "${ROOT_DIR}/scripts/verify.sh"

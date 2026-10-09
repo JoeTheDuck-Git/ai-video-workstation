@@ -106,6 +106,34 @@ else
   fail "canvas-video-pipeline is not installed"
 fi
 
+printf '\n-- Optional local editing skills --\n'
+for skill_name in footage-sifter caption-doctor subtitle-translator beat-cut-editor; do
+  skill_path="${CODEX_HOME:-${HOME}/.codex}/skills/${skill_name}/SKILL.md"
+  if [[ -f "$skill_path" ]]; then
+    ok "${skill_name} skill"
+  else
+    if [[ "$skill_name" == "beat-cut-editor" ]]; then
+      warn "beat-cut-editor is not installed; use ./scripts/import-irene-stage2.sh /path/to/hello-irene-codex"
+    else
+      warn "${skill_name} is not installed; use ./scripts/import-irene-skills.sh /path/to/hello-irene-codex"
+    fi
+  fi
+done
+if [[ -x "${HOME}/.irene/venv/bin/python3" ]]; then
+  if "${HOME}/.irene/venv/bin/python3" -c 'import opencc, jieba' >/dev/null 2>&1; then
+    ok "Irene subtitle dependencies (opencc, jieba)"
+  else
+    warn "Irene Python environment exists but opencc or jieba is missing"
+  fi
+fi
+if [[ -f "${CODEX_HOME:-${HOME}/.codex}/skills/beat-cut-editor/SKILL.md" ]] && [[ -x "${HOME}/.irene/venv/bin/python3" ]]; then
+  if "${HOME}/.irene/venv/bin/python3" -c 'import static_ffmpeg, scenedetect, cv2, PIL, numpy' >/dev/null 2>&1; then
+    ok "beat-cut core dependencies"
+  else
+    warn "beat-cut-editor is installed but one or more core Python dependencies are missing"
+  fi
+fi
+
 printf '\n'
 if (( FAILURES > 0 )); then
   printf 'Verification finished with %d required failure(s).\n' "$FAILURES"

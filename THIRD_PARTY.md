@@ -2,6 +2,8 @@
 
 本倉庫提供安裝協調腳本、自製的 `canvas-video` runtime、`canvas-video-pipeline` Skill 與 `video-delivery-qc` Skill；不重新散布下列第三方二進位檔或 Skill 原始碼。
 
+可選的 `footage-sifter`、`caption-doctor`、`subtitle-translator` 與 `beat-cut-editor` 只會由導入器從使用者提供且合法持有的本機 Hello Irene 套件複製；本倉庫不重新散布其原始碼、音樂、音效或模板。使用者須自行確認來源套件及素材的使用權，導入器會先備份既有同名 Skill。Canvas B-roll helper 為本倉庫重新實作的確定性程式，不含第三方模板程式碼。
+
 | 元件 | 來源 | 安裝方式 | 授權／條款 |
 |---|---|---|---|
 | Node.js 22 | `nodejs.org` | 官方發行檔＋SHA-256 驗證 | Node.js 專案授權條款 |

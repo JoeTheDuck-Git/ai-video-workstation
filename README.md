@@ -9,6 +9,10 @@
 - 獨立的 `canvas-video` 確定性 Canvas／Three.js renderer
 - `canvas-video-pipeline` Skill，串接即夢、Canvas motion、HyperFrames 與 QC
 - 本倉庫附帶的 `video-delivery-qc` 社群影片交付檢查 Skill
+- 可選擇從使用者合法持有的 Hello Irene 套件導入 `footage-sifter`、
+  `caption-doctor` 與 `subtitle-translator`；私人原始碼不會提交到本倉庫
+- 第二階段可另外導入 `beat-cut-editor`；Canvas Skill 內建原創、確定性的
+  B-roll 效果 API，不複製私有 HTML 模板
 
 第三方程式與第三方 Skills 不直接收進本倉庫，而是在安裝時從官方來源取得。登入憑證、Cookie、API Key、生成素材與影片也不會進入 Git。
 
@@ -19,6 +23,33 @@ git clone https://github.com/JoeTheDuck-Git/ai-video-workstation.git
 cd ai-video-workstation
 ./install.sh
 ```
+
+若本機已有合法取得的 `hello-irene-codex` 資料夾，可在安裝時只導入三個互補 Skill：
+
+```bash
+./install.sh --irene-source "$HOME/Downloads/hello-irene-codex"
+```
+
+已完成主安裝時，也可以獨立導入：
+
+```bash
+./scripts/import-irene-skills.sh "$HOME/Downloads/hello-irene-codex"
+```
+
+導入器會先確認三個 `SKILL.md` 存在，將既有同名 Skill 備份，再複製到
+`~/.codex/skills/`。字幕所需的 `opencc` 與 `jieba` 安裝在隔離的
+`~/.irene/venv`，不會修改系統 Python。
+
+第二階段導入節拍剪輯（會保留本機來源內的音樂／音效，但不會把它們提交到本倉庫）：
+
+```bash
+./scripts/import-irene-stage2.sh "$HOME/Downloads/hello-irene-codex"
+# 或連同主安裝一起：
+./install.sh --irene-stage2-source "$HOME/Downloads/hello-irene-codex"
+```
+
+核心剪輯依賴會放在 `~/.irene/venv`。Whisper 語音模型與自帶歌曲分析所需的
+`faster-whisper`／`librosa` 採需要時才安裝，避免首次安裝先下載大型模型。
 
 若要一次安裝 HyperFrames 發布的完整 Skill 集合：
 
@@ -102,6 +133,12 @@ canvas-video render ./motion-portrait
 ```
 
 橫式模板為 1920×1080，直式模板為 1080×1920；兩者具有各自的排版，不以裁切冒充直式構圖。Canvas 輸出會作為普通媒體素材交給 HyperFrames，最終成片再由 QC Skill 實測。
+
+`canvas-video-pipeline/assets/broll-effects.js` 提供 documentary marker、minimal bars、
+comic burst、VHS scanlines/noise、terminal panel、editorial rule、neon tube、glass card 與
+split-flap 等確定性 Canvas helper，並包含 kinetic type、shape morph、particle reveal、
+infinite zoom、parallax、timeline path、exploded view、預先計算音訊包絡、Bento 與 match cut。
+每次以 `time` 明確驅動，適合做可重現的標題卡與透明疊加層。
 
 ### 社群影片 QC Skill
 

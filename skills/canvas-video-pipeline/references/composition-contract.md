@@ -28,8 +28,16 @@ The entry page must expose:
 ```js
 window.CANVAS = outputCanvas;
 window.seek = async (seconds) => { /* draw the complete frame */ };
-window.ready = Promise.resolve().then(() => window.seek(0));
+window.ready = (async () => {
+  await document.fonts.ready;          // or BROLL_FX.prepare({ fonts, images })
+  await Promise.all(images.map((img) => img.decode()));
+  await window.seek(0);
+})();
 ```
+
+`window.ready` must not resolve until every font and image the scene uses has loaded. Ship
+font files with the project and declare them with `@font-face`; generic families such as
+`sans-serif` resolve to different faces on different machines.
 
 `seek(t)` must clear and redraw the complete frame. Its result may depend on `t`, immutable inputs, and fixed seeds only.
 
@@ -42,7 +50,7 @@ Avoid in the render path:
 - physics advanced from the previously rendered frame
 - network fetches whose contents are not frozen locally
 
-For preview, detect `new URLSearchParams(location.search).has("render")`. A wall-clock preview loop may run only when render mode is absent.
+Render mode is on whenever the `render` query parameter is present, whatever its value: detect it with `new URLSearchParams(location.search).has("render")`. A wall-clock preview loop may run only when render mode is off.
 
 ## Aspect-native layout
 
