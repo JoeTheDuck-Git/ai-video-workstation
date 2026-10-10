@@ -1,6 +1,13 @@
 ---
 name: canvas-video-pipeline
-description: Render a standalone coded motion asset (MP4, ProRes, or transparent MOV) with the canvas-video CLI from a Canvas 2D or Three.js scene, or adapt a bundled Tacky motion template, then hand it to HyperFrames and video-delivery-qc. Use when a request names canvas-video, Canvas 2D, Three.js, Tacky Templates, or needs a pre-rendered coded overlay or B-roll clip. Do not use for animation that should live inside a HyperFrames composition; route that to hyperframes.
+description: >-
+  Create and render a standalone coded motion video (MP4, ProRes, or transparent MOV) with
+  canvas-video from Canvas 2D, Three.js, or a bundled Tacky motion template. Use for 2D or 3D
+  animation, data animation, data visualization video, animated infographic, motion graphic,
+  coded B-roll or overlay, and requests such as「3D 動畫」「資料動畫」「數據可視化」
+  「可視化動畫」「動態資訊圖」or「輸出 MP4」. When the user requests animation, video,
+  motion, or MP4, deliver an actual moving video rather than a static image. Do not use for
+  animation that should live inside a HyperFrames composition; route that to hyperframes.
 ---
 
 # Canvas Video Pipeline
@@ -12,6 +19,9 @@ Use `canvas-video` as an isolated deterministic renderer. Do not merge its depen
 - Use `footage-sifter` as the primary workflow before editing whenever raw footage needs visual review, take grouping, selects, or editor handoff files.
 - Use the media source the user selects for generated, recorded, or stock assets. Do not require, install, authenticate, or spend credits with a generative provider unless the user explicitly requests that provider.
 - Use `canvas-video` for visuals whose value comes from code: Canvas drawing, Three.js, data animation, HUDs, particles, branded titles, or transparent overlays.
+- Treat「可視化動畫」「資料／數據動畫」「動態資訊圖」「3D 動畫」「visualization video」「animated infographic」and an explicit MP4 request as coded-motion intent even when the user does not name `canvas-video`.
+- A still image is only a review artifact. When the requested deliverable is animation, video, motion, or MP4, do not finish with a generated raster image, poster, storyboard, or static infographic unless the user explicitly changes the deliverable to a still.
+- When the user asks for 3D, use a real Three.js scene with spatial geometry, camera, lighting, and time-based motion. A flat AI-generated image with a faux-3D look does not satisfy a 3D-animation request.
 - Use the bundled Tacky Templates when the request needs a complete designed title-card system. Read [references/tacky-templates.md](references/tacky-templates.md), show the gallery or 2–4 suitable options, and adapt the selected asset rather than rebuilding its visual system from scratch.
 - Use HyperFrames for the final timeline, captions, scene assembly, audio mix, transitions, and delivery render. Start with `$hyperframes` and load its domain skills as required.
 - For every subtitle workflow, run `caption-doctor` first to correct the master text and timing. Use `subtitle-translator` as the primary workflow for additional languages only after the master is approved. Then hand the clean SRT tracks to HyperFrames for visual styling and burn-in; HyperFrames must not replace the text-cleaning step.
@@ -49,7 +59,13 @@ For Tacky Templates or the 31-effect gallery, read [references/tacky-templates.m
 5. Inspect the stills for safe areas, typography, clipping, contrast, and aspect-specific layout.
 6. Render the motion asset. Use alpha output only when HyperFrames will composite it over footage.
 7. Add the rendered asset to the HyperFrames project rather than copying Canvas runtime code into the HyperFrames composition.
-8. Render the full edit and run video delivery QC.
+8. For a standalone request, deliver the rendered video file and report its path, duration, dimensions, FPS, and codec. For an integrated request, render the full edit and run video delivery QC.
+
+## Completion gate
+
+- If the user asked for animation, video, motion, or MP4, completion requires a playable video file. Preview PNGs or JPEGs do not count as the final deliverable.
+- If the user asked for 3D, inspect representative frames for visible spatial depth and confirm the scene uses Three.js before rendering.
+- If rendering is blocked, report the concrete failing command and preserve the project for retry; do not silently substitute a static image.
 
 Commands:
 
