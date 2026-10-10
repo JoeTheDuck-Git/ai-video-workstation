@@ -1,8 +1,20 @@
 #!/usr/bin/env bash
 set -uo pipefail
 
+VERIFY_CODEX=1
+VERIFY_CLAUDE=1
+if [[ "${1:-}" == "--codex-only" ]]; then
+  VERIFY_CLAUDE=0
+elif [[ "${1:-}" == "--claude-only" ]]; then
+  VERIFY_CODEX=0
+elif [[ $# -gt 0 ]]; then
+  printf 'Usage: %s [--codex-only|--claude-only]\n' "$0" >&2
+  exit 2
+fi
+
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 MANAGED_NODE_BIN="${HOME}/.local/share/ai-video-workstation/node22-current/bin"
+MANAGED_PYTHON="${HOME}/.local/share/ai-video-workstation/python-venv/bin/python3"
 if [[ -x "${MANAGED_NODE_BIN}/node" ]]; then
   export PATH="${MANAGED_NODE_BIN}:${HOME}/.local/bin:${PATH}"
 else
@@ -62,20 +74,6 @@ if command -v hyperframes >/dev/null 2>&1; then
   hyperframes skills check --json || warn "HyperFrames skills need attention"
 fi
 
-check_command dreamina-canvas
-if command -v dreamina-canvas >/dev/null 2>&1; then
-  DREAMINA_VERSION="$(dreamina-canvas --version 2>/dev/null || true)"
-  ok "Dreamina Canvas ${DREAMINA_VERSION:-version unavailable}"
-  printf '\n-- Dreamina authorization --\n'
-  DREAMINA_AUTH="$(dreamina-canvas auth status --format json 2>/dev/null || true)"
-  printf '%s\n' "$DREAMINA_AUTH"
-  if printf '%s' "$DREAMINA_AUTH" | grep -Eq '"loggedIn"[[:space:]]*:[[:space:]]*true'; then
-    ok "Dreamina authorization is available"
-  else
-    warn "Dreamina is not authorized yet; run ${ROOT_DIR}/scripts/login.sh"
-  fi
-fi
-
 check_command canvas-video
 if command -v canvas-video >/dev/null 2>&1; then
   printf '\n-- Canvas video runtime --\n'
@@ -88,50 +86,45 @@ if command -v canvas-video >/dev/null 2>&1; then
   fi
 fi
 
-QC_SCRIPT="${CODEX_HOME:-${HOME}/.codex}/skills/video-delivery-qc/scripts/video_qc.py"
-if [[ -f "$QC_SCRIPT" ]]; then
-  if command -v python3 >/dev/null 2>&1 && python3 "$QC_SCRIPT" --help >/dev/null 2>&1; then
-    ok "video-delivery-qc skill"
+verify_skills_root() {
+  local agent_name="$1" skills_root="$2" qc_script skill_name skill_path tacky_engine
+  printf '\n-- %s Skills --\n' "$agent_name"
+  qc_script="${skills_root}/video-delivery-qc/scripts/video_qc.py"
+  if [[ -f "$qc_script" ]] && [[ -x "$MANAGED_PYTHON" ]] && "$MANAGED_PYTHON" "$qc_script" --help >/dev/null 2>&1; then
+    ok "${agent_name}: video-delivery-qc"
   else
-    fail "video-delivery-qc exists but could not be loaded"
+    fail "${agent_name}: video-delivery-qc is missing or could not be loaded"
   fi
-else
-  fail "video-delivery-qc is not installed"
-fi
-
-CANVAS_SKILL="${CODEX_HOME:-${HOME}/.codex}/skills/canvas-video-pipeline/SKILL.md"
-if [[ -f "$CANVAS_SKILL" ]]; then
-  ok "canvas-video-pipeline skill"
-else
-  fail "canvas-video-pipeline is not installed"
-fi
-
-printf '\n-- Optional local editing skills --\n'
-for skill_name in footage-sifter caption-doctor subtitle-translator beat-cut-editor; do
-  skill_path="${CODEX_HOME:-${HOME}/.codex}/skills/${skill_name}/SKILL.md"
-  if [[ -f "$skill_path" ]]; then
-    ok "${skill_name} skill"
-  else
-    if [[ "$skill_name" == "beat-cut-editor" ]]; then
-      warn "beat-cut-editor is not installed; use ./scripts/import-irene-stage2.sh /path/to/hello-irene-codex"
+  for skill_name in canvas-video-pipeline footage-sifter caption-doctor subtitle-translator; do
+    skill_path="${skills_root}/${skill_name}/SKILL.md"
+    if [[ -f "$skill_path" ]]; then
+      ok "${agent_name}: ${skill_name}"
     else
-      warn "${skill_name} is not installed; use ./scripts/import-irene-skills.sh /path/to/hello-irene-codex"
+      fail "${agent_name}: ${skill_name} is not installed"
     fi
-  fi
-done
-if [[ -x "${HOME}/.irene/venv/bin/python3" ]]; then
-  if "${HOME}/.irene/venv/bin/python3" -c 'import opencc, jieba' >/dev/null 2>&1; then
-    ok "Irene subtitle dependencies (opencc, jieba)"
+  done
+  tacky_engine="${skills_root}/canvas-video-pipeline/assets/tacky-templates/engine"
+  if [[ -f "${tacky_engine}/node_modules/playwright-core/cli.js" ]]; then
+    ok "${agent_name}: Tacky Templates isolated renderer"
   else
-    warn "Irene Python environment exists but opencc or jieba is missing"
+    fail "${agent_name}: Tacky Templates renderer dependencies are not installed"
   fi
+}
+
+[[ "$VERIFY_CODEX" -eq 1 ]] && verify_skills_root "Codex" "${CODEX_HOME:-${HOME}/.codex}/skills"
+[[ "$VERIFY_CLAUDE" -eq 1 ]] && verify_skills_root "Claude Code" "${CLAUDE_HOME:-${HOME}/.claude}/skills"
+
+if canvas-video tacky list >/dev/null 2>&1; then
+  ok "canvas-video tacky command"
+else
+  fail "canvas-video tacky command could not resolve an installed Skill"
 fi
-if [[ -f "${CODEX_HOME:-${HOME}/.codex}/skills/beat-cut-editor/SKILL.md" ]] && [[ -x "${HOME}/.irene/venv/bin/python3" ]]; then
-  if "${HOME}/.irene/venv/bin/python3" -c 'import static_ffmpeg, scenedetect, cv2, PIL, numpy' >/dev/null 2>&1; then
-    ok "beat-cut core dependencies"
-  else
-    warn "beat-cut-editor is installed but one or more core Python dependencies are missing"
-  fi
+
+printf '\n-- Shared subtitle runtime --\n'
+if [[ -x "$MANAGED_PYTHON" ]] && "$MANAGED_PYTHON" -c 'import opencc, jieba' >/dev/null 2>&1; then
+  ok "subtitle dependencies (opencc, jieba)"
+else
+  fail "managed subtitle dependencies are missing"
 fi
 
 printf '\n'
@@ -139,4 +132,4 @@ if (( FAILURES > 0 )); then
   printf 'Verification finished with %d required failure(s).\n' "$FAILURES"
   exit 1
 fi
-printf 'Verification passed. Authorization warnings can be resolved with scripts/login.sh.\n'
+printf 'Verification passed.\n'

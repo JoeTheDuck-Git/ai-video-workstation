@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>Pastel Code 粉彩程式・文字卡 — Tacky Templates</title>
+<link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Noto+Sans+TC:wght@500&family=Noto+Serif+TC:wght@600;900&display=swap" rel="stylesheet">
+<style>
+  :root{--ivory:#f2efe7;--card:#faf8f2;--ink:#3d3629;--soft:#9a917e;
+        --coral:#d97757;--coralbg:#f4d7c8;--sage:#a9c3a2;--sky:#a9c4de;
+        --lav:#c7b5d8;--butter:#f0d494;--squig:#e06c5a}
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:100%;height:100%;background:#e9e5da;overflow:hidden}
+  #fit{position:absolute}
+  #stage{position:relative;overflow:hidden;background:var(--ivory)}
+  .landscape #stage{width:1920px;height:1080px}
+  .portrait  #stage{width:1080px;height:1920px}
+  #camera{position:absolute;inset:0;will-change:transform}
+
+  /* ---------- airy pastel blobs (saturated but soft) ---------- */
+  .blob{position:absolute;border-radius:50%;filter:blur(90px);opacity:.55;
+    will-change:transform}
+  #blobA{width:820px;height:820px;background:var(--sage);top:-260px;right:-180px;
+    animation:driftA 26s ease-in-out infinite alternate}
+  #blobB{width:700px;height:700px;background:var(--sky);bottom:-300px;left:-160px;
+    animation:driftB 31s ease-in-out infinite alternate}
+  #blobC{width:520px;height:520px;background:var(--butter);top:34%;left:56%;
+    opacity:.4;animation:driftC 23s ease-in-out infinite alternate}
+  @keyframes driftA{to{transform:translate(-90px,70px) scale(1.08)}}
+  @keyframes driftB{to{transform:translate(80px,-60px) scale(1.06)}}
+  @keyframes driftC{to{transform:translate(-60px,-80px) scale(1.12)}}
+
+  /* ---------- window chrome ---------- */
+  #dots{position:absolute;z-index:5;display:flex;gap:16px;opacity:0;transition:opacity .8s}
+  .landscape #dots{top:66px;left:84px}.portrait #dots{top:76px;left:64px}
+  #dots.on{opacity:1}
+  #dots span{width:22px;height:22px;border-radius:50%}
+  #dots span:nth-child(1){background:#e8a49c}#dots span:nth-child(2){background:var(--butter)}
+  #dots span:nth-child(3){background:var(--sage)}
+  #status{position:absolute;z-index:5;font-family:'Courier Prime',monospace;
+    color:var(--soft);letter-spacing:.05em;opacity:0;transition:opacity .8s}
+  .landscape #status{bottom:64px;right:84px;font-size:26px;text-align:right}
+  .portrait  #status{bottom:74px;right:64px;font-size:23px;text-align:right}
+  #status.on{opacity:.9}
+  #lines{position:absolute;z-index:5;font-family:'Courier Prime',monospace;
+    color:var(--soft);opacity:0;transition:opacity .8s;line-height:2.5}
+  .landscape #lines{top:220px;left:88px;font-size:26px}
+  .portrait  #lines{top:300px;left:64px;font-size:23px}
+  #lines.on{opacity:.45}
+
+  /* ---------- eyebrow: mono comment ---------- */
+  #eyebrow{position:absolute;z-index:5;left:50%;transform:translateX(-50%);opacity:0;
+    font-family:'Courier Prime','Noto Sans TC',monospace;color:var(--coral);
+    letter-spacing:.08em;white-space:nowrap;transition:opacity .7s}
+  .landscape #eyebrow{top:168px;font-size:34px}
+  .portrait  #eyebrow{top:390px;font-size:30px}
+  #eyebrow.on{opacity:.95}
+
+  /* ---------- headline: warm serif, airy floats ---------- */
+  #headWrap{position:absolute;z-index:4;left:0;right:0;display:flex;
+    flex-direction:column;align-items:center;gap:.22em}
+  .landscape #headWrap{top:50%;transform:translateY(-52%)}
+  .portrait  #headWrap{top:50%;transform:translateY(-54%)}
+  .hline{display:flex;align-items:baseline;white-space:nowrap}
+  .hline.keyline{margin-top:.2em}
+  .word{font-family:'Noto Serif TC',serif;font-weight:900;color:var(--ink);
+    display:inline-block;opacity:0;padding:0 .05em;position:relative}
+  .landscape .word{font-size:124px;line-height:1.34}
+  .portrait  .word{font-size:96px;line-height:1.38}
+  .word.on{animation:floatUp .8s cubic-bezier(.16,.7,.2,1) forwards}
+  @keyframes floatUp{0%{opacity:0;transform:translateY(.35em);filter:blur(5px)}
+    60%{filter:blur(0)}
+    100%{opacity:1;transform:translateY(0);filter:blur(0)}}
+
+  /* key word: inline code chip, typed in */
+  .word.keyword{background:var(--coral);border-radius:.22em;margin:0 .14em;
+    align-self:center;display:inline-block;font-size:inherit;
+    box-shadow:0 10px 34px rgba(217,119,87,.35)}
+  .word.keyword svg{display:block}
+  .word.keyword svg text{fill:#fff;font-family:'Courier Prime','Noto Sans TC',monospace;
+    font-weight:700}
+  .word.keyword svg rect.cur{fill:#fff;animation:blink .75s steps(1) infinite}
+  .landscape .word.keyword{font-size:112px}
+  .portrait  .word.keyword{font-size:86px}
+  .word.keyword .tick{color:var(--coralbg);margin:0 .06em}
+  .word.keyword .cursor{display:inline-block;width:.5em;height:.9em;background:#fff;
+    vertical-align:-.08em;animation:blink .75s steps(1) infinite}
+  @keyframes blink{0%,55%{opacity:1}56%,100%{opacity:0}}
+  /* ✳ sparkle beside the chip */
+  .spark{position:absolute;z-index:6;color:var(--coral);font-weight:400;opacity:0;
+    font-family:'Noto Sans TC';transform:scale(.2) rotate(-40deg)}
+  .spark.on{animation:sparkIn .6s cubic-bezier(.2,1.5,.4,1) forwards}
+  @keyframes sparkIn{0%{opacity:0;transform:scale(.2) rotate(-40deg)}
+    70%{opacity:1;transform:scale(1.15) rotate(8deg)}
+    100%{opacity:1;transform:scale(1) rotate(0)}}
+  .spark.twinkle{animation:twinkle 2.6s ease-in-out infinite}
+  @keyframes twinkle{0%,100%{opacity:1;transform:scale(1) rotate(0)}
+    50%{opacity:.55;transform:scale(.86) rotate(12deg)}}
+
+  /* rejected word: linter squiggle (pure CSS scallop) + deprecated tooltip */
+  .word.deprecated{color:#a29782}
+  .word.dep-line::after{content:"";position:absolute;left:.05em;right:.05em;
+    bottom:-.02em;height:12px;pointer-events:none;
+    background:radial-gradient(circle at 9px -4px, transparent 10px,
+      var(--squig) 10px 15px, transparent 15.5px);
+    background-size:22px 100%;background-repeat:repeat-x;
+    transform:scaleX(0);transform-origin:left;
+    transition:transform .55s cubic-bezier(.3,.7,.3,1)}
+  .word.dep-line.squigon::after{transform:scaleX(1)}
+  .tip{position:absolute;z-index:6;background:var(--card);color:var(--soft);
+    font-family:'Courier Prime','Noto Sans TC',monospace;border-radius:18px;
+    padding:12px 26px;opacity:0;white-space:nowrap;
+    box-shadow:0 14px 44px rgba(61,54,41,.13);border:1.5px solid #e5dfd0}
+  .landscape .tip{font-size:29px}.portrait .tip{font-size:26px}
+  .tip.on{animation:tipIn .5s cubic-bezier(.2,1.2,.3,1) forwards}
+  @keyframes tipIn{0%{opacity:0;transform:translateY(-12px)}
+    100%{opacity:1;transform:translateY(0)}}
+
+  /* ---------- terminal prompt tag ---------- */
+  #prompt{position:absolute;z-index:5;left:50%;transform:translateX(-50%);
+    font-family:'Courier Prime','Noto Sans TC',monospace;color:var(--ink);
+    background:var(--card);border-radius:22px;padding:18px 40px;opacity:0;
+    box-shadow:0 16px 50px rgba(61,54,41,.12);border:1.5px solid #e5dfd0;
+    white-space:nowrap}
+  .landscape #prompt{bottom:158px;font-size:36px}
+  .portrait  #prompt{bottom:330px;font-size:31px}
+  #prompt.on{opacity:1;transition:opacity .5s}
+  #prompt .ps{color:var(--coral);font-weight:700;margin-right:18px}
+  #prompt .cursor{display:inline-block;width:.5em;height:.95em;background:var(--coral);
+    vertical-align:-.1em;animation:blink .75s steps(1) infinite}
+
+  #cd{position:absolute;inset:0;z-index:20;display:none;align-items:center;justify-content:center;background:var(--ivory)}
+  #cd span{font-family:'Noto Serif TC';font-weight:900;font-size:320px;color:var(--ink)}
+  #cues{position:absolute;right:24px;top:24px;z-index:21;display:none;background:rgba(61,54,41,.94);
+    color:var(--ivory);font-family:'Courier Prime',monospace;font-size:15px;line-height:1.75;
+    padding:14px 18px;max-height:70%;overflow:auto;border-radius:14px}
+  /* O = outro: everything exhales — soft rise and dissolve */
+  .outro #camera{transition:transform 1.1s cubic-bezier(.4,0,.6,.5),opacity 1s .1s;
+    transform:translateY(-40px) scale(1.015);opacity:0}
+</style>
+</head>
+<body>
+<div id="fit"><div id="stage">
+  <div id="camera">
+    <div class="blob" id="blobA"></div><div class="blob" id="blobB"></div>
+    <div class="blob" id="blobC"></div>
+    <div id="dots"><span></span><span></span><span></span></div>
+    <div id="lines">1<br>2<br>3<br>4</div>
+    <div id="eyebrow"></div>
+    <div id="headWrap"></div>
+    <div id="prompt"></div>
+    <div id="status"></div>
+  </div>
+</div></div>
+
+<script>
+/* ============================================================
+   CONFIG — Pastel Code 粉彩程式・文字卡 (soft saturated pastels ×
+   courier coding vibes; light and airy).
+   Emphasis vocabulary (unique):
+     key:true    → the word becomes an inline CODE CHIP (coral,
+                   rounded) that TYPES itself in, then a ✳ sparkle
+                   pops beside it and keeps twinkling
+     dep:true    → the rejected idea gets a LINTER SQUIGGLE and a
+                   floating tooltip comment (its `tip`, e.g.
+                   "// 已棄用 deprecated") — the IDE disapproves
+   tag = terminal prompt line (>) that types on and keeps its
+   blinking cursor. Motion is exhale-soft: floats, no impacts.
+   ============================================================ */
+const CONFIG = {
+  orientation: "landscape",
+  eyebrow: "// 給每個想太多的創作者",
+  lines: [
+    [ {t:"別再等"}, {t:"完美腳本", dep:true, tip:"// 已棄用 deprecated"} ],
+    [ {t:"先跑"}, {t:"初稿", key:true}, {t:"再迭代"} ]
+  ],
+  tag: "拍了才知道哪裡要改",
+  status: "UTF-8 ・ 已儲存 ✓",
+  timing: { start: 1.0, stagger: 0.5, typeChar: 0.09 }
+};
+/* ============================================================ */
+const $=q=>document.querySelector(q);
+const stagePx=()=>CONFIG.orientation==="portrait"?[1080,1920]:[1920,1080];
+document.body.parentElement.className=CONFIG.orientation;
+function fit(){const[W,H]=stagePx();const s=Math.min(innerWidth/W,innerHeight/H);
+  $("#fit").style.cssText=`position:absolute;left:50%;top:50%;width:${W}px;height:${H}px;`+
+  `transform:translate(-50%,-50%) scale(${s});`;}
+addEventListener("resize",fit);fit();
+const CUES=[];const cue=(t,l)=>CUES.push([t,l]);
+(function(){const st=document.getElementById("stage");
+ const cd=document.createElement("div");cd.id="cd";cd.innerHTML="<span></span>";st.appendChild(cd);
+ const cp=document.createElement("div");cp.id="cues";st.appendChild(cp);
+ addEventListener("keydown",e=>{
+  if(e.key==="r"||e.key==="R"){let n=3;cd.style.display="flex";
+    const s=cd.querySelector("span");s.textContent=n;
+    const iv=setInterval(()=>{n--;if(n<1){clearInterval(iv);location.reload();}else s.textContent=n;},700);}
+  if(e.key==="o"||e.key==="O"){document.getElementById("stage").classList.add("outro");}
+  if(e.key==="s"||e.key==="S"){
+    cp.innerHTML="<b>SFX CUE SHEET（秒）</b><br>"+CUES.slice().sort((a,b)=>a[0]-b[0])
+      .map(c=>c[0].toFixed(2)+"s — "+c[1]).join("<br>");
+    cp.style.display=cp.style.display==="block"?"none":"block";}});})();
+
+/* build */
+const wrap=$("#headWrap");const wordEls=[];
+CONFIG.lines.forEach(line=>{const div=document.createElement("div");div.className="hline";
+  line.forEach(w=>{const s=document.createElement("span");s.className="word";
+    if(w.key){s.classList.add("keyword");s.innerHTML='<span class="cursor"></span>';
+      div.classList.add("keyline");}
+    else s.textContent=w.t;
+    s._flags=w;div.appendChild(s);wordEls.push(s);});
+  wrap.appendChild(div);});
+$("#eyebrow").textContent=CONFIG.eyebrow;
+$("#status").textContent=CONFIG.status;
+
+function squiggle(el){el.classList.add("dep-line");
+  requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.add("squigon")));}
+
+function tipFor(el,text){const st=$("#stage").getBoundingClientRect(),[W,H]=stagePx();
+  const k=W/st.width,r=el.getBoundingClientRect();
+  const tip=document.createElement("div");tip.className="tip";tip.textContent=text;
+  $("#camera").appendChild(tip);
+  const x=(r.left-st.left)*k+r.width*k/2;
+  tip.style.left=Math.min(Math.max(x-160,60),W-560)+"px";
+  tip.style.top=((r.top-st.top)*k-92)+"px";
+  requestAnimationFrame(()=>tip.classList.add("on"));}
+
+function sparkFor(el){const st=$("#stage").getBoundingClientRect(),[W,H]=stagePx();
+  const k=W/st.width,r=el.getBoundingClientRect();
+  const sp=document.createElement("div");sp.className="spark";sp.textContent="✳";
+  sp.style.fontSize=(r.height*k*.40)+"px";
+  sp.style.left=((r.right-st.left)*k-r.height*k*.10)+"px";
+  sp.style.top=((r.bottom-st.top)*k-r.height*k*.16)+"px";
+  $("#camera").appendChild(sp);
+  requestAnimationFrame(()=>sp.classList.add("on"));
+  setTimeout(()=>{sp.classList.remove("on");sp.classList.add("twinkle");},700);}
+
+document.fonts.ready.then(()=>{fit();
+  cue(0,"鋪底：溫柔的環境音樂／房間 tone（極輕）");
+  setTimeout(()=>{$("#dots").classList.add("on");$("#lines").classList.add("on");
+    $("#status").classList.add("on");},400);
+  cue(.6,"氣音：註解浮現");
+  setTimeout(()=>$("#eyebrow").classList.add("on"),600);
+  const T=CONFIG.timing;let t=T.start;
+  wordEls.forEach(el=>{
+    const f=el._flags;
+    if(f.key){
+      const chars=[...f.t];
+      cue(t,"鍵盤輕敲 ×"+chars.length+"：code chip 打字");
+      cue(t+chars.length*T.typeChar+.4,"清脆 ✳ chime：sparkle");
+      setTimeout(()=>{el.classList.add("on");
+        // deterministic centering: canvas measures the real glyph ink,
+        // SVG places the baseline mathematically — identical in every engine
+        const fs=parseFloat(getComputedStyle(el).fontSize)*0.9;
+        const font=`700 ${fs}px 'Courier Prime','Noto Sans TC',monospace`;
+        const cv=document.createElement("canvas").getContext("2d");cv.font=font;
+        const m=cv.measureText(f.t);
+        const a=m.actualBoundingBoxAscent,b=m.actualBoundingBoxDescent;
+        const chipW=Math.ceil(m.width+fs*.62), chipH=Math.ceil(fs*1.42);
+        const baseY=(chipH+(a-b))/2;          // ink optically centered
+        const NS="http://www.w3.org/2000/svg";
+        const svg=document.createElementNS(NS,"svg");
+        svg.setAttribute("width",chipW);svg.setAttribute("height",chipH);
+        const tx=document.createElementNS(NS,"text");
+        tx.setAttribute("x",chipW/2);tx.setAttribute("y",baseY);
+        tx.setAttribute("text-anchor","middle");tx.setAttribute("font-size",fs);
+        const cur=document.createElementNS(NS,"rect");cur.setAttribute("class","cur");
+        cur.setAttribute("width",fs*.45);cur.setAttribute("height",fs*.82);
+        cur.setAttribute("y",baseY-fs*.72);
+        svg.append(tx,cur);el.innerHTML="";el.appendChild(svg);
+        let ci=0;(function type(){
+          const part=f.t.slice(0,ci);
+          tx.textContent=part;
+          cur.setAttribute("x",chipW/2+cv.measureText(part).width/2+4);
+          ci++;
+          if(ci<=chars.length)setTimeout(type,T.typeChar*1000);
+          else{setTimeout(()=>{cur.remove();sparkFor(el);},350);}})();
+      },t*1000);
+      t+=T.stagger+chars.length*T.typeChar;return;}
+    cue(t,"氣音：字浮上");
+    if(f.dep){cue(t+.55,"linter 波浪線刷過（小小的 blip）");
+      cue(t+1.0,"tooltip 彈出（軟 pop）");}
+    setTimeout(()=>{el.classList.add("on");
+      if(f.dep){setTimeout(()=>{squiggle(el);el.classList.add("deprecated");},550);
+        setTimeout(()=>tipFor(el,f.tip||"// deprecated"),1000);}
+    },t*1000);
+    t+=T.stagger;});
+  // terminal prompt types on
+  const tag=CONFIG.tag;let ci=0;
+  cue(t+.4,"鍵盤輕敲 ×"+tag.length+"：終端機提示列");
+  setTimeout(()=>{$("#prompt").classList.add("on");
+    (function type(){$("#prompt").innerHTML='<span class="ps">&gt;</span>'+
+      tag.slice(0,ci)+'<span class="cursor"></span>';
+      ci++;if(ci<=tag.length)setTimeout(type,55);})();
+  },(t+.4)*1000);});
+</script>
+</body>
+</html>

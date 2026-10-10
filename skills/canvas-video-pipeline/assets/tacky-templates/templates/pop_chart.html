@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>Pop Art 普普・數據卡 — Tacky Templates</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Noto+Sans+TC:wght@700;900&display=swap" rel="stylesheet">
+<style>
+  :root{--cream:#fdf3dc;--red:#e2262b;--yellow:#ffd400;--blue:#1c6fd6;
+        --black:#17120e;--cyan:#37b6e2;--white:#fffdf6}
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:100%;height:100%;background:#111;overflow:hidden}
+  #fit{position:absolute}
+  #stage{position:relative;overflow:hidden;background:var(--cream);
+    border:14px solid var(--black)}
+  .landscape #stage{width:1920px;height:1080px}
+  .portrait  #stage{width:1080px;height:1920px}
+  #camera{position:absolute;inset:0;will-change:transform}
+  #camera.shake{animation:shake .3s linear}
+  @keyframes shake{0%{transform:translate(0,0)}20%{transform:translate(-13px,8px) rotate(-.5deg)}
+    40%{transform:translate(10px,-6px) rotate(.4deg)}60%{transform:translate(-6px,4px)}
+    80%{transform:translate(4px,-3px)}100%{transform:translate(0,0)}}
+  #dotsA{position:absolute;inset:0;background-image:
+    radial-gradient(var(--cyan) 4px, transparent 4.5px);background-size:36px 36px;
+    opacity:.2;animation:dotDrift 16s linear infinite}
+  @keyframes dotDrift{to{background-position:36px 36px}}
+  #wedge{position:absolute;inset:0;background:var(--yellow);
+    clip-path:polygon(0 0, 34% 0, 18% 100%, 0 100%);opacity:.9}
+
+  #title{position:absolute;z-index:5;left:50%;transform:translateX(-50%) rotate(-1.2deg);
+    background:var(--white);color:var(--black);font-family:'Noto Sans TC';font-weight:900;
+    padding:14px 44px;opacity:0;border:8px solid var(--black);white-space:nowrap;
+    box-shadow:9px 9px 0 rgba(23,18,14,.85)}
+  .landscape #title{top:78px;font-size:56px}
+  .portrait  #title{top:220px;font-size:46px}
+  #title.on{animation:pop .4s cubic-bezier(.2,1.9,.35,1) forwards}
+  @keyframes pop{0%{opacity:0;transform:translateX(-50%) scale(.2) rotate(-1.2deg)}
+    62%{opacity:1;transform:translateX(-50%) scale(1.1) rotate(-1.2deg)}
+    100%{opacity:1;transform:translateX(-50%) scale(1) rotate(-1.2deg)}}
+
+  #chart{position:absolute;z-index:4}
+  .landscape #chart{left:300px;right:340px;top:300px;bottom:200px}
+  .portrait  #chart{left:110px;right:150px;top:460px;bottom:420px}
+  .row{position:absolute;left:0;right:0;display:flex;align-items:center;gap:26px}
+  .rlabel{font-family:'Noto Sans TC';font-weight:900;color:var(--black);text-align:right;
+    flex:0 0 auto;opacity:0;transform:scale(.4)}
+  .rlabel.on{animation:lIn .3s cubic-bezier(.2,1.8,.4,1) forwards}
+  @keyframes lIn{to{opacity:1;transform:scale(1)}}
+  .landscape .rlabel{width:230px;font-size:38px}
+  .portrait  .rlabel{width:180px;font-size:33px}
+  .rtrack{flex:1;position:relative;height:100%}
+  .rbar{position:absolute;left:0;top:50%;transform:translateY(-50%);height:58%;width:0;
+    background:var(--white);border:7px solid var(--black);
+    box-shadow:7px 7px 0 rgba(23,18,14,.85)}
+  .rbar .rfill{position:absolute;inset:0;background-image:
+    radial-gradient(var(--cyan) 3.5px, transparent 4px);background-size:22px 22px;opacity:.5}
+  .rbar.hl{background:var(--red)}
+  .rbar.hl .rfill{background-image:
+    radial-gradient(rgba(255,255,255,.55) 3.5px, transparent 4px)}
+  .rval{position:absolute;top:50%;transform:translateY(-50%);white-space:nowrap;
+    font-family:'Archivo Black','Noto Sans TC';font-weight:900;color:var(--black);opacity:0;
+    text-shadow:3px 3px 0 var(--yellow)}
+  .landscape .rval{font-size:46px}.portrait .rval{font-size:38px}
+
+  /* hl value gets a starburst */
+  #vburst{position:absolute;z-index:6;opacity:0;transform:scale(.1) rotate(-14deg)}
+  #vburst.on{animation:vbIn .45s cubic-bezier(.2,1.8,.4,1) forwards}
+  @keyframes vbIn{0%{opacity:0;transform:scale(.1) rotate(-14deg)}
+    58%{opacity:1;transform:scale(1.17,.9) rotate(3deg)}
+    78%{transform:scale(.94,1.07) rotate(-7deg)}
+    100%{opacity:1;transform:scale(1,1) rotate(-5deg)}}
+  #vburst svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+  #vburst .vt{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-family:'Archivo Black','Noto Sans TC';font-weight:900;color:#fff}
+
+  #source{position:absolute;z-index:5;background:var(--white);border:5px solid var(--black);
+    padding:8px 20px;font-family:'Noto Sans TC';font-weight:700;font-size:22px;
+    color:var(--black);opacity:0;transform:rotate(.8deg);transition:opacity .5s}
+  .landscape #source{left:90px;bottom:70px}
+  .portrait  #source{left:70px;bottom:330px}
+  #source.on{opacity:1}
+  #stripes{position:absolute;left:0;right:0;height:26px;bottom:0;background:
+    repeating-linear-gradient(-45deg, var(--black) 0 26px, var(--yellow) 26px 52px)}
+  #flash{position:absolute;inset:0;z-index:9;opacity:0;pointer-events:none}
+  #flash.go{animation:flashGo .14s steps(2,end)}
+  @keyframes flashGo{0%{opacity:.9}100%{opacity:0}}
+  #cd{position:absolute;inset:0;z-index:20;display:none;align-items:center;justify-content:center;background:var(--cream)}
+  #cd span{font-family:'Archivo Black';font-size:340px;color:var(--black);
+    text-shadow:10px 10px 0 var(--red)}
+  #cues{position:absolute;right:24px;top:24px;z-index:21;display:none;background:rgba(23,18,14,.94);
+    color:#fdf3dc;font-family:monospace;font-size:15px;line-height:1.75;
+    padding:14px 18px;max-height:70%;overflow:auto}
+  /* O = outro: comic pop-out */
+  .outro #camera{animation:outPop .5s cubic-bezier(.55,-.25,.85,.5) forwards}
+  @keyframes outPop{25%{transform:scale(1.05) rotate(1deg)}100%{transform:scale(0) rotate(-9deg);opacity:0}}
+</style>
+</head>
+<body>
+<div id="fit"><div id="stage">
+  <div id="camera">
+    <div id="dotsA"></div><div id="wedge"></div>
+    <div id="title"></div>
+    <div id="chart"></div>
+    <div id="vburst"><svg viewBox="0 0 100 100" preserveAspectRatio="none"></svg>
+      <div class="vt"></div></div>
+    <div id="source"></div>
+    <div id="stripes"></div>
+  </div>
+  <div id="flash"></div>
+</div></div>
+
+<script>
+/* ============================================================
+   CONFIG — Pop Art 普普・數據卡. Comic-block bars; the hl value
+   lands INSIDE a starburst with flash + shake. Real numbers +
+   source mandatory (same ethics as every chart in the Studio).
+   ============================================================ */
+const CONFIG = {
+  orientation: "landscape",
+  title: "觀眾在第幾秒滑走",
+  unit: "%", decimals: 0,
+  data: [
+    {label:"前 3 秒",  value:63, hl:true},
+    {label:"3–10 秒",  value:21},
+    {label:"10–30 秒", value:11},
+    {label:"30 秒後",  value:5}
+  ],
+  source: "資料來源：TikTok Creator Center 2025",
+  timing: { start: 1.1, stagger: 0.42 },
+  flashColor: "yellow"
+};
+/* ============================================================ */
+const $=q=>document.querySelector(q);
+const stagePx=()=>CONFIG.orientation==="portrait"?[1080,1920]:[1920,1080];
+document.body.parentElement.className=CONFIG.orientation;
+function fit(){const[W,H]=stagePx();const s=Math.min(innerWidth/W,innerHeight/H);
+  $("#fit").style.cssText=`position:absolute;left:50%;top:50%;width:${W}px;height:${H}px;`+
+  `transform:translate(-50%,-50%) scale(${s});`;}
+addEventListener("resize",fit);fit();
+
+const CUES=[];const cue=(t,l)=>CUES.push([t,l]);
+(function(){const st=document.getElementById("stage");
+ const cd=document.createElement("div");cd.id="cd";cd.innerHTML="<span></span>";st.appendChild(cd);
+ const cp=document.createElement("div");cp.id="cues";st.appendChild(cp);
+ addEventListener("keydown",e=>{
+  if(e.key==="r"||e.key==="R"){let n=3;cd.style.display="flex";
+    const s=cd.querySelector("span");s.textContent=n;
+    const iv=setInterval(()=>{n--;if(n<1){clearInterval(iv);location.reload();}else s.textContent=n;},700);}
+  if(e.key==="o"||e.key==="O"){document.getElementById("stage").classList.add("outro");}
+  if(e.key==="s"||e.key==="S"){
+    cp.innerHTML="<b>SFX CUE SHEET（秒）</b><br>"+CUES.slice().sort((a,b)=>a[0]-b[0])
+      .map(c=>c[0].toFixed(2)+"s — "+c[1]).join("<br>");
+    cp.style.display=cp.style.display==="block"?"none":"block";}});})();
+
+function burstPath(spikes,inner,outer){const pts=[];
+  for(let i=0;i<spikes*2;i++){const a=i/(spikes*2)*Math.PI*2-Math.PI/2;
+    const r=(i%2===0?outer:inner)*(0.92+Math.random()*.16);
+    pts.push((50+Math.cos(a)*r).toFixed(2)+","+(50+Math.sin(a)*r).toFixed(2));}
+  return "M"+pts.join(" L")+" Z";}
+const flashColors={yellow:"var(--yellow)",red:"var(--red)",white:"#fff"};
+function flash(){const f=$("#flash");f.style.background=flashColors[CONFIG.flashColor]||"#fff";
+  f.classList.remove("go");void f.offsetWidth;f.classList.add("go");}
+function shake(){const c=$("#camera");c.classList.remove("shake");void c.offsetWidth;
+  c.classList.add("shake");}
+function count(el,to,dur){const s=performance.now();
+  (function u(){const p=Math.min(1,(performance.now()-s)/dur),e=1-Math.pow(1-p,3);
+    el.textContent=(to*e).toFixed(CONFIG.decimals)+CONFIG.unit;
+    if(p<1)requestAnimationFrame(u);})();}
+
+$("#title").textContent=CONFIG.title;
+$("#source").textContent=CONFIG.source;
+
+document.fonts.ready.then(()=>{fit();
+  const ch=$("#chart"),n=CONFIG.data.length,maxV=Math.max(...CONFIG.data.map(d=>d.value));
+  CONFIG.data.forEach((d,i)=>{const row=document.createElement("div");row.className="row";
+    row.style.top=(i/n*100)+"%";row.style.height=(100/n)+"%";
+    row.innerHTML=`<div class="rlabel">${d.label}</div>
+      <div class="rtrack"><div class="rbar${d.hl?" hl":""}"><div class="rfill"></div></div>
+      <div class="rval">0${CONFIG.unit}</div></div>`;
+    ch.appendChild(row);});
+  const T=CONFIG.timing;
+  cue(T.start-.6,"啵 pop：標題牌");
+  setTimeout(()=>$("#title").classList.add("on"),(T.start-.6)*1000);
+  [...ch.children].forEach((row,i)=>{const d=CONFIG.data[i];
+    cue(T.start+i*T.stagger,"砰 thud：bar "+(i+1)+" 撞出 + 數字跳");
+    setTimeout(()=>{row.querySelector(".rlabel").classList.add("on");
+      const bar=row.querySelector(".rbar"),val=row.querySelector(".rval");
+      const wpct=d.value/maxV*78;
+      bar.style.transition="width .7s cubic-bezier(.2,1.5,.3,1)";
+      requestAnimationFrame(()=>bar.style.width=wpct+"%");
+      shake();
+      val.style.left=`calc(${wpct}% + 28px)`;val.style.opacity=1;
+      val.style.transition="opacity .25s";count(val,d.value,700);
+      if(d.hl){cue(T.start+i*T.stagger+.85,"POW 重擊：爆炸框數字 + 色閃 + 震動");
+        setTimeout(()=>{
+          val.style.opacity=0;                       // burst replaces the plain value
+          const st=$("#stage").getBoundingClientRect(),[W,H]=stagePx();
+          const k=W/st.width,r=val.getBoundingClientRect();
+          const s=Math.max(r.height*k*3.4,240);
+          const vb=$("#vburst");
+          vb.style.cssText+=`left:${(r.left-st.left)*k+r.width*k/2-s/2}px;`+
+            `top:${(r.top-st.top)*k+r.height*k/2-s/2}px;width:${s}px;height:${s}px`;
+          const svg=vb.querySelector("svg");
+          const p=document.createElementNS("http://www.w3.org/2000/svg","path");
+          p.setAttribute("d",burstPath(13,33,49));
+          p.setAttribute("fill","var(--red)");p.setAttribute("stroke","var(--black)");
+          p.setAttribute("stroke-width",3);p.setAttribute("vector-effect","non-scaling-stroke");
+          p.setAttribute("stroke-linejoin","round");svg.appendChild(p);
+          const vt=vb.querySelector(".vt");vt.textContent=d.value+CONFIG.unit;
+          vt.style.fontSize=(s*.26)+"px";
+          const B="var(--black)";
+          vt.style.textShadow=`2.5px 0 0 ${B},-2.5px 0 0 ${B},0 2.5px 0 ${B},0 -2.5px 0 ${B},`+
+            `2px 2px 0 ${B},-2px -2px 0 ${B},2px -2px 0 ${B},-2px 2px 0 ${B},5px 5px 0 ${B}`;
+          vb.classList.add("on");flash();shake();
+        },850);}
+    },(T.start+i*T.stagger)*1000);});
+  setTimeout(()=>$("#source").classList.add("on"),
+    (T.start+n*T.stagger+1.2)*1000);});
+</script>
+</body>
+</html>

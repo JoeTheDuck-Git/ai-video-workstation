@@ -1,0 +1,13 @@
+{
+  "project": "0704_日常vlog",
+  "fps": 30, "width": 1080, "height": 1920,
+  "clips": [
+    {"file": "IMG_4021.MOV", "group": "開場 hook", "take": 1, "verdict": "reject", "reason": "咬字含糊，中途笑場", "duration": 22.0},
+    {"file": "IMG_4022.MOV", "group": "開場 hook", "take": 2, "verdict": "select", "reason": "最有能量，一氣呵成", "order": 1, "in": 2.5, "out": 14.0, "duration": 18.0},
+    {"file": "IMG_4023 copy.MOV", "group": "開場 hook", "take": 3, "verdict": "backup", "reason": "OK 但比 take 2 平", "duration": 16.0},
+    {"file": "IMG_4030.MOV", "group": "咖啡店 B-roll", "verdict": "select", "reason": "光線最好的搖鏡", "order": 3, "in": 0, "out": 6.5, "duration": 31.0},
+    {"file": "IMG_4031.MOV", "group": "咖啡店 B-roll", "verdict": "backup", "reason": "手震", "duration": 12.0},
+    {"file": "IMG_4040.MOV", "group": "重點段落", "take": 1, "verdict": "select", "reason": "唯一完整講完的 take", "order": 2, "duration": 45.0},
+    {"file": "IMG_4041.MOV", "group": "重點段落", "take": 2, "verdict": "reject", "reason": "重拍到一半放棄", "duration": 9.0}
+  ]
+}

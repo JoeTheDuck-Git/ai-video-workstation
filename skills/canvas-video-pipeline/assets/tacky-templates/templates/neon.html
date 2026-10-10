@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>Neon 霓虹 — Tacky Templates (exploration)</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@500;700;900&family=Mr+Dafoe&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#07090f;
+    --coreB:#f2fbff; --glowB:#3ec6ff;   /* base tube: ice cyan */
+    --coreK:#fff2fb; --glowK:#ff4fc8;   /* key tube: hot pink  */
+    --dead:#27303f;                      /* unlit glass          */
+    --dim:#5a6b80}
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:100%;height:100%;background:#000;overflow:hidden}
+  #fit{position:absolute}
+  #stage{position:relative;overflow:hidden;background:var(--bg)}
+  .landscape #stage{width:1920px;height:1080px}
+  .portrait  #stage{width:1080px;height:1920px}
+  #camera{position:absolute;inset:0;will-change:transform,opacity}
+
+  /* ---------- night wall + glow pool ---------- */
+  #wall{position:absolute;inset:0;
+    background:radial-gradient(ellipse 70% 55% at 50% 46%,#10141f 0%,#0a0d16 55%,#05060a 100%)}
+  #pool{position:absolute;inset:0;opacity:.35;transition:opacity 1.4s ease;
+    background:radial-gradient(ellipse 46% 34% at 50% 44%,rgba(62,198,255,.14),transparent 70%)}
+  #pool.key{opacity:.85;
+    background:radial-gradient(ellipse 46% 34% at 50% 46%,rgba(255,79,200,.16),transparent 70%),
+               radial-gradient(ellipse 52% 40% at 50% 42%,rgba(62,198,255,.10),transparent 72%)}
+  /* sagging power cable */
+  #cable{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+  #cable path{fill:none;stroke:#161b25;stroke-width:7;stroke-linecap:round}
+
+  /* ---------- kicker: half-lit small tube line ---------- */
+  #kicker{position:absolute;left:50%;transform:translateX(-50%);
+    font-family:'Noto Sans TC',sans-serif;font-weight:700;font-size:30px;
+    letter-spacing:.5em;text-indent:.5em;color:var(--coreB);opacity:0;white-space:nowrap;
+    text-shadow:0 0 6px rgba(62,198,255,.9),0 0 18px rgba(62,198,255,.55),0 0 42px rgba(62,198,255,.3)}
+  .landscape #kicker{top:186px}.portrait #kicker{top:430px}
+  #kicker.on{opacity:1;animation:ignite .7s steps(1,end) forwards}
+
+  /* ---------- the sign ---------- */
+  #headWrap{position:absolute;left:0;right:0;display:flex;flex-direction:column;
+    align-items:center;
+    -webkit-box-reflect:below 46px linear-gradient(transparent 62%,rgba(255,255,255,.10))}
+  .landscape #headWrap{top:50%;transform:translateY(-54%);gap:.16em}
+  .portrait  #headWrap{top:50%;transform:translateY(-55%);gap:.2em}
+  .hline{display:flex;align-items:baseline;white-space:nowrap}
+  .landscape .hline{font-size:150px}
+  .portrait  .hline{font-size:112px}
+  .word{font-family:'Noto Sans TC',sans-serif;font-weight:900;font-size:1em;
+    display:inline-block;padding:0 .06em;line-height:1.3;color:var(--dead);
+    text-shadow:none;will-change:opacity}
+  .word.lit{color:var(--coreB);
+    text-shadow:0 0 5px rgba(62,198,255,.95),0 0 16px rgba(62,198,255,.7),
+      0 0 40px rgba(62,198,255,.45),0 0 90px rgba(62,198,255,.28)}
+  .word.on{animation:ignite .85s steps(1,end) forwards}
+  @keyframes ignite{0%{filter:brightness(.15)}4%{filter:brightness(1.25)}
+    9%{filter:brightness(.2)}14%{filter:brightness(1.1)}17%{filter:brightness(.25)}
+    23%{filter:brightness(1.2)}56%{filter:brightness(1)}62%{filter:brightness(.85)}
+    66%{filter:brightness(1.05)}100%{filter:brightness(1)}}
+
+  /* key:true — stutter-start, then full-bright hot pink */
+  .word.keyword{font-size:1.16em}
+  .word.keyword.lit{color:var(--coreK);
+    text-shadow:0 0 6px rgba(255,79,200,.95),0 0 18px rgba(255,79,200,.75),
+      0 0 46px rgba(255,79,200,.5),0 0 110px rgba(255,79,200,.32)}
+  .word.keyword.on{animation:keyIgnite 1.5s steps(1,end) forwards}
+  @keyframes keyIgnite{0%{filter:brightness(.12)}5%{filter:brightness(.9)}
+    8%{filter:brightness(.15)}13%{filter:brightness(.7)}15%{filter:brightness(.12)}
+    22%{filter:brightness(.15)}27%{filter:brightness(1.05)}31%{filter:brightness(.2)}
+    36%{filter:brightness(1.45)}52%{filter:brightness(1.12)}100%{filter:brightness(1)}}
+
+  /* out:true — the tube SHORTS OUT and dies to dark glass */
+  .word.out.dying{animation:shortOut .9s steps(1,end) forwards}
+  @keyframes shortOut{0%{filter:brightness(1)}8%{filter:brightness(1.5)}
+    12%{filter:brightness(.3)}18%{filter:brightness(1.2)}22%{filter:brightness(.2)}
+    30%{filter:brightness(.9)}34%{filter:brightness(.15)}46%{filter:brightness(.5)}
+    52%{filter:brightness(.1)}100%{filter:brightness(1)}}
+  .word.dead{color:var(--dead)!important;text-shadow:none!important}
+  /* a dead tube twitches faintly once in a while */
+  .word.dead.twitch{animation:deadTwitch 6s steps(1,end) infinite}
+  @keyframes deadTwitch{0%,73%,76%,100%{opacity:1}74%{opacity:.75}75%{opacity:.92}}
+
+  /* ---------- script badge (Latin only — neon script) ---------- */
+  #badge{position:absolute;left:50%;transform:translateX(-50%) rotate(-4deg);
+    font-family:'Mr Dafoe',cursive;font-weight:400;color:var(--coreK);opacity:0;
+    white-space:nowrap;
+    text-shadow:0 0 6px rgba(255,79,200,.9),0 0 20px rgba(255,79,200,.6),0 0 48px rgba(255,79,200,.35)}
+  .landscape #badge{bottom:150px;font-size:64px}
+  .portrait  #badge{bottom:400px;font-size:56px}
+  #badge.on{opacity:1;animation:ignite .7s steps(1,end) forwards,badgeBlink 7s steps(1,end) 2s infinite}
+  @keyframes badgeBlink{0%,88%,92%,100%{opacity:1}89%{opacity:.4}90%{opacity:1}91%{opacity:.55}}
+
+  /* ---------- note + corners (unlit paint on the wall) ---------- */
+  #note{position:absolute;left:50%;transform:translateX(-50%);
+    font-family:'Noto Sans TC',sans-serif;font-weight:500;font-size:27px;
+    color:var(--dim);letter-spacing:.18em;opacity:0;transition:opacity 1.2s ease;white-space:nowrap}
+  .landscape #note{bottom:96px}.portrait #note{bottom:330px}
+  #note.on{opacity:.85}
+  .meta{position:absolute;font-family:'Noto Sans TC',sans-serif;font-weight:700;
+    font-size:18px;letter-spacing:.26em;color:var(--dim);opacity:0;transition:opacity 1.4s}
+  .meta.on{opacity:.6}
+  .landscape #metaTL{top:96px;left:104px}.landscape #metaBR{bottom:92px;right:104px}
+  .portrait #metaTL{top:104px;left:76px}.portrait #metaBR{bottom:100px;right:76px}
+
+  #cd{position:absolute;inset:0;z-index:20;display:none;align-items:center;justify-content:center;background:var(--bg)}
+  #cd span{font-family:'Noto Sans TC',sans-serif;font-weight:900;font-size:300px;color:var(--coreB);
+    text-shadow:0 0 18px rgba(62,198,255,.7)}
+  #cues{position:absolute;right:24px;top:24px;z-index:21;display:none;background:rgba(7,9,15,.94);
+    color:#f2fbff;font-family:monospace;font-size:15px;line-height:1.75;
+    padding:14px 18px;max-height:70%;overflow:auto;border:1px solid #1c2430}
+</style>
+</head>
+<body>
+<div id="fit"><div id="stage">
+  <div id="camera">
+    <div id="wall"></div><div id="pool"></div>
+    <svg id="cable" viewBox="0 0 1920 1080" preserveAspectRatio="none">
+      <path d="M -20 130 Q 480 250 960 190 T 1940 150"/>
+    </svg>
+    <div id="kicker"></div>
+    <div id="headWrap"></div>
+    <div id="badge"></div>
+    <div id="note"></div>
+    <div class="meta" id="metaTL"></div><div class="meta" id="metaBR"></div>
+  </div>
+</div></div>
+
+<script>
+/* ============================================================
+   CONFIG — Neon 霓虹 (night-sign · EXPLORATION)
+   A physical neon sign on a dark wall. Everything is a TUBE:
+   it ignites with buzz-flicker, glows, and can die.
+   word flags: key:true (stutter-start ignition → hot pink, the
+                         glow pool warms to pink)
+               out:true (tube SHORTS OUT after lighting — dies to
+                         dark glass = the strike; twitches faintly)
+   badge = Latin-only neon script (e.g. "open 24 hrs")
+   ============================================================ */
+const CONFIG = {
+  orientation: "landscape",
+  kicker: "深夜開工中",
+  lines: [
+    [ {t:"別再"}, {t:"等靈感", out:true} ],
+    [ {t:"開拍", key:true}, {t:"，它就來了"} ]
+  ],
+  badge: "open 24 hrs",
+  note: "創作者的深夜時段 · 02:47 AM",
+  metaTL: "NO. 08 · 深夜場",
+  metaBR: "TAIPEI · 霓虹",
+  timing: { start: 1.0, stagger: 0.4 },
+  accentKey: "",                       // override pink, e.g. "#ffd24d"
+  accentBase: ""                       // override cyan
+};
+/* ============================================================ */
+const $=q=>document.querySelector(q);
+const stagePx=()=>CONFIG.orientation==="portrait"?[1080,1920]:[1920,1080];
+document.body.parentElement.className=CONFIG.orientation;
+const R=document.documentElement.style;
+function hexA(h,a){const n=parseInt(h.slice(1),16);
+  return`rgba(${n>>16&255},${n>>8&255},${n&255},${a})`}
+if(CONFIG.accentKey){R.setProperty("--glowK",CONFIG.accentKey);}
+if(CONFIG.accentBase){R.setProperty("--glowB",CONFIG.accentBase);}
+function fit(){const[W,H]=stagePx();const s=Math.min(innerWidth/W,innerHeight/H);
+  $("#fit").style.cssText=`position:absolute;left:50%;top:50%;width:${W}px;height:${H}px;`+
+  `transform:translate(-50%,-50%) scale(${s});`;}
+addEventListener("resize",fit);fit();
+
+const CUES=[];const cue=(t,l)=>CUES.push([t,l]);
+(function(){const st=document.getElementById("stage");
+ const cd=document.createElement("div");cd.id="cd";cd.innerHTML="<span></span>";st.appendChild(cd);
+ const cp=document.createElement("div");cp.id="cues";st.appendChild(cp);
+ addEventListener("keydown",e=>{
+  if(e.key==="r"||e.key==="R"){let n=3;cd.style.display="flex";
+    const s=cd.querySelector("span");s.textContent=n;
+    const iv=setInterval(()=>{n--;if(n<1){clearInterval(iv);location.reload();}else s.textContent=n;},700);}
+  if(e.key==="o"||e.key==="O"){powerCut();}
+  if(e.key==="s"||e.key==="S"){
+    cp.innerHTML="<b>SFX CUE SHEET（秒）</b><br>"+CUES.slice().sort((a,b)=>a[0]-b[0])
+      .map(c=>c[0].toFixed(2)+"s — "+c[1]).join("<br>");
+    cp.style.display=cp.style.display==="block"?"none":"block";}});})();
+
+/* O = outro: POWER CUT — every tube dies in a fast stagger */
+function powerCut(){
+  const glow=[...document.querySelectorAll(".word.lit,#kicker,#badge")];
+  glow.forEach((el,i)=>setTimeout(()=>{
+    el.classList.remove("lit");el.classList.add("dead");
+    el.style.animation="none";el.style.color="var(--dead)";el.style.textShadow="none";
+  },i*70+Math.random()*50));
+  setTimeout(()=>{$("#pool").style.opacity=0;
+    $("#note").style.opacity=0;
+    document.querySelectorAll(".meta").forEach(m=>m.style.opacity=0);},glow.length*70);
+}
+
+/* build */
+const wrap=$("#headWrap");const wordEls=[];
+CONFIG.lines.forEach(line=>{const div=document.createElement("div");div.className="hline";
+  line.forEach(w=>{const s=document.createElement("span");s.className="word";
+    if(w.key)s.classList.add("keyword"); if(w.out)s.classList.add("out");
+    s.textContent=w.t;s._flags=w;div.appendChild(s);wordEls.push(s);});
+  wrap.appendChild(div);});
+$("#kicker").textContent=CONFIG.kicker;
+$("#badge").textContent=CONFIG.badge;
+$("#note").textContent=CONFIG.note;
+$("#metaTL").textContent=CONFIG.metaTL;$("#metaBR").textContent=CONFIG.metaBR;
+
+document.fonts.ready.then(()=>{fit();
+  const T=CONFIG.timing;let t=T.start;
+  cue(t-.4,"低頻電流 hum 進場（整段墊底）");
+  cue(t-.3,"嗡＋嘶 buzz-flicker：招牌小字亮起");
+  setTimeout(()=>$("#kicker").classList.add("on","lit"),(t-.3)*1000);
+  document.querySelectorAll(".meta").forEach(m=>setTimeout(()=>m.classList.add("on"),(t-.1)*1000));
+  let keyEl=null,outEl=null;
+  wordEls.forEach(el=>{
+    if(el._flags.key){keyEl=el;return;}          // key ignites last
+    cue(t,"buzz-flicker：燈管亮起");
+    setTimeout(()=>{el.classList.add("on","lit")},t*1000);
+    if(el._flags.out)outEl=el;
+    t+=T.stagger;});
+  /* the short-out */
+  if(outEl){const tOut=t+.7;
+    cue(tOut,"電流劈啪 electrical short：燈管故障熄滅（the strike）");
+    setTimeout(()=>{outEl.classList.add("dying");
+      setTimeout(()=>{outEl.classList.remove("lit","dying");
+        outEl.classList.add("dead","twitch");},900);},tOut*1000);
+    t=tOut+1.1;}
+  /* key word: stutter start → full pink, pool warms */
+  if(keyEl){const tK=t+.3;
+    cue(tK,"接觸不良 stutter → 砰！低音 bloom：關鍵字粉紅全亮");
+    setTimeout(()=>{keyEl.classList.add("on","lit");
+      $("#pool").classList.add("key");},tK*1000);
+    t=tK+1.5;}
+  cue(t+.2,"嗡：草寫小招牌亮起");
+  setTimeout(()=>$("#badge").classList.add("on"),(t+.2)*1000);
+  setTimeout(()=>$("#note").classList.add("on"),(t+.6)*1000);});
+</script>
+</body>
+</html>

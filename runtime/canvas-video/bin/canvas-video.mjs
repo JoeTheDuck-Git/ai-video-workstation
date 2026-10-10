@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-import { accessSync, constants, cpSync, existsSync, mkdirSync } from 'node:fs';
+import { accessSync, constants, cpSync, existsSync, mkdirSync, statSync } from 'node:fs';
+import { homedir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
@@ -40,6 +41,7 @@ Usage:
   canvas-video render <project> [--still seconds] [--from seconds] [--to seconds]
                       [--output file] [--alpha|--prores] [--crf number]
                       [--motion-blur samples] [--shutter frames]
+  canvas-video tacky <list|gallery|copy-template|render-template> [...args]
 `);
 }
 
@@ -80,6 +82,31 @@ function initProject(directory, aspect) {
   console.log(`Created ${aspect} Canvas video project: ${destination}`);
 }
 
+function findTackyHelper() {
+  if (process.env.AI_VIDEO_SKILLS_ROOT) {
+    const explicit = join(process.env.AI_VIDEO_SKILLS_ROOT, 'canvas-video-pipeline', 'scripts', 'tacky-assets.mjs');
+    if (existsSync(explicit)) return explicit;
+    fail(`Tacky Templates helper was not found under AI_VIDEO_SKILLS_ROOT: ${process.env.AI_VIDEO_SKILLS_ROOT}`);
+  }
+  const skillRoots = [
+    process.env.CODEX_HOME ? join(process.env.CODEX_HOME, 'skills') : join(homedir(), '.codex', 'skills'),
+    process.env.CLAUDE_HOME ? join(process.env.CLAUDE_HOME, 'skills') : join(homedir(), '.claude', 'skills'),
+  ];
+  const helpers = skillRoots
+    .map(root => join(root, 'canvas-video-pipeline', 'scripts', 'tacky-assets.mjs'))
+    .filter(existsSync)
+    .sort((a, b) => statSync(b).mtimeMs - statSync(a).mtimeMs);
+  if (helpers[0]) return helpers[0];
+  fail('Tacky Templates helper was not found. Reinstall the canvas-video-pipeline Skill for Codex or Claude Code.');
+}
+
+function runTacky(tokens) {
+  if (tokens.length === 0) fail('tacky requires list, gallery, copy-template, or render-template');
+  const result = spawnSync(process.execPath, [findTackyHelper(), ...tokens], { stdio: 'inherit' });
+  if (result.error) fail(result.error.message);
+  process.exitCode = result.status ?? 1;
+}
+
 const [command, ...rest] = process.argv.slice(2);
 const { positionals, flags } = parse(rest);
 
@@ -113,6 +140,8 @@ if (command === 'doctor') {
     shutter: flags.shutter === undefined ? 0.5 : Number(flags.shutter),
   });
   console.log(JSON.stringify(result, null, 2));
+} else if (command === 'tacky') {
+  runTacky(rest);
 } else {
   usage();
   fail(`unknown command: ${command}`);

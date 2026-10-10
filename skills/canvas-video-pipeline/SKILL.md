@@ -1,6 +1,6 @@
 ---
 name: canvas-video-pipeline
-description: Render a standalone coded motion asset (MP4, ProRes, or transparent MOV) with the canvas-video CLI from a Canvas 2D or Three.js scene, then hand it to HyperFrames and video-delivery-qc. Use when a request names canvas-video, Canvas 2D, or Three.js, or needs a pre-rendered coded overlay or B-roll clip to combine with Dreamina or other footage. Do not use for animation that should live inside a HyperFrames composition; route that to hyperframes.
+description: Render a standalone coded motion asset (MP4, ProRes, or transparent MOV) with the canvas-video CLI from a Canvas 2D or Three.js scene, or adapt a bundled Tacky motion template, then hand it to HyperFrames and video-delivery-qc. Use when a request names canvas-video, Canvas 2D, Three.js, Tacky Templates, or needs a pre-rendered coded overlay or B-roll clip. Do not use for animation that should live inside a HyperFrames composition; route that to hyperframes.
 ---
 
 # Canvas Video Pipeline
@@ -9,12 +9,12 @@ Use `canvas-video` as an isolated deterministic renderer. Do not merge its depen
 
 ## Route the work
 
-- Use `footage-sifter` before editing when a raw footage dump needs visual review, take grouping, selects, or editor handoff files.
-- Use `beat-cut-editor` after selects are approved when the job needs music-beat cuts, dialogue tightening, long-form highlight extraction, an EDL, or editable subtitle timing. It is an optional local import and is not bundled here.
-- Use Dreamina Canvas for requested generative image, video, voice, or music assets. Follow `$dreamina-canvas-cli`, including live capability discovery and credit confirmation.
+- Use `footage-sifter` as the primary workflow before editing whenever raw footage needs visual review, take grouping, selects, or editor handoff files.
+- Use the media source the user selects for generated, recorded, or stock assets. Do not require, install, authenticate, or spend credits with a generative provider unless the user explicitly requests that provider.
 - Use `canvas-video` for visuals whose value comes from code: Canvas drawing, Three.js, data animation, HUDs, particles, branded titles, or transparent overlays.
+- Use the bundled Tacky Templates when the request needs a complete designed title-card system. Read [references/tacky-templates.md](references/tacky-templates.md), show the gallery or 2–4 suitable options, and adapt the selected asset rather than rebuilding its visual system from scratch.
 - Use HyperFrames for the final timeline, captions, scene assembly, audio mix, transitions, and delivery render. Start with `$hyperframes` and load its domain skills as required.
-- Use `caption-doctor` to clean an authored SRT while preserving timing, then `subtitle-translator` for additional languages. These optional Skills may be imported from a locally owned package and are not bundled here.
+- For every subtitle workflow, run `caption-doctor` first to correct the master text and timing. Use `subtitle-translator` as the primary workflow for additional languages only after the master is approved. Then hand the clean SRT tracks to HyperFrames for visual styling and burn-in; HyperFrames must not replace the text-cleaning step.
 - Use `$video-delivery-qc` on the final exported file. Measured QC is authoritative; do not assume the mux target guarantees compliance.
 - For social delivery, ask the finishing timeline for `-16 LUFS` unless the delivery brief says otherwise, then accept or reject by measured QC rather than by the requested encoder value.
 
@@ -35,8 +35,10 @@ canvas-video init ./motion-asset --aspect portrait
 canvas-video init ./motion-asset --aspect landscape
 ```
 
-Read [references/composition-contract.md](references/composition-contract.md) before authoring or modifying a scene. Read [references/pipeline.md](references/pipeline.md) when Dreamina or HyperFrames participates in the deliverable.
+Read [references/composition-contract.md](references/composition-contract.md) before authoring or modifying a scene. Read [references/pipeline.md](references/pipeline.md) when external media or HyperFrames participates in the deliverable.
 When the request calls for an animated title card, B-roll graphic, data card, documentary annotation, glass panel, CRT/VHS treatment, neon lettering, terminal UI, comic impact, editorial rule, split-flap board, kinetic typography, shape morph, particle reveal, infinite zoom, parallax collage, timeline path, exploded product view, audio-reactive accent, Bento layout, or match-cut transition, also read [references/broll-effects.md](references/broll-effects.md). Copy `assets/broll-effects.js` into the Canvas project and build from those deterministic helpers; do not copy private third-party templates or creator-owned prompts into the project or repository.
+
+For Tacky Templates or the 31-effect gallery, read [references/tacky-templates.md](references/tacky-templates.md). These assets are bundled with this Skill; copy only the selected asset into the production project. Keep the Tacky template engine, Canvas runtime, and HyperFrames in separate dependency directories.
 
 ## Review loop
 
@@ -57,11 +59,15 @@ canvas-video render ./motion-asset --still 0
 canvas-video render ./motion-asset --still 2.5
 canvas-video render ./motion-asset --output ./motion-asset/out/final.mp4
 canvas-video render ./motion-asset --alpha --output ./motion-asset/out/overlay.mov
+
+canvas-video tacky list
+canvas-video tacky copy-template vox ./title-card.html
+canvas-video tacky render-template ./title-card.html ./title-card.mp4 --dur=8 --ffmpeg=ffmpeg
 ```
 
 ## Invariants
 
-- A scene must expose `window.seek(t)`, `window.ready`, and `window.CANVAS`.
+- A Canvas runtime scene must expose `window.seek(t)`, `window.ready`, and `window.CANVAS`. Tacky HTML templates use their isolated virtual-time renderer instead.
 - The same `t` and inputs must produce the same frame. No wall-clock time, unseeded randomness, or state that depends on the previous seek.
 - Preview-only `requestAnimationFrame` is allowed only when the `render` query parameter is absent (any value, including `render=0`, means render mode).
 - `window.ready` resolves only after every font and image has loaded. Bundle fonts with the project; never rely on a generic family such as `sans-serif`.

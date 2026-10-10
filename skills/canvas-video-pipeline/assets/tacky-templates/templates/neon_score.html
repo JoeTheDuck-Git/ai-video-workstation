@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>Neon 霓虹・計分板 — Tacky Templates</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@500;700;900&family=Mr+Dafoe&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#07090f;
+    --coreB:#f2fbff; --glowB:#3ec6ff;
+    --coreK:#fff2fb; --glowK:#ff4fc8;
+    --dead:#27303f; --dim:#5a6b80}
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:100%;height:100%;background:#000;overflow:hidden}
+  #fit{position:absolute}
+  #stage{position:relative;overflow:hidden;background:var(--bg)}
+  .landscape #stage{width:1920px;height:1080px}
+  .portrait  #stage{width:1080px;height:1920px}
+  #camera{position:absolute;inset:0}
+
+  #wall{position:absolute;inset:0;
+    background:radial-gradient(ellipse 70% 55% at 50% 46%,#10141f 0%,#0a0d16 55%,#05060a 100%)}
+  #pool{position:absolute;inset:0;opacity:.35;transition:opacity 1.4s ease;
+    background:radial-gradient(ellipse 46% 40% at 50% 46%,rgba(62,198,255,.13),transparent 70%)}
+  #pool.key{opacity:.8;
+    background:radial-gradient(ellipse 46% 40% at 50% 48%,rgba(255,79,200,.15),transparent 70%),
+               radial-gradient(ellipse 52% 46% at 50% 42%,rgba(62,198,255,.09),transparent 72%)}
+  #cable{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+  #cable path{fill:none;stroke:#161b25;stroke-width:7;stroke-linecap:round}
+
+  @keyframes ignite{0%{filter:brightness(.15)}4%{filter:brightness(1.25)}
+    9%{filter:brightness(.2)}14%{filter:brightness(1.1)}17%{filter:brightness(.25)}
+    23%{filter:brightness(1.2)}56%{filter:brightness(1)}62%{filter:brightness(.85)}
+    66%{filter:brightness(1.05)}100%{filter:brightness(1)}}
+  @keyframes keyIgnite{0%{filter:brightness(.12)}5%{filter:brightness(.9)}
+    8%{filter:brightness(.15)}13%{filter:brightness(.7)}15%{filter:brightness(.12)}
+    22%{filter:brightness(.15)}27%{filter:brightness(1.05)}31%{filter:brightness(.2)}
+    36%{filter:brightness(1.45)}52%{filter:brightness(1.12)}100%{filter:brightness(1)}}
+
+  /* ---------- kicker ---------- */
+  #kicker{position:absolute;left:50%;transform:translateX(-50%);white-space:nowrap;
+    font-family:'Noto Sans TC',sans-serif;font-weight:700;font-size:30px;
+    letter-spacing:.5em;text-indent:.5em;color:var(--coreB);opacity:0;
+    text-shadow:0 0 6px rgba(62,198,255,.9),0 0 18px rgba(62,198,255,.55),0 0 42px rgba(62,198,255,.3)}
+  .landscape #kicker{top:186px}.portrait #kicker{top:430px}
+  #kicker.on{opacity:1;animation:ignite .7s steps(1,end) forwards}
+
+  /* ---------- scoreboard ---------- */
+  #board{position:absolute;display:flex;justify-content:center}
+  .landscape #board{left:0;right:0;top:50%;transform:translateY(-52%);
+    flex-direction:row;align-items:stretch;gap:150px}
+  .portrait  #board{left:0;right:0;top:50%;transform:translateY(-54%);
+    flex-direction:column;align-items:center;gap:110px}
+  .stat{display:flex;flex-direction:column;align-items:center;gap:26px;
+    color:var(--dead)}
+  .stat .num{font-family:'Noto Sans TC',sans-serif;font-weight:900;white-space:nowrap;
+    font-variant-numeric:tabular-nums;line-height:1}
+  .landscape .stat .num{font-size:170px}
+  .portrait  .stat .num{font-size:150px}
+  .stat .num .unit{font-size:.42em;font-weight:700;margin-left:.08em}
+  .stat .lab{font-family:'Noto Sans TC',sans-serif;font-weight:700;font-size:36px;
+    letter-spacing:.22em;text-indent:.22em;white-space:nowrap}
+  .stat.lit{color:var(--coreB);
+    text-shadow:0 0 5px rgba(62,198,255,.9),0 0 16px rgba(62,198,255,.65),
+      0 0 42px rgba(62,198,255,.42),0 0 95px rgba(62,198,255,.25)}
+  .stat.on{animation:ignite .85s steps(1,end) forwards}
+  .stat.hl.lit{color:var(--coreK);
+    text-shadow:0 0 6px rgba(255,79,200,.95),0 0 18px rgba(255,79,200,.75),
+      0 0 46px rgba(255,79,200,.5),0 0 110px rgba(255,79,200,.32)}
+  .stat.hl.on{animation:keyIgnite 1.5s steps(1,end) forwards}
+  .landscape .stat.hl .num{font-size:200px}
+  .portrait  .stat.hl .num{font-size:170px}
+  .stat.hl .tag{font-family:'Mr Dafoe',cursive;font-size:44px;color:var(--coreK);
+    transform:rotate(-5deg);opacity:0;white-space:nowrap;
+    text-shadow:0 0 6px rgba(255,79,200,.9),0 0 20px rgba(255,79,200,.6)}
+  .stat.hl .tag.on{opacity:1;animation:ignite .7s steps(1,end) forwards}
+
+  /* ---------- source + corners ---------- */
+  #source{position:absolute;left:50%;transform:translateX(-50%);
+    font-family:'Noto Sans TC',sans-serif;font-weight:500;font-size:24px;
+    color:var(--dim);letter-spacing:.14em;opacity:0;transition:opacity 1.2s ease;white-space:nowrap}
+  .landscape #source{bottom:96px}.portrait #source{bottom:330px}
+  #source.on{opacity:.8}
+  .meta{position:absolute;font-family:'Noto Sans TC',sans-serif;font-weight:700;
+    font-size:18px;letter-spacing:.26em;color:var(--dim);opacity:0;transition:opacity 1.4s}
+  .meta.on{opacity:.6}
+  .landscape #metaTL{top:96px;left:104px}.landscape #metaBR{bottom:92px;right:104px}
+  .portrait #metaTL{top:104px;left:76px}.portrait #metaBR{bottom:100px;right:76px}
+
+  #cd{position:absolute;inset:0;z-index:20;display:none;align-items:center;justify-content:center;background:var(--bg)}
+  #cd span{font-family:'Noto Sans TC',sans-serif;font-weight:900;font-size:300px;color:var(--coreB);
+    text-shadow:0 0 18px rgba(62,198,255,.7)}
+  #cues{position:absolute;right:24px;top:24px;z-index:21;display:none;background:rgba(7,9,15,.94);
+    color:#f2fbff;font-family:monospace;font-size:15px;line-height:1.75;
+    padding:14px 18px;max-height:70%;overflow:auto;border:1px solid #1c2430}
+</style>
+</head>
+<body>
+<div id="fit"><div id="stage">
+  <div id="camera">
+    <div id="wall"></div><div id="pool"></div>
+    <svg id="cable" viewBox="0 0 1920 1080" preserveAspectRatio="none">
+      <path d="M -20 130 Q 480 250 960 190 T 1940 150"/>
+    </svg>
+    <div id="kicker"></div>
+    <div id="board"></div>
+    <div id="source"></div>
+    <div class="meta" id="metaTL"></div><div class="meta" id="metaBR"></div>
+  </div>
+</div></div>
+
+<script>
+/* ============================================================
+   CONFIG — Neon 霓虹・計分板 (glowing scoreboard)
+   For numbers/stats — served as glowing tube digits that COUNT
+   UP while flickering on. 2–3 stats landscape, 2–3 portrait.
+   stats: {v:38, unit:"%", prefix:"+", dec:0, lab:"觀看時長",
+           hl:true → hot pink, ignites last, bigger, script tag}
+   ONE hl stat. source line is MANDATORY — never invent data;
+   ask the creator for real numbers or mark 示意.
+   ============================================================ */
+const CONFIG = {
+  orientation: "landscape",
+  kicker: "本月成績單",
+  stats: [
+    { v:38,  unit:"%", prefix:"+", lab:"觀看時長" },
+    { v:52,  unit:"%",             lab:"完播率" },
+    { v:3.2, unit:"萬", dec:1,     lab:"新訂閱", hl:true }
+  ],
+  tag: "new record!",
+  source: "資料來源：頻道後台 2026.06（示意數據）",
+  metaTL: "NO. 08 · 深夜場",
+  metaBR: "TAIPEI · 霓虹",
+  timing: { start: 1.1, stagger: 0.55, count: 1.1 },
+  accentKey: "", accentBase: ""
+};
+/* ============================================================ */
+const $=q=>document.querySelector(q);
+const stagePx=()=>CONFIG.orientation==="portrait"?[1080,1920]:[1920,1080];
+document.body.parentElement.className=CONFIG.orientation;
+const R=document.documentElement.style;
+if(CONFIG.accentKey)R.setProperty("--glowK",CONFIG.accentKey);
+if(CONFIG.accentBase)R.setProperty("--glowB",CONFIG.accentBase);
+function fit(){const[W,H]=stagePx();const s=Math.min(innerWidth/W,innerHeight/H);
+  $("#fit").style.cssText=`position:absolute;left:50%;top:50%;width:${W}px;height:${H}px;`+
+  `transform:translate(-50%,-50%) scale(${s});`;}
+addEventListener("resize",fit);fit();
+
+const CUES=[];const cue=(t,l)=>CUES.push([t,l]);
+(function(){const st=document.getElementById("stage");
+ const cd=document.createElement("div");cd.id="cd";cd.innerHTML="<span></span>";st.appendChild(cd);
+ const cp=document.createElement("div");cp.id="cues";st.appendChild(cp);
+ addEventListener("keydown",e=>{
+  if(e.key==="r"||e.key==="R"){let n=3;cd.style.display="flex";
+    const s=cd.querySelector("span");s.textContent=n;
+    const iv=setInterval(()=>{n--;if(n<1){clearInterval(iv);location.reload();}else s.textContent=n;},700);}
+  if(e.key==="o"||e.key==="O"){powerCut();}
+  if(e.key==="s"||e.key==="S"){
+    cp.innerHTML="<b>SFX CUE SHEET（秒）</b><br>"+CUES.slice().sort((a,b)=>a[0]-b[0])
+      .map(c=>c[0].toFixed(2)+"s — "+c[1]).join("<br>");
+    cp.style.display=cp.style.display==="block"?"none":"block";}});})();
+
+function powerCut(){
+  const glow=[...document.querySelectorAll(".stat.lit,#kicker,.tag")];
+  glow.forEach((el,i)=>setTimeout(()=>{
+    el.classList.remove("lit");
+    el.style.animation="none";el.style.color="var(--dead)";el.style.textShadow="none";
+    el.style.opacity=el.classList.contains("tag")?0:1;
+  },i*80+Math.random()*50));
+  setTimeout(()=>{$("#pool").style.opacity=0;$("#source").style.opacity=0;
+    document.querySelectorAll(".meta").forEach(m=>m.style.opacity=0);},glow.length*80);
+}
+
+/* build */
+const board=$("#board");const statEls=[];
+CONFIG.stats.forEach(st=>{
+  const d=document.createElement("div");d.className="stat"+(st.hl?" hl":"");
+  const num=document.createElement("div");num.className="num";
+  const val=document.createElement("span");val.className="v";
+  val.textContent=(st.prefix||"")+(0).toFixed(st.dec||0);
+  const unit=document.createElement("span");unit.className="unit";unit.textContent=st.unit||"";
+  num.appendChild(val);num.appendChild(unit);
+  const lab=document.createElement("div");lab.className="lab";lab.textContent=st.lab;
+  d.appendChild(num);d.appendChild(lab);
+  if(st.hl&&CONFIG.tag){const g=document.createElement("div");g.className="tag";
+    g.textContent=CONFIG.tag;d.appendChild(g);}
+  d._flags=st;d._val=val;board.appendChild(d);statEls.push(d);});
+$("#kicker").textContent=CONFIG.kicker;
+$("#source").textContent=CONFIG.source;
+$("#metaTL").textContent=CONFIG.metaTL;$("#metaBR").textContent=CONFIG.metaBR;
+
+function countUp(el,st,dur){const t0=performance.now();
+  const dec=st.dec||0,target=st.v,pre=st.prefix||"";
+  (function tick(now){const p=Math.min((now-t0)/(dur*1000),1);
+    const eased=1-Math.pow(1-p,2.4);
+    el.textContent=pre+(target*eased).toFixed(dec);
+    if(p<1)requestAnimationFrame(tick);})(performance.now());}
+
+document.fonts.ready.then(()=>{fit();
+  const T=CONFIG.timing;let t=T.start;
+  cue(t-.5,"低頻電流 hum 進場（整段墊底）");
+  cue(t-.3,"嗡＋嘶 buzz-flicker：標題亮起");
+  setTimeout(()=>$("#kicker").classList.add("on"),(t-.3)*1000);
+  document.querySelectorAll(".meta").forEach(m=>setTimeout(()=>m.classList.add("on"),(t-.1)*1000));
+  let hlEl=null;
+  statEls.forEach(d=>{
+    if(d._flags.hl){hlEl=d;return;}              // record lights last
+    cue(t,"buzz-flicker＋數字滾動：燈管數字亮起");
+    setTimeout(()=>{d.classList.add("on","lit");
+      countUp(d._val,d._flags,T.count);},t*1000);
+    t+=T.stagger;});
+  if(hlEl){const tK=t+.55;
+    cue(tK,"接觸不良 stutter → 砰！低音 bloom：主數字粉紅全亮＋滾動");
+    setTimeout(()=>{hlEl.classList.add("on","lit");
+      countUp(hlEl._val,hlEl._flags,T.count+.3);
+      $("#pool").classList.add("key");},tK*1000);
+    cue(tK+1.6,"嗡：草寫小牌亮起");
+    setTimeout(()=>{const g=hlEl.querySelector(".tag");
+      if(g)g.classList.add("on");},(tK+1.6)*1000);
+    t=tK+2;}
+  setTimeout(()=>$("#source").classList.add("on"),(t+.3)*1000);});
+</script>
+</body>
+</html>

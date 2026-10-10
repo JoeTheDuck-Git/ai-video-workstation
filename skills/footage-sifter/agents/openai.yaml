@@ -1,0 +1,4 @@
+interface:
+  display_name: "Footage Sifter 素材整理師"
+  short_description: "篩選、分組、命名素材並建立可交接的 selects"
+  default_prompt: "Use $footage-sifter to organize and review this footage without changing originals."

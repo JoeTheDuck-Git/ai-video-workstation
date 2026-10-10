@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>Pop Art 普普・分格卡 — Tacky Templates</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Noto+Sans+TC:wght@700;900&display=swap" rel="stylesheet">
+<style>
+  :root{--cream:#fdf3dc;--red:#e2262b;--yellow:#ffd400;--blue:#1c6fd6;
+        --black:#17120e;--cyan:#37b6e2;--white:#fffdf6}
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:100%;height:100%;background:#111;overflow:hidden}
+  #fit{position:absolute}
+  #stage{position:relative;overflow:hidden;background:var(--cream);
+    border:14px solid var(--black)}
+  .landscape #stage{width:1920px;height:1080px}
+  .portrait  #stage{width:1080px;height:1920px}
+  #camera{position:absolute;inset:0;will-change:transform}
+  #camera.shake{animation:shake .3s linear}
+  @keyframes shake{0%{transform:translate(0,0)}20%{transform:translate(-13px,8px) rotate(-.5deg)}
+    40%{transform:translate(10px,-6px) rotate(.4deg)}60%{transform:translate(-6px,4px)}
+    80%{transform:translate(4px,-3px)}100%{transform:translate(0,0)}}
+  #dotsA{position:absolute;inset:0;background-image:
+    radial-gradient(var(--cyan) 4px, transparent 4.5px);background-size:36px 36px;
+    opacity:.22;animation:dotDrift 16s linear infinite}
+  @keyframes dotDrift{to{background-position:36px 36px}}
+
+  #kicker{position:absolute;z-index:5;left:50%;transform:translateX(-50%) rotate(-1.5deg);
+    background:var(--blue);color:#fff;font-family:'Noto Sans TC';font-weight:900;
+    padding:10px 34px;font-size:34px;letter-spacing:.12em;opacity:0;
+    border:6px solid var(--black);box-shadow:7px 7px 0 rgba(23,18,14,.85)}
+  .landscape #kicker{top:64px}.portrait #kicker{top:110px}
+  #kicker.on{animation:pop .4s cubic-bezier(.2,1.9,.35,1) forwards}
+  @keyframes pop{0%{opacity:0;transform:translateX(-50%) scale(.2) rotate(-1.5deg)}
+    62%{opacity:1;transform:translateX(-50%) scale(1.12) rotate(-1.5deg)}
+    100%{opacity:1;transform:translateX(-50%) scale(1) rotate(-1.5deg)}}
+
+  #strip{position:absolute;display:flex;gap:34px}
+  .landscape #strip{left:110px;right:110px;top:220px;bottom:170px;flex-direction:row}
+  .portrait  #strip{left:70px;right:70px;top:270px;bottom:200px;flex-direction:column}
+  .panel{flex:1;position:relative;background:var(--white);border:9px solid var(--black);
+    box-shadow:10px 10px 0 rgba(23,18,14,.85);opacity:0;overflow:hidden}
+  .panel.on{animation:panelIn .5s cubic-bezier(.2,1.7,.35,1) forwards}
+  @keyframes panelIn{0%{opacity:0;transform:scale(.55) rotate(var(--pr,0deg))}
+    58%{opacity:1;transform:scale(1.07,.94) rotate(0)}
+    78%{transform:scale(.97,1.04)}
+    100%{opacity:1;transform:scale(1,1) rotate(0)}}
+  .panel:nth-child(2n) .pdots{background-image:
+    radial-gradient(var(--yellow) 5px, transparent 5.5px);background-size:30px 30px;opacity:.5}
+  .panel:nth-child(2n+1) .pdots{background-image:
+    radial-gradient(var(--cyan) 4px, transparent 4.5px);background-size:32px 32px;opacity:.28}
+  .pdots{position:absolute;inset:0}
+  .pcap{position:absolute;top:-9px;left:-9px;background:var(--yellow);
+    border:7px solid var(--black);padding:8px 24px;font-family:'Noto Sans TC';
+    font-weight:900;font-size:30px;color:var(--black);opacity:0;z-index:2}
+  .pcap.on{animation:capIn .35s cubic-bezier(.2,1.8,.4,1) forwards}
+  @keyframes capIn{0%{opacity:0;transform:scale(.3) rotate(-6deg)}
+    100%{opacity:1;transform:scale(1) rotate(0)}}
+  .ptxt{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    text-align:center;font-family:'Noto Sans TC';font-weight:900;color:var(--black);
+    padding:40px;opacity:0;line-height:1.35;
+    text-shadow:4px 4px 0 var(--red), -2.5px -2.5px 0 var(--cyan)}
+  .landscape .ptxt{font-size:58px}.portrait .ptxt{font-size:56px}
+  .ptxt.on{animation:txtIn .38s cubic-bezier(.2,1.8,.4,1) forwards}
+  @keyframes txtIn{0%{opacity:0;transform:scale(.5)}
+    70%{opacity:1;transform:scale(1.08)}100%{opacity:1;transform:scale(1)}}
+  .pburst{position:absolute;z-index:3;opacity:0;transform:scale(.1) rotate(-15deg)}
+  .pburst.on{animation:burstIn .45s cubic-bezier(.2,1.8,.4,1) forwards}
+  @keyframes burstIn{0%{opacity:0;transform:scale(.1) rotate(-15deg)}
+    58%{opacity:1;transform:scale(1.18,.9) rotate(4deg)}
+    78%{transform:scale(.94,1.08) rotate(-6deg)}
+    100%{opacity:1;transform:scale(1,1) rotate(-4deg)}}
+  .pburst svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+  .pburst .bt{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-family:'Noto Sans TC';font-weight:900;color:#fff}
+
+  #stripes{position:absolute;left:0;right:0;height:26px;bottom:0;background:
+    repeating-linear-gradient(-45deg, var(--black) 0 26px, var(--yellow) 26px 52px)}
+  #flash{position:absolute;inset:0;z-index:9;opacity:0;pointer-events:none}
+  #flash.go{animation:flashGo .14s steps(2,end)}
+  @keyframes flashGo{0%{opacity:.9}100%{opacity:0}}
+  #cd{position:absolute;inset:0;z-index:20;display:none;align-items:center;justify-content:center;background:var(--cream)}
+  #cd span{font-family:'Archivo Black';font-size:340px;color:var(--black);
+    text-shadow:10px 10px 0 var(--red)}
+  #cues{position:absolute;right:24px;top:24px;z-index:21;display:none;background:rgba(23,18,14,.94);
+    color:#fdf3dc;font-family:monospace;font-size:15px;line-height:1.75;
+    padding:14px 18px;max-height:70%;overflow:auto}
+  /* O = outro: comic pop-out */
+  .outro #camera{animation:outPop .5s cubic-bezier(.55,-.25,.85,.5) forwards}
+  @keyframes outPop{25%{transform:scale(1.05) rotate(1deg)}100%{transform:scale(0) rotate(-9deg);opacity:0}}
+</style>
+</head>
+<body>
+<div id="fit"><div id="stage">
+  <div id="camera">
+    <div id="dotsA"></div>
+    <div id="kicker"></div>
+    <div id="strip"></div>
+    <div id="stripes"></div>
+  </div>
+  <div id="flash"></div>
+</div></div>
+
+<script>
+/* ============================================================
+   CONFIG — Pop Art 普普・分格卡 (comic strip).
+   2–3 panels: setup → beat → PUNCHLINE. Panels pop in sequence;
+   the LAST panel should carry the reversal — give it `burst`
+   (2-4 chars) for the starburst payoff.
+   ============================================================ */
+const CONFIG = {
+  orientation: "landscape",
+  kicker: "新手創作者的一個月",
+  panels: [
+    {caption:"第 1 天",  text:"看了 3 支教學\n信心滿滿"},
+    {caption:"第 14 天", text:"還在研究\n哪支麥克風最好"},
+    {caption:"第 30 天", text:"別人已經發了", burst:"30 支"}
+  ],
+  pow: "啊！",                      // reserved for future corner burst; "" = off
+  timing: { start: 0.9, stagger: 1.05 },
+  flashColor: "yellow"
+};
+/* ============================================================ */
+const $=q=>document.querySelector(q);
+const stagePx=()=>CONFIG.orientation==="portrait"?[1080,1920]:[1920,1080];
+document.body.parentElement.className=CONFIG.orientation;
+function fit(){const[W,H]=stagePx();const s=Math.min(innerWidth/W,innerHeight/H);
+  $("#fit").style.cssText=`position:absolute;left:50%;top:50%;width:${W}px;height:${H}px;`+
+  `transform:translate(-50%,-50%) scale(${s});`;}
+addEventListener("resize",fit);fit();
+
+const CUES=[];const cue=(t,l)=>CUES.push([t,l]);
+(function(){const st=document.getElementById("stage");
+ const cd=document.createElement("div");cd.id="cd";cd.innerHTML="<span></span>";st.appendChild(cd);
+ const cp=document.createElement("div");cp.id="cues";st.appendChild(cp);
+ addEventListener("keydown",e=>{
+  if(e.key==="r"||e.key==="R"){let n=3;cd.style.display="flex";
+    const s=cd.querySelector("span");s.textContent=n;
+    const iv=setInterval(()=>{n--;if(n<1){clearInterval(iv);location.reload();}else s.textContent=n;},700);}
+  if(e.key==="o"||e.key==="O"){document.getElementById("stage").classList.add("outro");}
+  if(e.key==="s"||e.key==="S"){
+    cp.innerHTML="<b>SFX CUE SHEET（秒）</b><br>"+CUES.slice().sort((a,b)=>a[0]-b[0])
+      .map(c=>c[0].toFixed(2)+"s — "+c[1]).join("<br>");
+    cp.style.display=cp.style.display==="block"?"none":"block";}});})();
+
+function burstPath(spikes,inner,outer){const pts=[];
+  for(let i=0;i<spikes*2;i++){const a=i/(spikes*2)*Math.PI*2-Math.PI/2;
+    const r=(i%2===0?outer:inner)*(0.92+Math.random()*.16);
+    pts.push((50+Math.cos(a)*r).toFixed(2)+","+(50+Math.sin(a)*r).toFixed(2));}
+  return "M"+pts.join(" L")+" Z";}
+const flashColors={yellow:"var(--yellow)",red:"var(--red)",white:"#fff"};
+function flash(){const f=$("#flash");f.style.background=flashColors[CONFIG.flashColor]||"#fff";
+  f.classList.remove("go");void f.offsetWidth;f.classList.add("go");}
+function shake(){const c=$("#camera");c.classList.remove("shake");void c.offsetWidth;
+  c.classList.add("shake");}
+
+/* build panels */
+$("#kicker").textContent=CONFIG.kicker;
+const strip=$("#strip");
+CONFIG.panels.forEach((p,i)=>{
+  const d=document.createElement("div");d.className="panel";
+  d.style.setProperty("--pr",(Math.random()*4-2).toFixed(1)+"deg");
+  d.innerHTML=`<div class="pdots"></div>
+    <div class="pcap">${p.caption}</div>
+    <div class="ptxt">${p.text.replace(/\n/g,"<br>")}</div>`;
+  if(p.burst){
+    const b=document.createElement("div");b.className="pburst";
+    b.innerHTML=`<svg viewBox="0 0 100 100" preserveAspectRatio="none"></svg>
+      <div class="bt">${p.burst}</div>`;
+    d.appendChild(b);}
+  strip.appendChild(d);});
+/* size bursts after layout */
+requestAnimationFrame(()=>{document.querySelectorAll(".pburst").forEach(b=>{
+  const panel=b.parentElement,pw=panel.clientWidth,ph=panel.clientHeight;
+  const s=Math.min(pw,ph)*.62;
+  b.style.cssText+=`width:${s}px;height:${s}px;right:${-s*.16}px;bottom:${-s*.14}px`;
+  const svg=b.querySelector("svg");
+  const path=document.createElementNS("http://www.w3.org/2000/svg","path");
+  path.setAttribute("d",burstPath(13,32,49));
+  path.setAttribute("fill","var(--red)");path.setAttribute("stroke","var(--black)");
+  path.setAttribute("stroke-width",3);path.setAttribute("vector-effect","non-scaling-stroke");
+  path.setAttribute("stroke-linejoin","round");svg.appendChild(path);
+  const bt=b.querySelector(".bt");bt.style.fontSize=(s*.24)+"px";
+  const B="var(--black)";
+  bt.style.textShadow=`2.5px 0 0 ${B},-2.5px 0 0 ${B},0 2.5px 0 ${B},0 -2.5px 0 ${B},`+
+    `2px 2px 0 ${B},-2px -2px 0 ${B},2px -2px 0 ${B},-2px 2px 0 ${B},5px 5px 0 ${B}`;});});
+
+/* timeline */
+document.fonts.ready.then(()=>{fit();
+  const T=CONFIG.timing;
+  cue(T.start-.5,"彈簧 boing：kicker");
+  setTimeout(()=>$("#kicker").classList.add("on"),(T.start-.5)*1000);
+  [...strip.children].forEach((panel,i)=>{
+    const t=T.start+i*T.stagger;const last=i===strip.children.length-1;
+    cue(t,"砰 thud：第 "+(i+1)+" 格拍上"+(last?"（重拍）":""));
+    cue(t+.22,"啵 pop：caption");
+    cue(t+.4,"啵 pop：台詞");
+    setTimeout(()=>{panel.classList.add("on");shake();
+      setTimeout(()=>panel.querySelector(".pcap").classList.add("on"),220);
+      setTimeout(()=>panel.querySelector(".ptxt").classList.add("on"),400);
+      const b=panel.querySelector(".pburst");
+      if(b){cue(t+.75,"POW 重擊：爆炸框 + 色閃 + 震動");
+        setTimeout(()=>{b.classList.add("on");flash();shake();},750);}
+    },t*1000);});});
+</script>
+</body>
+</html>

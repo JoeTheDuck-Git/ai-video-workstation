@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>Vox 紀錄片・解釋板 — Tacky Templates</title>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Caveat:wght@700&family=LXGW+WenKai+TC:wght@700&family=Noto+Sans+TC:wght@500;700;900&family=Noto+Serif+TC:wght@900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{--paper:#ece5d3;--paper2:#dcd2b8;--ink:#191510;--accent:#c94f34;
+        --hilite:#f5c842;--mono:#6b6252;--news:#f6f1e2;--chip:#f2ecdb}
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:100%;height:100%;background:#111;overflow:hidden}
+  #fit{position:absolute}
+  #stage{position:relative;overflow:hidden;background:var(--paper)}
+  .landscape #stage{width:1920px;height:1080px}
+  .portrait  #stage{width:1080px;height:1920px}
+  #camera{position:absolute;inset:0;will-change:transform}
+  .plane{position:absolute;inset:-70px;will-change:transform}
+  #plane-fg{inset:0 !important}
+  #plane-bg{z-index:1}#plane-mid{z-index:3}#plane-fg{z-index:6;pointer-events:none}
+  #paperGrad{position:absolute;inset:0;background:
+    radial-gradient(120% 95% at 40% 30%, var(--paper) 0%, var(--paper2) 88%)}
+  #corkTint{position:absolute;inset:0;opacity:.5;background:
+    radial-gradient(300px 200px at 15% 20%, rgba(140,115,70,.12), transparent 70%),
+    radial-gradient(340px 260px at 85% 75%, rgba(140,115,70,.14), transparent 70%),
+    radial-gradient(260px 200px at 70% 15%, rgba(140,115,70,.10), transparent 70%)}
+  #vignette{position:absolute;inset:0;z-index:7;pointer-events:none;background:
+    radial-gradient(115% 100% at 50% 46%, transparent 56%, rgba(40,30,12,.32) 100%)}
+
+  #kicker{position:absolute;left:50%;transform:translateX(-50%);z-index:5;opacity:0;
+    display:flex;align-items:center;gap:24px;transition:opacity .5s}
+  .landscape #kicker{top:134px}.portrait #kicker{top:214px}
+  #kicker.on{opacity:1}
+  #kicker .txt{font-family:'Anton';font-size:31px;letter-spacing:.32em;color:var(--accent)}
+  #kicker .rule{width:96px;height:3px;background:var(--accent)}
+
+  /* ---------- board items ---------- */
+  .node{position:absolute;opacity:0;z-index:4;
+    box-shadow:0 14px 40px rgba(30,20,5,.30), 0 3px 10px rgba(30,20,5,.2)}
+  .node.on{animation:drop .5s cubic-bezier(.2,1.25,.3,1) forwards}
+  @keyframes drop{
+    0%{opacity:0;transform:translateY(-60px) rotate(var(--rot)) scale(1.07)}
+    70%{opacity:1;transform:translateY(5px) rotate(var(--rot)) scale(.995)}
+    100%{opacity:1;transform:translateY(0) rotate(var(--rot)) scale(1)}}
+  /* center concept card */
+  .node.center{background:var(--ink);color:var(--paper);padding:30px 44px;z-index:5}
+  .node.center .clabel{font-family:'Noto Sans TC';font-weight:900;line-height:1.3}
+  .landscape .node.center .clabel{font-size:56px}
+  .portrait  .node.center .clabel{font-size:46px}
+  .node.center .csub{font-family:'Space Mono';font-size:20px;color:var(--hilite);
+    letter-spacing:.14em;margin-top:8px}
+  /* stat chip */
+  .node.stat{background:var(--chip);padding:22px 34px;border-top:6px solid var(--accent)}
+  .node.stat .v{font-family:'Space Mono';font-weight:700;color:var(--accent)}
+  .landscape .node.stat .v{font-size:64px}.portrait .node.stat .v{font-size:52px}
+  .node.stat .l{font-family:'Noto Sans TC';font-weight:700;font-size:28px;color:var(--ink)}
+  /* term card */
+  .node.term{background:var(--chip);padding:24px 36px}
+  .node.term .t{font-family:'Noto Sans TC';font-weight:900;color:var(--ink)}
+  .landscape .node.term .t{font-size:42px}.portrait .node.term .t{font-size:36px}
+  .node.term .t u{text-decoration:none;border-bottom:5px solid var(--accent)}
+  /* mini clipping */
+  .node.clip{background:var(--news);padding:20px 26px 16px}
+  .node.clip .mast{font-family:'Noto Serif TC';font-weight:900;font-size:22px;
+    border-bottom:2.5px double var(--ink);padding-bottom:5px;margin-bottom:8px;
+    display:flex;justify-content:space-between}
+  .node.clip .mast .d{font-family:'Space Mono';font-size:15px;color:var(--mono)}
+  .node.clip h3{font-family:'Noto Serif TC';font-weight:900;font-size:30px;
+    line-height:1.3;color:var(--ink)}
+  /* pins */
+  .pin{position:absolute;width:20px;height:20px;border-radius:50%;z-index:6;
+    background:radial-gradient(circle at 35% 30%, #e8846b, var(--accent) 65%);
+    box-shadow:0 3px 6px rgba(30,20,5,.4);opacity:0;transition:opacity .25s}
+  .pin.on{opacity:1}
+
+  #inkSvg{position:absolute;inset:0;width:100%;height:100%;z-index:4;pointer-events:none}
+  .string{fill:none;stroke:var(--accent);stroke-width:4.5;stroke-linecap:round;
+    filter:drop-shadow(0 2px 2px rgba(30,20,5,.25))}
+  .slabel{font-family:'Caveat','LXGW WenKai TC','Noto Sans TC',cursive;font-weight:700;
+    fill:var(--accent);opacity:0;transition:opacity .4s;
+    paint-order:stroke;stroke:var(--paper);stroke-width:16px;stroke-linejoin:round}
+  .slabel.on{opacity:1}
+  #tag{font-family:'Caveat','LXGW WenKai TC','Noto Sans TC',cursive;font-weight:700;
+    fill:var(--ink);opacity:0}
+  #tag.on{animation:tagIn .5s cubic-bezier(.2,1.5,.4,1) forwards}
+  @keyframes tagIn{from{opacity:0;transform:translateY(12px) rotate(-2deg)}
+    to{opacity:1;transform:translateY(0) rotate(-2deg)}}
+
+  .meta{position:absolute;font-family:'Space Mono';font-size:21px;color:var(--mono);
+    letter-spacing:.08em;opacity:0;transition:opacity .6s}
+  .meta.on{opacity:.85}
+  .landscape #metaBL{bottom:52px;left:64px}.landscape #metaBR{bottom:52px;right:64px}
+  .portrait #metaBL{bottom:60px;left:52px}.portrait #metaBR{bottom:60px;right:52px}
+  #flash{position:absolute;inset:0;background:#fff;z-index:9;opacity:0;pointer-events:none}
+  #flash.go{animation:flashGo .12s steps(2,end)}
+  @keyframes flashGo{0%{opacity:.92}100%{opacity:0}}
+  #grain{position:absolute;inset:0;z-index:8;pointer-events:none;opacity:.09;mix-blend-mode:multiply}
+  #inkSvg .string{filter:url(#rough)}
+  .node.center{transition:filter .7s ease}
+  .node.center.defocus{filter:blur(2.5px) brightness(.96)}   /* rack focus while evidence lands */
+  .node.clip .nimg{width:100%;display:block;margin:8px 0 10px;
+    filter:grayscale(.85) contrast(1.12) sepia(.14)}   /* printed newspaper photo */
+  #cd{position:absolute;inset:0;z-index:20;display:none;align-items:center;justify-content:center;background:var(--paper)}
+  #cd span{font-family:'Anton',sans-serif;font-size:340px;color:var(--ink)}
+  #cues{position:absolute;right:24px;top:24px;z-index:21;display:none;background:rgba(20,16,10,.92);
+    color:#f4efe3;font-family:'Space Mono',monospace;font-size:15px;line-height:1.75;
+    padding:14px 18px;max-height:70%;overflow:auto}
+  /* O = outro: push through and fade (filmic) */
+  .outro #camera{transition:transform 1.1s cubic-bezier(.5,0,.8,.4),opacity 1.1s;transform:scale(1.14);opacity:0}
+  .outro #grain,.outro #vignette{transition:opacity 1.1s;opacity:0}
+</style>
+</head>
+<body>
+<div id="fit"><div id="stage">
+  <div id="camera">
+    <div class="plane" id="plane-bg"><div id="paperGrad"></div><div id="corkTint"></div></div>
+    <div class="plane" id="plane-mid">
+      <div id="kicker"><div class="rule"></div><div class="txt"></div><div class="rule"></div></div>
+      <svg id="inkSvg"></svg>
+      <div id="board"></div>
+    </div>
+    <div class="plane" id="plane-fg">
+      <div class="meta" id="metaBL"></div><div class="meta" id="metaBR"></div>
+    </div>
+  </div>
+  <canvas id="grain"></canvas><div id="vignette"></div><div id="flash"></div>
+</div></div>
+
+<script>
+/* ============================================================
+   CONFIG — 解釋板 (evidence board): subjects fly in one by one,
+   red strings connect each to the CENTER concept, then the
+   camera pulls BACK to reveal the whole system.
+   node types: "stat" {v,l} | "term" {t (use <u> for underline)}
+             | "clip" {masthead,date,headline}
+   x/y/w in % of stage. links: node index -> center, with a
+   handwritten label on the string.
+   ============================================================ */
+const CONFIG = {
+  orientation: "landscape",
+  kicker: "把線索拼起來",
+  center: { label:"影片為什麼<br>沒人看完", sub:"THE REAL PROBLEM",
+            x:36, y:36, w:28 },   // use <br> to balance the line break yourself
+  nodes: [
+    {type:"stat", v:"63%", l:"前 3 秒就滑走", x:6,  y:12, w:19, rot:-3},
+    {type:"term", t:"開頭<u>沒有鉤子</u>",     x:72, y:11, w:21, rot:2.5},
+    {type:"clip", masthead:"創作者週刊", date:"2026.04",
+     headline:"觀眾的耐心只剩三秒", x:5, y:62, w:23, rot:-2},
+    {type:"term", t:"資訊密度<u>太低</u>",     x:71, y:66, w:22, rot:1.8}
+  ],
+  links: [
+    {from:0, label:"數據"}, {from:1, label:"直接原因"},
+    {from:2, label:"大家都知道"}, {from:3, label:"隱形殺手"}
+  ],
+  tag: "全部指向同一件事",
+  metaBL: "BOARD ／ 解釋板 01",
+  metaBR: "VOX ／ 紀錄片",
+  timing: { start: 0.8, stagger: 0.75 },
+  camera: { startZoom: 1.35, drift: 1 },   // starts pushed-in on center, pulls back
+  accent: ""
+};
+/* ============================================================ */
+const $=q=>document.querySelector(q);
+const stagePx=()=>CONFIG.orientation==="portrait"?[1080,1920]:[1920,1080];
+document.body.parentElement.className=CONFIG.orientation;
+if(CONFIG.accent) document.documentElement.style.setProperty("--accent",CONFIG.accent);
+function fit(){const[W,H]=stagePx();const s=Math.min(innerWidth/W,innerHeight/H);
+  $("#fit").style.cssText=`position:absolute;left:50%;top:50%;width:${W}px;height:${H}px;`+
+  `transform:translate(-50%,-50%) scale(${s});`;}
+addEventListener("resize",fit);fit();
+
+/* ---- rough-ink turbulence filter + record helpers (R = 3·2·1 restart, S = SFX cues) ---- */
+document.querySelector("#inkSvg").insertAdjacentHTML("afterbegin",
+ '<defs><filter id="rough" x="-30%" y="-30%" width="160%" height="160%">'+
+ '<feTurbulence type="fractalNoise" baseFrequency="0.032" numOctaves="2" seed="8"/>'+
+ '<feDisplacementMap in="SourceGraphic" scale="7" xChannelSelector="R" yChannelSelector="G"/></filter></defs>');
+const CUES=[];const cue=(t,l)=>CUES.push([t,l]);
+(function(){const st=document.getElementById("stage");
+ const cd=document.createElement("div");cd.id="cd";cd.innerHTML="<span></span>";st.appendChild(cd);
+ const cp=document.createElement("div");cp.id="cues";st.appendChild(cp);
+ addEventListener("keydown",e=>{
+  if(e.key==="r"||e.key==="R"){let n=3;cd.style.display="flex";
+    const s=cd.querySelector("span");s.textContent=n;
+    const iv=setInterval(()=>{n--;if(n<1){clearInterval(iv);location.reload();}else s.textContent=n;},700);}
+  if(e.key==="o"||e.key==="O"){document.getElementById("stage").classList.add("outro");}
+  if(e.key==="s"||e.key==="S"){
+    cp.innerHTML="<b>SFX CUE SHEET（秒）</b><br>"+CUES.slice().sort((a,b)=>a[0]-b[0])
+      .map(c=>c[0].toFixed(2)+"s — "+c[1]).join("<br>");
+    cp.style.display=cp.style.display==="block"?"none":"block";}});})();
+
+$("#kicker .txt").textContent=CONFIG.kicker;
+$("#metaBL").textContent=CONFIG.metaBL;$("#metaBR").textContent=CONFIG.metaBR;
+
+const NS="http://www.w3.org/2000/svg";
+const jit=a=>(Math.random()*2-1)*a;
+function boxOf(el){const svg=$("#inkSvg"),sr=svg.getBoundingClientRect(),r=el.getBoundingClientRect();
+  const k=svg.clientWidth/sr.width;
+  return{x:(r.left-sr.left)*k,y:(r.top-sr.top)*k,w:r.width*k,h:r.height*k};}
+function flash(){const f=$("#flash");f.classList.remove("go");void f.offsetWidth;f.classList.add("go");}
+function pinAt(x,y){const p=document.createElement("div");p.className="pin";
+  p.style.left=(x-10)+"px";p.style.top=(y-10)+"px";$("#board").appendChild(p);
+  requestAnimationFrame(()=>p.classList.add("on"));return p;}
+
+/* saggy red string with pins + handwritten label */
+function stringLink(fromEl,toEl,label){
+  const a=boxOf(fromEl),b=boxOf(toEl);
+  const ax=a.x+a.w/2,ay=a.y+a.h/2,bx=b.x+b.w/2,by=b.y+b.h/2;
+  // node-side: pin near the INNER-TOP CORNER of the card (like a real pinned paper),
+  // clear of the text. center-side: on the facing edge.
+  const fx=ax+(bx>ax? a.w*.44 : -a.w*.44), fy=a.y+a.h*.16;
+  const tx=bx+(ax>bx? b.w*.46 : -b.w*.46), ty=by+jit(b.h*.15);
+  const mx=(fx+tx)/2+jit(20), my=(fy+ty)/2+46+jit(12);   // sag
+  const p=document.createElementNS(NS,"path");
+  p.setAttribute("d",`M ${fx} ${fy} Q ${mx} ${my} ${tx} ${ty}`);
+  p.setAttribute("class","string");$("#inkSvg").appendChild(p);
+  const L=p.getTotalLength();p.style.strokeDasharray=L;p.style.strokeDashoffset=L;
+  p.style.transition="stroke-dashoffset .55s cubic-bezier(.4,.6,.3,1)";
+  requestAnimationFrame(()=>requestAnimationFrame(()=>p.style.strokeDashoffset=0));
+  setTimeout(()=>{p.animate(                       /* follow-through: string settles */
+    [{transform:"translateY(0)"},{transform:"translateY(8px)"},
+     {transform:"translateY(-3px)"},{transform:"translateY(1.5px)"},{transform:"translateY(0)"}],
+    {duration:680,easing:"cubic-bezier(.3,.6,.4,1)"});},560);
+  pinAt(fx,fy); setTimeout(()=>pinAt(tx,ty),480);
+  if(label){const t=document.createElementNS(NS,"text");
+    t.setAttribute("class","slabel");
+    // place label 62% along the string (toward the NODE), clear of the center card
+    const lt=.38, lx=(1-lt)*(1-lt)*fx+2*(1-lt)*lt*mx+lt*lt*tx,
+          ly=(1-lt)*(1-lt)*fy+2*(1-lt)*lt*my+lt*lt*ty;
+    t.setAttribute("x",lx);t.setAttribute("y",ly-16);t.setAttribute("text-anchor","middle");
+    t.setAttribute("font-size",CONFIG.orientation==="portrait"?38:42);
+    t.textContent=label;$("#inkSvg").appendChild(t);
+    setTimeout(()=>t.classList.add("on"),450);}}
+
+/* build nodes */
+const [SW,SH]=stagePx();
+const c=CONFIG.center;
+const centerEl=document.createElement("div");
+centerEl.className="node center";centerEl.style.cssText=
+  `left:${c.x}%;top:${c.y}%;width:${c.w}%;--rot:${(c.rot||-1.2)}deg`;
+centerEl.innerHTML=`<div class="clabel">${c.label}</div>`+
+  (c.sub?`<div class="csub">${c.sub}</div>`:"");
+$("#board").appendChild(centerEl);
+const nodeEls=CONFIG.nodes.map(n=>{
+  const d=document.createElement("div");d.className="node "+n.type;
+  d.style.cssText=`left:${n.x}%;top:${n.y}%;width:${n.w}%;--rot:${n.rot||0}deg`;
+  if(n.type==="stat")d.innerHTML=`<div class="v">${n.v}</div><div class="l">${n.l}</div>`;
+  if(n.type==="term")d.innerHTML=`<div class="t">${n.t}</div>`;
+  if(n.type==="clip")d.innerHTML=`<div class="mast"><span>${n.masthead}</span>`+
+    `<span class="d">${n.date}</span></div>`+
+    (n.img?`<img class="nimg" src="${n.img}">`:"")+`<h3>${n.headline}</h3>`;
+  $("#board").appendChild(d);return d;});
+
+(function(){const cv=$("#grain");cv.width=SW/2;cv.height=SH/2;
+  const ctx=cv.getContext("2d");cv.style.width="100%";cv.style.height="100%";
+  (function loop(){const img=ctx.createImageData(cv.width,cv.height),d=img.data;
+    for(let i=0;i<d.length;i+=4){const v=Math.random()*255|0;d[i]=d[i+1]=d[i+2]=v;d[i+3]=30;}
+    ctx.putImageData(img,0,0);setTimeout(loop,66);})();})();
+(function(){const k=CONFIG.camera.drift;if(!k)return;const t1=performance.now();
+  (function loop(){const e=(performance.now()-t1)/1000;
+    const x=(Math.sin(e*.21)+.45*Math.sin(e*.57+1.7)+.22*Math.sin(e*1.33+4.2))*5.5*k;
+    const y=(Math.cos(e*.17)+.45*Math.sin(e*.49+.8)+.22*Math.sin(e*1.21+2.6))*4.5*k;
+    const r=(Math.sin(e*.23+1.1)+.5*Math.sin(e*.61+3))*.09*k;
+    $("#plane-bg").style.transform=`translate(${x*.4}px,${y*.4}px)`;
+    $("#plane-mid").style.transform=`translate(${x}px,${y}px) rotate(${r}deg)`;
+    $("#plane-fg").style.transform=`translate(${x*1.7}px,${y*1.7}px)`;
+    requestAnimationFrame(loop);})();})();
+
+/* master timeline: center first (camera tight on it) → nodes fly in as camera
+   pulls back → strings connect → tag */
+document.fonts.ready.then(()=>{fit();
+  $("#kicker").classList.add("on");
+  document.querySelectorAll(".meta").forEach((m,i)=>setTimeout(()=>m.classList.add("on"),500+i*120));
+  // camera starts zoomed on the CENTER card, pulls back over the build
+  const cb={x:(c.x+c.w/2)/100*SW, y:(c.y+8)/100*SH};
+  const z=CONFIG.camera.startZoom;
+  const dx=(SW/2-cb.x)*(z-1), dy=(SH/2-cb.y)*(z-1);
+  const totalT=(CONFIG.timing.start+CONFIG.nodes.length*CONFIG.timing.stagger+1.6);
+  $("#camera").animate(
+    [{transform:`translate(${dx}px,${dy}px) scale(${z})`},
+     {transform:"translate(0px,0px) scale(1)"}],
+    {duration:totalT*1000,easing:"cubic-bezier(.35,.15,.25,1)",fill:"forwards"});
+  const T=CONFIG.timing;
+  cue(T.start,"砰 stamp：中心卡 + 喀擦 flash");
+  setTimeout(()=>{centerEl.classList.add("on");flash();},T.start*1000);
+  CONFIG.nodes.forEach((n,i)=>{
+    cue(T.start+.55+i*T.stagger,"啪 slap：線索 "+(i+1)+" 釘上");
+    cue(T.start+.97+i*T.stagger,"咻 zip：紅線拉出 + 圖釘 click");
+    setTimeout(()=>{
+      if(i===0) centerEl.classList.add("defocus");   // rack focus to the evidence
+      nodeEls[i].classList.add("on");
+      const link=CONFIG.links.find(l=>l.from===i);
+      if(link)setTimeout(()=>stringLink(nodeEls[i],centerEl,link.label),420);
+    },(T.start+.55+i*T.stagger)*1000);});
+  // handwritten conclusion tag under the center card
+  cue(T.start+.55+CONFIG.nodes.length*T.stagger+.6,"手寫 scribble：結論 + 喀擦（焦點回到中心）");
+  setTimeout(()=>{
+    centerEl.classList.remove("defocus");            // rack focus back for the conclusion
+    const b=boxOf(centerEl);
+    const t=document.createElementNS(NS,"text");t.id="tag";
+    t.setAttribute("x",b.x+b.w/2);t.setAttribute("y",b.y+b.h+160);
+    t.setAttribute("text-anchor","middle");
+    t.setAttribute("font-size",CONFIG.orientation==="portrait"?56:64);
+    t.textContent=CONFIG.tag;$("#inkSvg").appendChild(t);
+    requestAnimationFrame(()=>t.classList.add("on"));flash();
+  },(T.start+.55+CONFIG.nodes.length*T.stagger+.6)*1000);});
+</script>
+</body>
+</html>

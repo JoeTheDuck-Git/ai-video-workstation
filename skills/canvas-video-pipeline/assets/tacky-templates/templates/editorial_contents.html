@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>Editorial 雜誌・目錄卡 — Tacky Templates</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700;1,900&family=Noto+Serif+TC:wght@400;600;900&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#f7f3ec;--ink:#1a1815;--soft:#a39c8f;--accent:#5f6a3a;--hair:#1a1815}
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:100%;height:100%;background:#111;overflow:hidden}
+  #fit{position:absolute}
+  #stage{position:relative;overflow:hidden;background:var(--bg)}
+  .landscape #stage{width:1920px;height:1080px}
+  .portrait  #stage{width:1080px;height:1920px}
+  #camera{position:absolute;inset:0;will-change:transform,opacity}
+
+  /* ---------- kicker ---------- */
+  #kicker{position:absolute;left:50%;transform:translateX(-50%);display:flex;
+    align-items:center;gap:34px;white-space:nowrap}
+  .landscape #kicker{top:130px}.portrait #kicker{top:330px}
+  #kicker .txt{font-family:'Playfair Display','Noto Serif TC',serif;font-weight:700;
+    font-size:26px;color:var(--ink);text-transform:uppercase;
+    letter-spacing:.55em;text-indent:.55em;opacity:0;
+    transition:letter-spacing 1.4s cubic-bezier(.2,.8,.2,1),opacity 1.2s ease}
+  #kicker.on .txt{letter-spacing:.34em;text-indent:.34em;opacity:1}
+  #kicker .hair{width:110px;height:1px;background:var(--hair);opacity:.85;
+    transform:scaleX(0);transition:transform 1.1s cubic-bezier(.2,.8,.2,1) .25s}
+  #kicker .hair.l{transform-origin:right}#kicker .hair.r{transform-origin:left}
+  #kicker.on .hair{transform:scaleX(1)}
+
+  /* ---------- contents rows ---------- */
+  #list{position:absolute;display:flex;flex-direction:column}
+  .landscape #list{left:50%;transform:translateX(-50%);top:268px;width:1210px;gap:0}
+  .portrait  #list{left:50%;transform:translateX(-50%);top:520px;width:860px;gap:0}
+  .rowMask{overflow:hidden;padding:2px 6px}
+  .row{display:flex;align-items:baseline;gap:44px;padding:34px 10px;
+    border-bottom:1px solid rgba(26,24,21,.16);
+    transform:translateY(112%);will-change:transform}
+  .portrait .row{gap:32px;padding:40px 8px}
+  .row.on{animation:settle 1s cubic-bezier(.16,.84,.22,1) forwards}
+  @keyframes settle{0%{transform:translateY(112%)}100%{transform:translateY(0)}}
+  .row .pg{font-family:'Playfair Display',serif;font-style:italic;font-weight:400;
+    font-size:44px;color:var(--soft);min-width:96px;text-align:right;
+    transition:color .8s ease,font-weight .8s ease}
+  .row .ti{font-family:'Noto Serif TC',serif;font-weight:600;font-size:52px;
+    color:var(--ink);letter-spacing:.04em;transition:color .8s ease}
+  .portrait .row .ti{font-size:46px}
+  .row .sub{font-family:'Noto Serif TC',serif;font-weight:400;font-size:26px;
+    color:var(--soft);margin-left:auto;letter-spacing:.06em;white-space:nowrap}
+  .portrait .row .sub{display:none}
+
+  /* focus row — the featured story */
+  .row.focus .pg{color:var(--accent);font-weight:700}
+  .row.focus .ti{font-weight:900;font-size:60px;position:relative}
+  .portrait .row.focus .ti{font-size:54px}
+  .row.focus .ti .obl{display:inline-block;transform:skewX(-6deg);
+    transition:color .9s cubic-bezier(.3,.1,.2,1)}
+  .row.focus.lit .ti .obl{color:var(--accent)}
+  .row.focus .ti sup{font-family:'Playfair Display',serif;font-style:italic;
+    font-weight:700;font-size:.4em;color:var(--accent);vertical-align:.9em;
+    margin-left:.08em;opacity:0;transform:scale(.4) rotate(-30deg);display:inline-block;
+    transition:opacity .5s ease,transform .5s cubic-bezier(.2,1.4,.3,1)}
+  .row.focus.lit .ti sup{opacity:1;transform:scale(1) rotate(0)}
+  .row.focus::after{content:"";position:absolute;left:0;bottom:-1px;height:2px;
+    width:100%;background:var(--accent);transform:scaleX(0);transform-origin:left;
+    transition:transform .9s cubic-bezier(.2,.8,.2,1)}
+  .row.focus{position:relative}
+  .row.focus.lit::after{transform:scaleX(1)}
+
+  /* ---------- deck note ---------- */
+  #deck{position:absolute;left:50%;transform:translateX(-50%);display:flex;
+    flex-direction:column;align-items:center;gap:20px;opacity:0;transition:opacity 1.1s ease}
+  .landscape #deck{bottom:132px}.portrait #deck{bottom:360px}
+  #deck.on{opacity:1}
+  #deck .txt{font-family:'Noto Serif TC',serif;font-weight:400;font-size:28px;
+    color:var(--ink);letter-spacing:.1em;white-space:nowrap}
+  #deck .txt .mark{font-family:'Playfair Display',serif;font-style:italic;
+    font-weight:700;color:var(--accent);margin-right:.45em}
+
+  /* ---------- folio corners + page number ---------- */
+  .meta{position:absolute;font-family:'Playfair Display','Noto Serif TC',serif;
+    font-weight:700;font-size:19px;letter-spacing:.24em;color:var(--ink);
+    text-transform:uppercase;opacity:0;transition:opacity 1.4s}
+  .meta.on{opacity:.72}
+  .landscape #metaTL{top:96px;left:104px}.landscape #metaBR{bottom:92px;right:104px}
+  .portrait #metaTL{top:104px;left:76px}.portrait #metaBR{bottom:100px;right:76px}
+  #folio{position:absolute;left:50%;transform:translateX(-50%);
+    font-family:'Playfair Display',serif;font-style:italic;font-weight:400;
+    font-size:21px;color:var(--ink);opacity:0;transition:opacity 1.4s}
+  #folio.on{opacity:.6}
+  .landscape #folio{bottom:64px}.portrait #folio{bottom:96px}
+
+  #cd{position:absolute;inset:0;z-index:20;display:none;align-items:center;justify-content:center;background:var(--bg)}
+  #cd span{font-family:'Playfair Display',serif;font-style:italic;font-size:300px;color:var(--ink)}
+  #cues{position:absolute;right:24px;top:24px;z-index:21;display:none;background:rgba(26,24,21,.94);
+    color:#f7f3ec;font-family:monospace;font-size:15px;line-height:1.75;
+    padding:14px 18px;max-height:70%;overflow:auto}
+  .outro #camera{transition:transform 1.1s cubic-bezier(.5,0,.7,.4),opacity 1.1s;
+    transform:translateY(-26px);opacity:0}
+  .outro #kicker .hair{transition:transform .7s ease;transform:scaleX(0)}
+</style>
+</head>
+<body>
+<div id="fit"><div id="stage">
+  <div id="camera">
+    <div id="kicker"><div class="hair l"></div><div class="txt"></div><div class="hair r"></div></div>
+    <div id="list"></div>
+    <div id="deck"><div class="txt"></div></div>
+    <div class="meta" id="metaTL"></div><div class="meta" id="metaBR"></div>
+    <div id="folio"></div>
+  </div>
+</div></div>
+
+<script>
+/* ============================================================
+   CONFIG — Editorial 雜誌・目錄卡 (table of contents / list)
+   For lists, frameworks, "本集重點", multi-part promises.
+   items: {t:"title", sub:"one-line tease (landscape only)",
+           focus:true → the featured story: olive oblique 900,
+           footnote *, olive rule underlines the row.
+           pg:"128" optional — else auto ascending page numbers}
+   ONE focus item only. 3–5 items ideal (6 max landscape).
+   ============================================================ */
+const CONFIG = {
+  orientation: "landscape",
+  kicker: "In This Issue",
+  items: [
+    { t:"構圖的減法",  sub:"留白是最貴的裝飾" },
+    { t:"光線的方向",  sub:"一盞檯燈就夠" },
+    { t:"品味養成",    sub:"每天拆解一支你嫉妒的影片", focus:true },
+    { t:"聲音的質地",  sub:"觀眾用耳朵決定畫質" }
+  ],
+  deck: "四堂課，把手機片拍出雜誌感",
+  metaTL: "VOL. 07 · 質感專題",
+  metaBR: "Taipei · Jul 2026",
+  folio: "— 目錄 —",
+  timing: { start: 1.15, stagger: 0.34 },
+  accent: ""
+};
+/* ============================================================ */
+const $=q=>document.querySelector(q);
+const stagePx=()=>CONFIG.orientation==="portrait"?[1080,1920]:[1920,1080];
+document.body.parentElement.className=CONFIG.orientation;
+if(CONFIG.accent) document.documentElement.style.setProperty("--accent",CONFIG.accent);
+function fit(){const[W,H]=stagePx();const s=Math.min(innerWidth/W,innerHeight/H);
+  $("#fit").style.cssText=`position:absolute;left:50%;top:50%;width:${W}px;height:${H}px;`+
+  `transform:translate(-50%,-50%) scale(${s});`;}
+addEventListener("resize",fit);fit();
+
+const CUES=[];const cue=(t,l)=>CUES.push([t,l]);
+(function(){const st=document.getElementById("stage");
+ const cd=document.createElement("div");cd.id="cd";cd.innerHTML="<span></span>";st.appendChild(cd);
+ const cp=document.createElement("div");cp.id="cues";st.appendChild(cp);
+ addEventListener("keydown",e=>{
+  if(e.key==="r"||e.key==="R"){let n=3;cd.style.display="flex";
+    const s=cd.querySelector("span");s.textContent=n;
+    const iv=setInterval(()=>{n--;if(n<1){clearInterval(iv);location.reload();}else s.textContent=n;},700);}
+  if(e.key==="o"||e.key==="O"){document.getElementById("stage").classList.add("outro");}
+  if(e.key==="s"||e.key==="S"){
+    cp.innerHTML="<b>SFX CUE SHEET（秒）</b><br>"+CUES.slice().sort((a,b)=>a[0]-b[0])
+      .map(c=>c[0].toFixed(2)+"s — "+c[1]).join("<br>");
+    cp.style.display=cp.style.display==="block"?"none":"block";}});})();
+
+/* build */
+const list=$("#list");const rows=[];
+let pgAuto=112;
+CONFIG.items.forEach(it=>{
+  const mask=document.createElement("div");mask.className="rowMask";
+  const r=document.createElement("div");r.className="row"+(it.focus?" focus":"");
+  const pg=document.createElement("span");pg.className="pg";
+  pg.textContent=it.pg||String(pgAuto);pgAuto+=6+Math.floor(Math.random()*6);
+  const ti=document.createElement("span");ti.className="ti";
+  if(it.focus){const o=document.createElement("span");o.className="obl";o.textContent=it.t;
+    const sup=document.createElement("sup");sup.textContent="*";
+    ti.appendChild(o);ti.appendChild(sup);}
+  else ti.textContent=it.t;
+  r.appendChild(pg);r.appendChild(ti);
+  if(it.sub){const su=document.createElement("span");su.className="sub";
+    su.textContent=it.sub;r.appendChild(su);}
+  r._flags=it;mask.appendChild(r);list.appendChild(mask);rows.push(r);});
+$("#kicker .txt").textContent=CONFIG.kicker;
+const deckTxt=$("#deck .txt");
+if(CONFIG.items.some(i=>i.focus)){
+  const m=document.createElement("span");m.className="mark";m.textContent="*";
+  deckTxt.appendChild(m);}
+deckTxt.appendChild(document.createTextNode(CONFIG.deck));
+$("#metaTL").textContent=CONFIG.metaTL;$("#metaBR").textContent=CONFIG.metaBR;
+$("#folio").textContent=CONFIG.folio;
+
+document.fonts.ready.then(()=>{fit();
+  const T=CONFIG.timing;let t=T.start;
+  cue(.35,"翻頁聲 page flip（很輕）：開場");
+  setTimeout(()=>$("#kicker").classList.add("on"),350);
+  document.querySelectorAll(".meta").forEach(m=>setTimeout(()=>m.classList.add("on"),800));
+  setTimeout(()=>$("#folio").classList.add("on"),900);
+  let focusEl=null;
+  rows.forEach(r=>{
+    cue(t,"紙張滑動 paper slide：條目升起");
+    setTimeout(()=>r.classList.add("on"),t*1000);
+    if(r._flags.focus)focusEl=r;
+    t+=T.stagger;});
+  const tKey=t+.5;
+  if(focusEl){cue(tKey,"低沉墨染 ink bloom：本期主打轉橄欖綠＋劃線");
+    setTimeout(()=>focusEl.classList.add("lit"),tKey*1000);}
+  cue(tKey+.75,"氣音：註解浮現");
+  setTimeout(()=>$("#deck").classList.add("on"),(tKey+.75)*1000);});
+</script>
+</body>
+</html>

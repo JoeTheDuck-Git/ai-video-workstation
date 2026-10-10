@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>Dark Terminal 深夜終端・狀態卡 — Tacky Templates</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Noto+Sans+TC:wght@700;900&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0c1016;--panel:#10151d;--frame:#2b3340;
+        --text:#c9d1d9;--dim:#8b949e;--green:#7ee787;--cyan:#79c0ff;
+        --amber:#ffa657;--red:#ff7b72;--purple:#d2a8ff;--sel:#153b26}
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:100%;height:100%;background:#05070a;overflow:hidden}
+  #fit{position:absolute}
+  #stage{position:relative;overflow:hidden;background:var(--bg)}
+  .landscape #stage{width:1920px;height:1080px}
+  .portrait  #stage{width:1080px;height:1920px}
+  #camera{position:absolute;inset:0;will-change:transform}
+  #vig{position:absolute;inset:0;z-index:7;pointer-events:none;background:
+    radial-gradient(120% 105% at 50% 42%, transparent 60%, rgba(0,0,0,.5) 100%)}
+
+  #frame{position:absolute;border:2px solid var(--frame);border-radius:14px;z-index:3}
+  .landscape #frame{inset:64px 84px 96px}
+  .portrait  #frame{inset:84px 56px 120px}
+  #tbar{position:absolute;top:0;left:0;right:0;height:64px;display:flex;align-items:center;
+    padding:0 34px;border-bottom:2px solid var(--frame);
+    font-family:'JetBrains Mono',monospace;color:var(--dim);font-size:26px;letter-spacing:.03em}
+  #tbar .tdots{display:flex;gap:13px;margin-right:28px}
+  #tbar .tdots span{width:17px;height:17px;border-radius:50%;background:#2f3742}
+  #tbar .path b{color:var(--green);font-weight:700}
+
+  #scroll{position:absolute;left:0;right:0;top:64px;bottom:0;padding:40px 58px;
+    overflow:hidden;font-family:'JetBrains Mono','Noto Sans TC',monospace}
+  .cline{color:var(--text);opacity:0;white-space:nowrap;margin-bottom:12px}
+  .landscape .cline{font-size:37px}
+  .portrait  .cline{font-size:31px}
+  .cline.on{opacity:1}
+  .cline .ps{color:var(--green);font-weight:700;margin-right:20px}
+  .cline .cm{color:var(--cyan)}
+  .cline .arg{color:var(--text)}
+  .cursor{display:inline-block;width:.55em;height:1em;background:var(--green);
+    vertical-align:-.12em;animation:blink .7s steps(1) infinite;
+    box-shadow:0 0 10px rgba(126,231,135,.5)}
+  @keyframes blink{0%,55%{opacity:1}56%,100%{opacity:0}}
+
+  /* ---------- status output ---------- */
+  .branch{opacity:0;color:var(--text);margin:30px 0 8px;white-space:nowrap;
+    font-family:'JetBrains Mono','Noto Sans TC',monospace}
+  .landscape .branch{font-size:40px}.portrait .branch{font-size:33px}
+  .branch b{color:var(--cyan);font-weight:700}
+  .branch.on{opacity:1}
+  .shead{opacity:0;color:var(--dim);margin:30px 0 14px;white-space:nowrap}
+  .landscape .shead{font-size:33px}.portrait .shead{font-size:28px}
+  .shead.on{opacity:1}
+  .item{display:flex;align-items:baseline;opacity:0;white-space:nowrap;
+    margin:0 0 16px 56px}
+  .item.on{opacity:1}
+  .item .glyph{font-family:'JetBrains Mono',monospace;font-weight:700;width:56px;flex:0 0 auto}
+  .landscape .item .glyph{font-size:38px}.portrait .item .glyph{font-size:32px}
+  .item .lab{font-family:'JetBrains Mono',monospace;flex:0 0 auto;margin-right:24px}
+  .landscape .item .lab{font-size:34px}.portrait .item .lab{font-size:29px}
+  .item .txt{font-family:'Noto Sans TC',sans-serif;font-weight:900}
+  .landscape .item .txt{font-size:46px}.portrait .item .txt{font-size:38px}
+  .item.done .glyph,.item.done .lab{color:var(--green)}
+  .item.done .txt{color:var(--text)}
+  .item.wip  .glyph,.item.wip .lab{color:var(--amber)}
+  .item.wip  .txt{color:var(--dim)}
+  /* key item = the message */
+  .item.keyed .txt{color:var(--green);
+    text-shadow:0 0 22px rgba(126,231,135,.45),0 0 70px rgba(126,231,135,.16)}
+  .item.keyed .txt .selWord{background:var(--sel);border-radius:8px;padding:0 .12em;
+    box-shadow:0 0 0 2px rgba(126,231,135,.35)}
+  .ok{display:inline-block;font-family:'JetBrains Mono',monospace;color:var(--green);
+    margin-left:26px;opacity:0;font-weight:700}
+  .landscape .ok{font-size:36px}.portrait .ok{font-size:30px}
+  .ok.on{opacity:1;animation:okPulse 1.4s ease-in-out 1}
+  @keyframes okPulse{0%,100%{text-shadow:0 0 10px rgba(126,231,135,.4)}
+    50%{text-shadow:0 0 26px rgba(126,231,135,.9)}}
+  .hint{opacity:0;color:var(--dim);margin-top:30px;white-space:nowrap}
+  .landscape .hint{font-size:31px}.portrait .hint{font-size:27px}
+  .hint.on{opacity:.9;transition:opacity .6s}
+  .cmt{color:var(--dim);opacity:0;margin-top:14px;
+    font-family:'JetBrains Mono','Noto Sans TC',monospace}
+  .landscape .cmt{font-size:34px}.portrait .cmt{font-size:29px}
+  .cmt.on{opacity:.9;transition:opacity .6s}
+
+  #tmux{position:absolute;height:52px;z-index:5;
+    display:flex;align-items:center;justify-content:space-between;
+    background:var(--panel);
+    font-family:'JetBrains Mono',monospace;font-size:23px;color:var(--dim);
+    padding:0 40px;opacity:0;transition:opacity .6s}
+  .landscape #tmux{left:84px;right:84px;bottom:96px;border:2px solid var(--frame);
+    border-radius:0 0 12px 12px}
+  .portrait  #tmux{left:56px;right:56px;bottom:120px;border:2px solid var(--frame);
+    border-radius:0 0 12px 12px}
+  #tmux.on{opacity:1}
+  #tmux .sess b{color:var(--green);font-weight:700}
+
+  #cd{position:absolute;inset:0;z-index:20;display:none;align-items:center;justify-content:center;background:var(--bg)}
+  #cd span{font-family:'JetBrains Mono',monospace;font-size:340px;color:var(--green);
+    text-shadow:0 0 40px rgba(126,231,135,.5)}
+  #cues{position:absolute;right:24px;top:24px;z-index:21;display:none;background:rgba(5,8,12,.96);
+    color:var(--text);font-family:'JetBrains Mono',monospace;font-size:16px;line-height:1.7;
+    padding:14px 18px;max-height:70%;overflow:auto;border:1px solid var(--frame);border-radius:10px}
+  .outro #camera{animation:termOff .55s cubic-bezier(.55,0,.8,.4) forwards}
+  @keyframes termOff{60%{opacity:1;filter:brightness(1.6)}100%{opacity:0;filter:brightness(0)}}
+</style>
+</head>
+<body>
+<div id="fit"><div id="stage">
+  <div id="camera">
+    <div id="frame">
+      <div id="tbar"><span class="tdots"><span></span><span></span><span></span></span>
+        <span class="path"><b>creator@studio</b> : ~/影片工廠</span></div>
+      <div id="scroll"></div>
+    </div>
+    <div id="tmux">
+      <span class="sess">[<b>studio</b>] 0:progress*</span>
+      <span class="clock" id="clock"></span>
+    </div>
+  </div>
+  <div id="vig"></div>
+</div></div>
+
+<script>
+/* ============================================================
+   CONFIG — Dark Terminal 深夜終端・狀態卡 (git status of a life).
+   `git status` types → branch line → two sections print in
+   monospace ticks:
+     done[]  → green "+ 新增:" items（已經改變的事）
+     wip[]   → amber "~ 修改中:" items（還在路上的事）
+   Exactly ONE done item key:true — glowing green, <sel>…</sel>
+   selection block, pulsing [✓]. It lands LAST in its section.
+   hint = the dim closing line; comment = the tag.
+   2–3 items per section; the contrast done/wip IS the story.
+   ============================================================ */
+const CONFIG = {
+  orientation: "landscape",
+  path: "~/影片工廠",
+  cmd: "git status",
+  branch: "On branch <b>成長中</b>",
+  doneHead: "已經改變的事：",
+  done: [
+    {t:"固定的拍片時段"},
+    {t:"敢把影片 <sel>發出去</sel>", key:true}
+  ],
+  wipHead: "還在修改中：",
+  wip: [
+    {t:"面對鏡頭的自然度"},
+    {t:"剪輯的速度"}
+  ],
+  hint: "距離上一次上傳：3 天（該 commit 了）",
+  comment: "# 進度不用完美，只要有 diff",
+  timing: { start: 1.0, typeChar: 0.05, lineGap: 0.5 }
+};
+/* ============================================================ */
+const $=q=>document.querySelector(q);
+const stagePx=()=>CONFIG.orientation==="portrait"?[1080,1920]:[1920,1080];
+document.body.parentElement.className=CONFIG.orientation;
+function fit(){const[W,H]=stagePx();const s=Math.min(innerWidth/W,innerHeight/H);
+  $("#fit").style.cssText=`position:absolute;left:50%;top:50%;width:${W}px;height:${H}px;`+
+  `transform:translate(-50%,-50%) scale(${s});`;}
+addEventListener("resize",fit);fit();
+const CUES=[];const cue=(t,l)=>CUES.push([t,l]);
+(function(){const st=document.getElementById("stage");
+ const cd=document.createElement("div");cd.id="cd";cd.innerHTML="<span></span>";st.appendChild(cd);
+ const cp=document.createElement("div");cp.id="cues";st.appendChild(cp);
+ addEventListener("keydown",e=>{
+  if(e.key==="r"||e.key==="R"){let n=3;cd.style.display="flex";
+    const s=cd.querySelector("span");s.textContent=n;
+    const iv=setInterval(()=>{n--;if(n<1){clearInterval(iv);location.reload();}else s.textContent=n;},700);}
+  if(e.key==="o"||e.key==="O"){document.getElementById("stage").classList.add("outro");}
+  if(e.key==="s"||e.key==="S"){
+    cp.innerHTML="<b>SFX CUE SHEET（秒）</b><br>"+CUES.slice().sort((a,b)=>a[0]-b[0])
+      .map(c=>c[0].toFixed(2)+"s — "+c[1]).join("<br>");
+    cp.style.display=cp.style.display==="block"?"none":"block";}});})();
+
+document.querySelector("#tbar .path").innerHTML=
+  `<b>creator@studio</b> : ${CONFIG.path}`;
+setInterval(()=>{const d=new Date();
+  $("#clock").textContent=d.toTimeString().slice(0,5)+" ・ 深夜模式";},1000);
+
+const scroll=$("#scroll");
+function colorCmd(cmd){return cmd.split(" ").map((tok,i)=>
+    i===0?`<span class="cm">${tok}</span>`:`<span class="arg">${tok}</span>`).join(" ");}
+const sel=s=>s.replace(/<sel>/g,'<span class="selWord">').replace(/<\/sel>/g,"</span>");
+
+document.fonts.ready.then(()=>{fit();
+  cue(0,"鋪底：機箱風扇低鳴（整段）");
+  setTimeout(()=>$("#tmux").classList.add("on"),500);
+  const T=CONFIG.timing;let t=T.start;
+
+  cue(t,"機械鍵盤敲擊 ×"+CONFIG.cmd.length);
+  const cl=document.createElement("div");cl.className="cline";scroll.appendChild(cl);
+  setTimeout(()=>{cl.classList.add("on");let ci=0;
+    (function type(){cl.innerHTML='<span class="ps">❯</span>'+
+      colorCmd(CONFIG.cmd.slice(0,ci))+'<span class="cursor"></span>';ci++;
+      if(ci<=CONFIG.cmd.length)setTimeout(type,T.typeChar*1000);
+      else cl.innerHTML='<span class="ps">❯</span>'+colorCmd(CONFIG.cmd);})();},t*1000);
+  t+=CONFIG.cmd.length*T.typeChar+.35;
+
+  const line=(cls,html,at,label)=>{
+    cue(at,label);
+    const el=document.createElement("div");el.className=cls;el.innerHTML=html;
+    scroll.appendChild(el);
+    setTimeout(()=>el.classList.add("on"),at*1000);
+    return el;};
+
+  line("branch",CONFIG.branch,t,"輕 blip：branch 列印");t+=T.lineGap;
+
+  // done section — key item forced last
+  line("shead",CONFIG.doneHead,t,"輕 blip：段落標題");t+=T.lineGap*.8;
+  const doneOrdered=[...CONFIG.done.filter(i=>!i.key),...CONFIG.done.filter(i=>i.key)];
+  doneOrdered.forEach(it=>{
+    const keyed=!!it.key;
+    const el=line("item done"+(keyed?" keyed":""),
+      `<span class="glyph">+</span><span class="lab">新增:</span>`+
+      `<span class="txt">${sel(it.t)}${keyed?'<span class="ok">[✓]</span>':""}</span>`,
+      t,keyed?"低音沉入 + 綠光起：關鍵項亮起":"輕 blip：項目列印");
+    if(keyed){setTimeout(()=>el.querySelector(".ok").classList.add("on"),(t+.5)*1000);
+      cue(t+.5,"清脆確認音：[✓]");}
+    t+=T.lineGap;});
+
+  // wip section
+  t+=.15;
+  line("shead",CONFIG.wipHead,t,"輕 blip：段落標題");t+=T.lineGap*.8;
+  CONFIG.wip.forEach(it=>{
+    line("item wip",
+      `<span class="glyph">~</span><span class="lab">修改中:</span>`+
+      `<span class="txt">${it.t}</span>`,t,"輕 blip：項目列印");
+    t+=T.lineGap;});
+
+  line("hint",CONFIG.hint,t+.15,"輕 blip：提示行");
+  // comment types
+  cue(t+.7,"鍵盤輕敲：註解");
+  const cm=document.createElement("div");cm.className="cline cmt";scroll.appendChild(cm);
+  setTimeout(()=>{cm.classList.add("on");let ci=0;const txt=CONFIG.comment;
+    (function type(){cm.innerHTML=txt.slice(0,ci)+'<span class="cursor"></span>';ci++;
+      if(ci<=txt.length)setTimeout(type,60);
+      else cm.innerHTML=txt+' <span class="cursor"></span>';})();},(t+.7)*1000);
+});
+</script>
+</body>
+</html>

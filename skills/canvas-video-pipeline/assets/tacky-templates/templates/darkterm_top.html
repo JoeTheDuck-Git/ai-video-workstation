@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>Dark Terminal 深夜終端・監控卡 — Tacky Templates</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Noto+Sans+TC:wght@700;900&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0c1016;--panel:#10151d;--frame:#2b3340;
+        --text:#c9d1d9;--dim:#8b949e;--green:#7ee787;--cyan:#79c0ff;
+        --amber:#ffa657;--red:#ff7b72;--purple:#d2a8ff;--sel:#153b26}
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:100%;height:100%;background:#05070a;overflow:hidden}
+  #fit{position:absolute}
+  #stage{position:relative;overflow:hidden;background:var(--bg)}
+  .landscape #stage{width:1920px;height:1080px}
+  .portrait  #stage{width:1080px;height:1920px}
+  #camera{position:absolute;inset:0;will-change:transform}
+  #vig{position:absolute;inset:0;z-index:7;pointer-events:none;background:
+    radial-gradient(120% 105% at 50% 42%, transparent 60%, rgba(0,0,0,.5) 100%)}
+
+  #frame{position:absolute;border:2px solid var(--frame);border-radius:14px;z-index:3}
+  .landscape #frame{inset:64px 84px 96px}
+  .portrait  #frame{inset:84px 56px 120px}
+  #tbar{position:absolute;top:0;left:0;right:0;height:64px;display:flex;align-items:center;
+    padding:0 34px;border-bottom:2px solid var(--frame);
+    font-family:'JetBrains Mono',monospace;color:var(--dim);font-size:26px;letter-spacing:.03em}
+  #tbar .tdots{display:flex;gap:13px;margin-right:28px}
+  #tbar .tdots span{width:17px;height:17px;border-radius:50%;background:#2f3742}
+  #tbar .path b{color:var(--green);font-weight:700}
+
+  #scroll{position:absolute;left:0;right:0;top:64px;bottom:0;padding:40px 58px;
+    overflow:hidden;font-family:'JetBrains Mono','Noto Sans TC',monospace}
+  .cline{color:var(--text);opacity:0;white-space:nowrap;margin-bottom:12px}
+  .landscape .cline{font-size:37px}
+  .portrait  .cline{font-size:31px}
+  .cline.on{opacity:1}
+  .cline .ps{color:var(--green);font-weight:700;margin-right:20px}
+  .cline .cm{color:var(--cyan)}
+  .cline .arg{color:var(--text)}
+  .cline .flag{color:var(--purple)}
+  .cursor{display:inline-block;width:.55em;height:1em;background:var(--green);
+    vertical-align:-.12em;animation:blink .7s steps(1) infinite;
+    box-shadow:0 0 10px rgba(126,231,135,.5)}
+  @keyframes blink{0%,55%{opacity:1}56%,100%{opacity:0}}
+
+  /* ---------- monitor table ---------- */
+  #mon{margin-top:34px}
+  .mhead{opacity:0;display:flex;font-family:'JetBrains Mono',monospace;color:var(--dim);
+    letter-spacing:.06em;margin-bottom:20px;border-bottom:1.5px solid var(--frame);
+    padding-bottom:14px;white-space:nowrap}
+  .landscape .mhead .h1{width:470px}.portrait .mhead .h1{width:380px}
+  .landscape .mhead .h2{width:560px}.portrait .mhead .h2{width:300px}
+  .mhead .h3{text-align:right}
+  .landscape .mhead .h3{width:170px}.portrait .mhead .h3{width:145px}
+  .landscape .mhead{font-size:27px}.portrait .mhead{font-size:24px}
+  .mhead.on{opacity:1}
+  .prow{display:flex;align-items:center;opacity:0;white-space:nowrap}
+  .landscape .prow{margin-bottom:30px}
+  .portrait  .prow{margin-bottom:26px}
+  .prow.on{opacity:1}
+  .pname{font-family:'Noto Sans TC',sans-serif;font-weight:900;color:var(--text);
+    overflow:hidden;text-overflow:clip}
+  .landscape .pname{font-size:44px;width:470px}
+  .portrait  .pname{font-size:37px;width:380px}
+  .pbar{font-family:'JetBrains Mono',monospace;color:var(--cyan);letter-spacing:.02em;
+    flex:0 0 auto;overflow:hidden}
+  .landscape .pbar{font-size:38px;width:560px}
+  .portrait  .pbar{font-size:30px;width:300px}
+  .pbar .empty{color:#232b36}
+  .pval{font-family:'JetBrains Mono',monospace;color:var(--dim);text-align:right;
+    font-weight:700}
+  .landscape .pval{font-size:40px;width:170px}
+  .portrait  .pval{font-size:33px;width:145px}
+  /* hl row = the payoff process */
+  .prow.hl .pname{color:var(--green)}
+  .prow.hl .pbar{color:var(--green);
+    text-shadow:0 0 18px rgba(126,231,135,.5),0 0 60px rgba(126,231,135,.15)}
+  .prow.hl .pbar .empty{text-shadow:none}
+  .prow.hl .pval{color:var(--green)}
+  .prow.hl.lock .pval{animation:okPulse 1.4s ease-in-out 1}
+  @keyframes okPulse{0%,100%{text-shadow:0 0 10px rgba(126,231,135,.4)}
+    50%{text-shadow:0 0 26px rgba(126,231,135,.9)}}
+  .pnote{display:inline-block;margin-left:26px;font-family:'JetBrains Mono','Noto Sans TC',monospace;
+    color:var(--green);opacity:0;font-weight:700}
+  .landscape .pnote{font-size:31px}.portrait .pnote{font-size:26px}
+  .pnote.on{opacity:1;transition:opacity .4s}
+  /* load line + comment */
+  .loadline{opacity:0;font-family:'JetBrains Mono','Noto Sans TC',monospace;color:var(--dim);
+    margin-top:26px}
+  .landscape .loadline{font-size:30px}.portrait .loadline{font-size:26px}
+  .loadline.on{opacity:.9;transition:opacity .6s}
+  .cmt{color:var(--dim);opacity:0;font-family:'JetBrains Mono','Noto Sans TC',monospace;
+    margin-top:16px}
+  .landscape .cmt{font-size:34px}.portrait .cmt{font-size:29px}
+  .cmt.on{opacity:.9;transition:opacity .6s}
+
+  #tmux{position:absolute;height:52px;z-index:5;
+    display:flex;align-items:center;justify-content:space-between;
+    background:var(--panel);
+    font-family:'JetBrains Mono',monospace;font-size:23px;color:var(--dim);
+    padding:0 40px;opacity:0;transition:opacity .6s}
+  .landscape #tmux{left:84px;right:84px;bottom:96px;border:2px solid var(--frame);
+    border-radius:0 0 12px 12px}
+  .portrait  #tmux{left:56px;right:56px;bottom:120px;border:2px solid var(--frame);
+    border-radius:0 0 12px 12px}
+  #tmux.on{opacity:1}
+  #tmux .sess b{color:var(--green);font-weight:700}
+
+  #cd{position:absolute;inset:0;z-index:20;display:none;align-items:center;justify-content:center;background:var(--bg)}
+  #cd span{font-family:'JetBrains Mono',monospace;font-size:340px;color:var(--green);
+    text-shadow:0 0 40px rgba(126,231,135,.5)}
+  #cues{position:absolute;right:24px;top:24px;z-index:21;display:none;background:rgba(5,8,12,.96);
+    color:var(--text);font-family:'JetBrains Mono',monospace;font-size:16px;line-height:1.7;
+    padding:14px 18px;max-height:70%;overflow:auto;border:1px solid var(--frame);border-radius:10px}
+  .outro #camera{animation:termOff .55s cubic-bezier(.55,0,.8,.4) forwards}
+  @keyframes termOff{60%{opacity:1;filter:brightness(1.6)}100%{opacity:0;filter:brightness(0)}}
+</style>
+</head>
+<body>
+<div id="fit"><div id="stage">
+  <div id="camera">
+    <div id="frame">
+      <div id="tbar"><span class="tdots"><span></span><span></span><span></span></span>
+        <span class="path"><b>creator@studio</b> : ~/影片工廠</span></div>
+      <div id="scroll"></div>
+    </div>
+    <div id="tmux">
+      <span class="sess">[<b>studio</b>] 0:monitor*</span>
+      <span class="clock" id="clock"></span>
+    </div>
+  </div>
+  <div id="vig"></div>
+</div></div>
+
+<script>
+/* ============================================================
+   CONFIG — Dark Terminal 深夜終端・監控卡 (htop-style monitor).
+   `cmd` types, table header prints, then each process row:
+   name + segmented bar that fills in DISCRETE TICKS (no easing)
+   + % counter. Exactly ONE row hl:true — it fills LAST, in
+   glowing green, overshoots the others, and locks with `note`
+   (e.g. "[✓] 保持運行"). Use REAL numbers the user gives; scale
+   is relative (max value = longest bar). 3–5 rows.
+   loadline = closing status; comment = the tag.
+   ============================================================ */
+const CONFIG = {
+  orientation: "landscape",
+  path: "~/影片工廠",
+  cmd: "htop --sort 佔用心力",
+  header: ["任務","心力佔用","%"],
+  rows: [
+    {name:"焦慮別人的數據", val:87},
+    {name:"重看自己的舊片", val:64},
+    {name:"每天實際拍片",   val:96, hl:true, note:"[✓] 唯一該跑滿的程序"}
+  ],
+  loadline: "load average: 別人的成功不佔你的 CPU",
+  comment: "# kill 掉前兩個，資源全給第三個",
+  timing: { start: 1.0, typeChar: 0.045, rowGap: 0.45, tick: 0.048 }
+};
+/* ============================================================ */
+const $=q=>document.querySelector(q);
+const stagePx=()=>CONFIG.orientation==="portrait"?[1080,1920]:[1920,1080];
+document.body.parentElement.className=CONFIG.orientation;
+function fit(){const[W,H]=stagePx();const s=Math.min(innerWidth/W,innerHeight/H);
+  $("#fit").style.cssText=`position:absolute;left:50%;top:50%;width:${W}px;height:${H}px;`+
+  `transform:translate(-50%,-50%) scale(${s});`;}
+addEventListener("resize",fit);fit();
+const CUES=[];const cue=(t,l)=>CUES.push([t,l]);
+(function(){const st=document.getElementById("stage");
+ const cd=document.createElement("div");cd.id="cd";cd.innerHTML="<span></span>";st.appendChild(cd);
+ const cp=document.createElement("div");cp.id="cues";st.appendChild(cp);
+ addEventListener("keydown",e=>{
+  if(e.key==="r"||e.key==="R"){let n=3;cd.style.display="flex";
+    const s=cd.querySelector("span");s.textContent=n;
+    const iv=setInterval(()=>{n--;if(n<1){clearInterval(iv);location.reload();}else s.textContent=n;},700);}
+  if(e.key==="o"||e.key==="O"){document.getElementById("stage").classList.add("outro");}
+  if(e.key==="s"||e.key==="S"){
+    cp.innerHTML="<b>SFX CUE SHEET（秒）</b><br>"+CUES.slice().sort((a,b)=>a[0]-b[0])
+      .map(c=>c[0].toFixed(2)+"s — "+c[1]).join("<br>");
+    cp.style.display=cp.style.display==="block"?"none":"block";}});})();
+
+document.querySelector("#tbar .path").innerHTML=
+  `<b>creator@studio</b> : ${CONFIG.path}`;
+setInterval(()=>{const d=new Date();
+  $("#clock").textContent=d.toTimeString().slice(0,5)+" ・ 深夜模式";},1000);
+
+const scroll=$("#scroll");
+function colorCmd(cmd){return cmd.split(" ").map((tok,i)=>
+    i===0?`<span class="cm">${tok}</span>`:
+    tok.startsWith("-")?`<span class="flag">${tok}</span>`:
+    `<span class="arg">${tok}</span>`).join(" ");}
+
+const NSEG=CONFIG.orientation==="portrait"?14:22;
+const maxV=Math.max(...CONFIG.rows.map(r=>r.val));
+
+document.fonts.ready.then(()=>{fit();
+  cue(0,"鋪底：機箱風扇低鳴（整段）");
+  setTimeout(()=>$("#tmux").classList.add("on"),500);
+  const T=CONFIG.timing;let t=T.start;
+
+  // command types
+  cue(t,"機械鍵盤敲擊 ×"+CONFIG.cmd.length);
+  const cl=document.createElement("div");cl.className="cline";scroll.appendChild(cl);
+  setTimeout(()=>{cl.classList.add("on");let ci=0;
+    (function type(){cl.innerHTML='<span class="ps">❯</span>'+
+      colorCmd(CONFIG.cmd.slice(0,ci))+'<span class="cursor"></span>';ci++;
+      if(ci<=CONFIG.cmd.length)setTimeout(type,T.typeChar*1000);
+      else cl.innerHTML='<span class="ps">❯</span>'+colorCmd(CONFIG.cmd);})();},t*1000);
+  t+=CONFIG.cmd.length*T.typeChar+.35;
+
+  // table header
+  const mon=document.createElement("div");mon.id="mon";scroll.appendChild(mon);
+  cue(t,"輕 blip：表頭列印");
+  const mh=document.createElement("div");mh.className="mhead";
+  mh.innerHTML=`<span class="h1">${CONFIG.header[0]}</span>`+
+    `<span class="h2">${CONFIG.header[1]}</span><span class="h3">${CONFIG.header[2]}</span>`;
+  mon.appendChild(mh);
+  setTimeout(()=>mh.classList.add("on"),t*1000);
+  t+=.4;
+
+  // rows: non-hl first (CONFIG order), hl LAST regardless of position
+  const ordered=[...CONFIG.rows.filter(r=>!r.hl),...CONFIG.rows.filter(r=>r.hl)];
+  ordered.forEach(r=>{
+    const row=document.createElement("div");
+    row.className="prow"+(r.hl?" hl":"");
+    row.innerHTML=`<span class="pname">${r.name}</span>`+
+      `<span class="pbar"></span><span class="pval">0%</span>`+
+      (r.hl?`<span class="pnote">${r.note||""}</span>`:"");
+    mon.appendChild(row);
+    const segs=Math.round(r.val/maxV*NSEG);
+    cue(t,(r.hl?"低音沉入 + ":"")+"燈條逐格填滿（滴答 ×"+segs+"）");
+    setTimeout(()=>{row.classList.add("on");
+      const bar=row.querySelector(".pbar"),val=row.querySelector(".pval");
+      let k=0;
+      (function tick(){
+        bar.innerHTML="█".repeat(k)+`<span class="empty">${"░".repeat(NSEG-k)}</span> `;
+        val.textContent=(segs?Math.round(k/segs*r.val):0)+"%";
+        k++;
+        if(k<=segs)setTimeout(tick,T.tick*1000);
+        else{val.textContent=r.val+"%";
+          if(r.hl){row.classList.add("lock");
+            const note=row.querySelector(".pnote");
+            setTimeout(()=>note.classList.add("on"),350);
+            cue(t+segs*T.tick+.35,"清脆確認音：[✓] note 亮起");}}
+      })();},t*1000);
+    t+=segs*T.tick+T.rowGap;});
+
+  // load line + comment
+  cue(t+.15,"輕 blip：load average");
+  const ld=document.createElement("div");ld.className="loadline";
+  ld.textContent=CONFIG.loadline;mon.appendChild(ld);
+  setTimeout(()=>ld.classList.add("on"),(t+.15)*1000);
+  cue(t+.7,"鍵盤輕敲：註解");
+  const cm=document.createElement("div");cm.className="cline cmt";
+  mon.appendChild(cm);
+  setTimeout(()=>{cm.classList.add("on");let ci=0;const txt=CONFIG.comment;
+    (function type(){cm.innerHTML=txt.slice(0,ci)+'<span class="cursor"></span>';ci++;
+      if(ci<=txt.length)setTimeout(type,60);
+      else cm.innerHTML=txt+' <span class="cursor"></span>';})();},(t+.7)*1000);
+});
+</script>
+</body>
+</html>

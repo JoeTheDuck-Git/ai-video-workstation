@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>Minimal 極簡・數據卡 — Tacky Templates</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500;600&family=Noto+Sans+TC:wght@300;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#fbfbfa;--ink:#16181d;--soft:#8a8f98;--accent:#2456e6;
+        --rule:#e6e7e9;--bar:#d8dadd}
+  .dark{--bg:#0f1013;--ink:#f2f3f5;--soft:#7f858e;--accent:#5b82ff;
+        --rule:#24262b;--bar:#2b2e34}
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:100%;height:100%;background:#111;overflow:hidden}
+  #fit{position:absolute}
+  #stage{position:relative;overflow:hidden;background:var(--bg)}
+  .landscape #stage{width:1920px;height:1080px}
+  .portrait  #stage{width:1080px;height:1920px}
+  #camera{position:absolute;inset:0;will-change:transform}
+
+  #eyebrow{position:absolute;left:50%;transform:translateX(-50%);display:flex;
+    flex-direction:column;align-items:center;gap:20px;opacity:0;transition:opacity .8s}
+  .landscape #eyebrow{top:110px}.portrait #eyebrow{top:300px}
+  #eyebrow.on{opacity:1}
+  #eyebrow .txt{font-family:'Inter','Noto Sans TC',sans-serif;font-weight:600;font-size:24px;
+    letter-spacing:.42em;text-indent:.42em;color:var(--soft);text-transform:uppercase}
+  #eyebrow .hair{width:56px;height:2px;background:var(--accent);transform:scaleX(0);
+    transition:transform .7s cubic-bezier(.2,.8,.2,1) .2s}
+  #eyebrow.on .hair{transform:scaleX(1)}
+  #title{position:absolute;left:50%;transform:translateX(-50%);opacity:0;white-space:nowrap;
+    font-family:'Noto Sans TC',sans-serif;font-weight:300;color:var(--ink)}
+  .landscape #title{top:190px;font-size:76px}
+  .portrait  #title{top:400px;font-size:60px}
+  #title b{font-weight:700}
+  #title.on{animation:rise .7s cubic-bezier(.16,.84,.24,1) forwards}
+  @keyframes rise{0%{opacity:0;transform:translateX(-50%) translateY(.3em)}
+    100%{opacity:1;transform:translateX(-50%) translateY(0)}}
+
+  #chart{position:absolute}
+  .landscape #chart{left:330px;right:330px;top:380px;bottom:190px}
+  .portrait  #chart{left:120px;right:120px;top:600px;bottom:480px}
+  .row{position:absolute;left:0;right:0;display:flex;align-items:center;gap:30px}
+  .rlabel{font-family:'Noto Sans TC';font-weight:500;color:var(--ink);text-align:right;
+    flex:0 0 auto;opacity:0;transition:opacity .5s}
+  .landscape .rlabel{width:210px;font-size:33px}
+  .portrait  .rlabel{width:170px;font-size:30px}
+  .rtrack{flex:1;position:relative;height:100%}
+  .rline{position:absolute;left:0;right:0;top:50%;height:1.5px;background:var(--rule)}
+  .rbar{position:absolute;left:0;top:50%;transform:translateY(-50%);height:26px;width:0;
+    background:var(--bar);border-radius:2px}
+  .rbar.hl{background:var(--accent)}
+  .rbar.hl.pulse{animation:pulse 1s ease-out}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 color-mix(in srgb, var(--accent) 45%, transparent)}
+    100%{box-shadow:0 0 0 26px transparent}}
+  .rval{position:absolute;top:50%;transform:translateY(-50%);white-space:nowrap;
+    font-family:'Inter';font-weight:600;color:var(--soft);opacity:0;transition:opacity .3s}
+  .landscape .rval{font-size:36px}.portrait .rval{font-size:31px}
+  .rval.hl{color:var(--accent)}
+  #note{position:absolute;display:flex;align-items:center;gap:16px;opacity:0;transition:opacity .8s}
+  #note .dot{width:7px;height:7px;border-radius:50%;background:var(--accent)}
+  #note .txt{font-family:'Inter','Noto Sans TC';font-weight:500;font-size:28px;color:var(--soft)}
+  #note.on{opacity:1}
+  #source{position:absolute;font-family:'Inter','Noto Sans TC';font-weight:500;font-size:20px;
+    letter-spacing:.06em;color:var(--soft);opacity:0;transition:opacity .8s}
+  .landscape #source{left:330px;bottom:92px}
+  .portrait  #source{left:120px;bottom:370px}
+  #source.on{opacity:.8}
+  .meta{position:absolute;font-family:'Inter';font-weight:500;font-size:17px;
+    letter-spacing:.18em;color:var(--rule);opacity:0;transition:opacity 1s;
+    filter:brightness(.75)}
+  .meta.on{opacity:1}
+  .landscape #metaTL{top:64px;left:72px}.landscape #metaBR{bottom:60px;right:72px}
+  .portrait #metaTL{top:70px;left:56px}.portrait #metaBR{bottom:66px;right:56px}
+
+  #cd{position:absolute;inset:0;z-index:20;display:none;align-items:center;justify-content:center;background:var(--bg)}
+  #cd span{font-family:'Inter';font-weight:300;font-size:300px;color:var(--ink)}
+  #cues{position:absolute;right:24px;top:24px;z-index:21;display:none;background:rgba(22,24,29,.94);
+    color:#fbfbfa;font-family:'Inter',monospace;font-size:15px;line-height:1.75;
+    padding:14px 18px;max-height:70%;overflow:auto}
+  /* O = outro: calm dissolve-away */
+  .outro #camera{transition:transform 1s cubic-bezier(.5,0,.7,.4),opacity 1s;transform:scale(.985);opacity:0}
+</style>
+</head>
+<body>
+<div id="fit"><div id="stage">
+  <div id="camera">
+    <div id="eyebrow"><div class="txt"></div><div class="hair"></div></div>
+    <div id="title"></div>
+    <div id="chart"></div>
+    <div id="note"><div class="dot"></div><div class="txt"></div></div>
+    <div id="source"></div>
+    <div class="meta" id="metaTL"></div><div class="meta" id="metaBR"></div>
+  </div>
+</div></div>
+
+<script>
+/* ============================================================
+   CONFIG — Minimal 極簡・數據卡. No ink, no rings drawn by hand:
+   the highlight datum speaks through COLOR + one soft pulse.
+   Use the user's real numbers; always fill source.
+   ============================================================ */
+const CONFIG = {
+  orientation: "landscape",
+  theme: "light",                          // "light" | "dark"
+  eyebrow: "Retention Report",
+  title: "觀眾在<b>第幾秒</b>滑走",
+  unit: "%", decimals: 0,
+  data: [
+    {label:"前 3 秒",  value:63, hl:true, note:"勝負在這裡"},
+    {label:"3–10 秒",  value:21},
+    {label:"10–30 秒", value:11},
+    {label:"30 秒後",  value:5}
+  ],
+  source: "資料來源：TikTok Creator Center 2025",
+  metaTL: "SHORT-FORM STUDIO", metaBR: "02 · 數據",
+  timing: { start: 1.2, stagger: 0.4 },
+  camera: { push: 1.015 },
+  accent: ""
+};
+/* ============================================================ */
+const $=q=>document.querySelector(q);
+const stagePx=()=>CONFIG.orientation==="portrait"?[1080,1920]:[1920,1080];
+document.body.parentElement.className=
+  CONFIG.orientation+(CONFIG.theme==="dark"?" dark":"");
+if(CONFIG.accent) document.documentElement.style.setProperty("--accent",CONFIG.accent);
+function fit(){const[W,H]=stagePx();const s=Math.min(innerWidth/W,innerHeight/H);
+  $("#fit").style.cssText=`position:absolute;left:50%;top:50%;width:${W}px;height:${H}px;`+
+  `transform:translate(-50%,-50%) scale(${s});`;}
+addEventListener("resize",fit);fit();
+
+const CUES=[];const cue=(t,l)=>CUES.push([t,l]);
+(function(){const st=document.getElementById("stage");
+ const cd=document.createElement("div");cd.id="cd";cd.innerHTML="<span></span>";st.appendChild(cd);
+ const cp=document.createElement("div");cp.id="cues";st.appendChild(cp);
+ addEventListener("keydown",e=>{
+  if(e.key==="r"||e.key==="R"){let n=3;cd.style.display="flex";
+    const s=cd.querySelector("span");s.textContent=n;
+    const iv=setInterval(()=>{n--;if(n<1){clearInterval(iv);location.reload();}else s.textContent=n;},700);}
+  if(e.key==="o"||e.key==="O"){document.getElementById("stage").classList.add("outro");}
+  if(e.key==="s"||e.key==="S"){
+    cp.innerHTML="<b>SFX CUE SHEET（秒）</b><br>"+CUES.slice().sort((a,b)=>a[0]-b[0])
+      .map(c=>c[0].toFixed(2)+"s — "+c[1]).join("<br>");
+    cp.style.display=cp.style.display==="block"?"none":"block";}});})();
+
+$("#eyebrow .txt").textContent=CONFIG.eyebrow;
+$("#title").innerHTML=CONFIG.title;
+$("#source").textContent=CONFIG.source;
+$("#metaTL").textContent=CONFIG.metaTL;$("#metaBR").textContent=CONFIG.metaBR;
+if(CONFIG.camera.push)
+  $("#camera").animate([{transform:"scale(1)"},{transform:`scale(${CONFIG.camera.push})`}],
+    {duration:9000,easing:"cubic-bezier(.3,.2,.2,1)",fill:"forwards"});
+
+function count(el,to,dur){const s=performance.now();
+  (function u(){const p=Math.min(1,(performance.now()-s)/dur),e=1-Math.pow(1-p,3);
+    el.textContent=(to*e).toFixed(CONFIG.decimals)+CONFIG.unit;
+    if(p<1)requestAnimationFrame(u);})();}
+
+document.fonts.ready.then(()=>{fit();
+  const ch=$("#chart"),n=CONFIG.data.length,maxV=Math.max(...CONFIG.data.map(d=>d.value));
+  CONFIG.data.forEach((d,i)=>{const row=document.createElement("div");row.className="row";
+    row.style.top=(i/n*100)+"%";row.style.height=(100/n)+"%";
+    row.innerHTML=`<div class="rlabel">${d.label}</div>
+      <div class="rtrack"><div class="rline"></div>
+      <div class="rbar${d.hl?" hl":""}"></div>
+      <div class="rval${d.hl?" hl":""}">0${CONFIG.unit}</div></div>`;
+    ch.appendChild(row);});
+  const T=CONFIG.timing;
+  cue(T.start-.7,"氣音：標題浮現");
+  setTimeout(()=>$("#eyebrow").classList.add("on"),(T.start-.9)*1000);
+  setTimeout(()=>$("#title").classList.add("on"),(T.start-.7)*1000);
+  document.querySelectorAll(".meta").forEach(m=>setTimeout(()=>m.classList.add("on"),(T.start-.5)*1000));
+  [...ch.children].forEach((row,i)=>{const d=CONFIG.data[i];
+    cue(T.start+i*T.stagger,"細 tick：bar "+(i+1));
+    if(d.hl)cue(T.start+i*T.stagger+1,"柔和 chime：亮點 pulse");
+    setTimeout(()=>{row.querySelector(".rlabel").style.opacity=1;
+      const bar=row.querySelector(".rbar"),val=row.querySelector(".rval");
+      const wpct=d.value/maxV*80;
+      bar.style.transition="width 1s cubic-bezier(.25,.8,.25,1)";
+      requestAnimationFrame(()=>bar.style.width=wpct+"%");
+      val.style.left=`calc(${wpct}% + 26px)`;val.style.opacity=1;
+      count(val,d.value,1000);
+      if(d.hl){setTimeout(()=>{bar.classList.add("pulse");
+        if(d.note){const b=row.getBoundingClientRect(),ch2=ch.getBoundingClientRect();
+          const note=$("#note");note.querySelector(".txt").textContent=d.note;
+          note.style.left=(CONFIG.orientation==="portrait"?120:330)+"px";
+          note.style.top="auto";
+          note.style.bottom=(CONFIG.orientation==="portrait"?430:150)+"px";
+          setTimeout(()=>note.classList.add("on"),300);}
+      },1000);}
+    },(T.start+i*T.stagger)*1000);});
+  setTimeout(()=>$("#source").classList.add("on"),
+    (T.start+n*CONFIG.timing.stagger+1.4)*1000);});
+</script>
+</body>
+</html>

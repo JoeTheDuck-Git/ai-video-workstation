@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>Tacky Templates — 風格總覽 Style Gallery</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600&family=Noto+Sans+TC:wght@500;900&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#101114;color:#f2f3f5;font-family:'Noto Sans TC',sans-serif;
+    padding:48px 56px 80px}
+  h1{font-weight:900;font-size:40px;margin-bottom:6px}
+  p.sub{color:#8a8f98;font-size:19px;margin-bottom:40px;font-family:'Inter','Noto Sans TC'}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(560px,1fr));gap:36px}
+  .tile{background:#17181c;border-radius:10px;overflow:hidden;
+    border:1px solid #26282c}
+  .frame{position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;background:#000}
+  .frame iframe{position:absolute;top:0;left:0;width:1920px;height:1080px;
+    border:0;transform-origin:top left;pointer-events:none}
+  .label{display:flex;align-items:baseline;gap:14px;padding:16px 20px}
+  .label .num{font-family:'Inter';font-weight:600;color:#5b82ff;font-size:22px}
+  .label .name{font-weight:900;font-size:22px}
+  .label .desc{color:#8a8f98;font-size:16px;margin-left:auto;text-align:right}
+  .hint{margin-top:44px;color:#8a8f98;font-size:17px;line-height:1.9;
+    border-top:1px solid #26282c;padding-top:24px}
+  .hint b{color:#f2f3f5}
+</style>
+</head>
+<body>
+<h1>風格總覽 Style Gallery</h1>
+<p class="sub">每一格都是現場播放的動畫 — 看上哪一個，直接告訴 AI 助手編號（重新整理可重看）</p>
+<div class="grid" id="grid"></div>
+<div class="hint">
+  怎麼選：跟 AI 助手說「我要 <b>1 號的剪報卡</b>」或「<b>2 號深色</b>」就行。<br>
+  你的選擇會被記住（broll-profile.md），之後不用再選 — 想換風格隨時說。<br>
+  每種風格都有多種卡片（文字／數據／剪報／解釋板／步驟…），AI 助手會依你貼的內容自動挑卡片。
+</div>
+<script>
+const TILES=[
+  ["templates/vox.html","01","Vox 紀錄片・文字卡","手繪圈註＋鏡頭推進"],
+  ["templates/vox_chart.html","01","Vox 紀錄片・數據卡","動態長條＋數字跳動"],
+  ["templates/vox_news.html","01","Vox 紀錄片・剪報卡","報紙拼貼＋推鏡失焦"],
+  ["templates/vox_board.html","01","Vox 紀錄片・解釋板","紅線串證據"],
+  ["templates/pop.html","03","Pop Art 普普・文字卡","爆炸框＋對話泡＋網點"],
+  ["templates/pop_strip.html","03","Pop Art 普普・分格卡","三格漫畫＋反轉爆點"],
+  ["templates/pop_chart.html","03","Pop Art 普普・數據卡","漫畫長條＋爆炸數字"],
+  ["templates/pastel.html","05","Pastel Code 粉彩程式・文字卡","粉彩＋程式感＋✳"],
+  ["templates/pastel_steps.html","05","Pastel Code 粉彩程式・步驟卡","終端機指令逐行執行"],
+  ["templates/pastel_log.html","05","Pastel Code 粉彩程式・紀錄卡","git 成長時間軸"],
+  ["templates/vhs.html","04","VHS 錄影帶・文字卡","CRT＋追蹤故障＋靜電吃字"],
+  ["templates/vhs_log.html","04","VHS 錄影帶・日誌卡","磁帶索引＋轉捩點鎖定"],
+  ["templates/vhs_chart.html","04","VHS 錄影帶・訊號表","LED 燈條＋爆表警告"],
+  ["templates/darkterm.html","06","Dark Terminal 深夜終端・文字卡","指令敘事＋backspace 刪除"],
+  ["templates/darkterm_top.html","06","Dark Terminal 深夜終端・監控卡","htop 燈條逐格填滿"],
+  ["templates/darkterm_status.html","06","Dark Terminal 深夜終端・狀態卡","git status 人生進度"],
+  ["templates/editorial.html","07","Editorial 雜誌・文字卡","時尚內頁＋斜體放大關鍵字"],
+  ["templates/editorial_quote.html","07","Editorial 雜誌・引言卡","巨型引號＋署名"],
+  ["templates/editorial_contents.html","07","Editorial 雜誌・目錄卡","目錄式清單＋本期主打"],
+  ["templates/neon.html","08","Neon 霓虹・文字卡","霓虹燈管＋故障熄滅"],
+  ["templates/neon_menu.html","08","Neon 霓虹・菜單卡","深夜食堂菜單＋本日特餐"],
+  ["templates/neon_score.html","08","Neon 霓虹・計分板","燈管數字滾動＋粉紅紀錄"],
+  ["templates/glass.html","09","Liquid Glass 液態玻璃・文字卡","玻璃面板＋結霜刪除＋放大膠囊"],
+  ["templates/glass_widgets.html","09","Liquid Glass 液態玻璃・小工具卡","玻璃小工具＋數字滾動"],
+  ["templates/glass_notif.html","09","Liquid Glass 液態玻璃・通知卡","通知橫幅＋置頂爆點"],
+  ["templates/flap.html","10","Split-flap 翻牌看板・文字卡","翻牌嗒嗒＋琥珀鎖定＋紅色取消"],
+  ["templates/flap_board.html","10","Split-flap 翻牌看板・時刻表卡","班次時刻表＋登機中"],
+  ["templates/flap_stats.html","10","Split-flap 翻牌看板・數字卡","翻牌數字＋琥珀紀錄"],
+  ["templates/minimal.html","02","Minimal 極簡・文字卡","一個重點色，極靜"],
+  ["templates/minimal_chart.html","02","Minimal 極簡・數據卡","細長條＋脈衝亮點"],
+  ["templates/minimal_steps.html","02","Minimal 極簡・步驟卡","框架逐條浮現"] 
+];
+const grid=document.getElementById("grid");
+TILES.forEach(([src,num,name,desc])=>{
+  const t=document.createElement("div");t.className="tile";
+  t.innerHTML=`<div class="frame"><iframe src="${src}" scrolling="no"></iframe></div>
+    <div class="label"><span class="num">${num}</span><span class="name">${name}</span>
+    <span class="desc">${desc}</span></div>`;
+  grid.appendChild(t);});
+function scaleFrames(){document.querySelectorAll(".frame").forEach(f=>{
+  const s=f.clientWidth/1920;
+  f.querySelector("iframe").style.transform=`scale(${s})`;});}
+addEventListener("resize",scaleFrames);
+requestAnimationFrame(scaleFrames);
+</script>
+</body>
+</html>

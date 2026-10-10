@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>Pop Art 普普・文字卡 — Tacky Templates</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Noto+Sans+TC:wght@700;900&display=swap" rel="stylesheet">
+<style>
+  :root{--cream:#fdf3dc;--red:#e2262b;--yellow:#ffd400;--blue:#1c6fd6;
+        --black:#17120e;--cyan:#37b6e2;--pink:#f4a9c4}
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:100%;height:100%;background:#111;overflow:hidden}
+  #fit{position:absolute}
+  #stage{position:relative;overflow:hidden;background:var(--cream);
+    border:14px solid var(--black)}
+  .landscape #stage{width:1920px;height:1080px}
+  .portrait  #stage{width:1080px;height:1920px}
+  #camera{position:absolute;inset:0;will-change:transform}
+  #camera.shake{animation:shake .3s linear}
+  @keyframes shake{0%{transform:translate(0,0) rotate(0)}20%{transform:translate(-14px,8px) rotate(-.5deg)}
+    40%{transform:translate(11px,-7px) rotate(.4deg)}60%{transform:translate(-7px,5px) rotate(-.25deg)}
+    80%{transform:translate(4px,-3px) rotate(.15deg)}100%{transform:translate(0,0) rotate(0)}}
+
+  /* ---------- Ben-Day dot world ---------- */
+  #dotsA{position:absolute;inset:0;background-image:
+    radial-gradient(var(--cyan) 4.5px, transparent 5px);background-size:34px 34px;
+    opacity:.28;animation:dotDrift 16s linear infinite}
+  @keyframes dotDrift{to{background-position:34px 34px}}
+  #wedge{position:absolute;inset:0;background:var(--yellow);
+    clip-path:polygon(0 0, 46% 0, 26% 100%, 0 100%)}
+  #wedgeDots{position:absolute;inset:0;background-image:
+    radial-gradient(var(--red) 5px, transparent 5.5px);background-size:30px 30px;
+    opacity:.35;clip-path:polygon(0 0, 46% 0, 26% 100%, 0 100%)}
+  #rays{position:absolute;inset:-30%;opacity:0;background:repeating-conic-gradient(
+    from 0deg, var(--yellow) 0deg 9deg, transparent 9deg 18deg);
+    transform-origin:var(--rx,72%) var(--ry,40%)}
+  #rays.on{opacity:.5;animation:raySpin 14s linear infinite}
+  @keyframes raySpin{to{transform:rotate(360deg)}}
+
+  /* ---------- headline: fat outline + CMYK misprint ---------- */
+  #headWrap{position:absolute;z-index:4;left:0;right:0;display:flex;
+    flex-direction:column;align-items:center;gap:.06em}
+  .landscape #headWrap{top:50%;transform:translateY(-52%)}
+  .portrait  #headWrap{top:50%;transform:translateY(-54%)}
+  .hline{display:flex;align-items:baseline;white-space:nowrap}
+  .hline.keyline{margin:.3em 0 .1em}   /* reserved air for the burst spikes */
+  .word{font-family:'Noto Sans TC',sans-serif;font-weight:900;color:var(--black);
+    display:inline-block;opacity:0;padding:0 .04em;position:relative;
+    /* NO -webkit-text-stroke on CJK — it outlines internal contours and shatters glyphs */
+    text-shadow:5px 5px 0 var(--red), -3px -3px 0 var(--cyan)}
+  .landscape .word{font-size:148px;line-height:1.2}
+  .portrait  .word{font-size:114px;line-height:1.24}
+  .word.on{animation:pop .46s cubic-bezier(.2,1.6,.35,1) forwards}
+  @keyframes pop{0%{opacity:0;transform:scale(.2) rotate(var(--tilt,0deg))}
+    55%{opacity:1;transform:scale(1.16,.86) rotate(0)}      /* squash on impact */
+    74%{transform:scale(.95,1.08)}                          /* stretch back */
+    88%{transform:scale(1.025,.985)}
+    100%{opacity:1;transform:scale(1,1) rotate(0)}}
+  /* rejected word: fat red X slapped over it */
+  .word .xmark{position:absolute;inset:-6% -4%;pointer-events:none}
+  .word .xmark line{stroke:var(--red);stroke-width:14;stroke-linecap:round;
+    stroke-dasharray:var(--len);stroke-dashoffset:var(--len)}
+  .word .xmark line.go{transition:stroke-dashoffset .18s cubic-bezier(.4,0,.8,1)}
+
+  /* ---------- starburst key word ---------- */
+  #burstWrap{position:absolute;z-index:5;opacity:0;transform:scale(.1) rotate(-18deg)}
+  #burstWrap.on{animation:burstIn .5s cubic-bezier(.2,1.7,.4,1) forwards}
+  @keyframes burstIn{0%{opacity:0;transform:scale(.1) rotate(-18deg)}
+    65%{opacity:1;transform:scale(1.12) rotate(3deg)}
+    100%{opacity:1;transform:scale(1) rotate(-2deg)}}
+  #burstWrap svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+  #burstWrap .btxt{position:relative;z-index:2;font-family:'Noto Sans TC';font-weight:900;
+    color:#fff;white-space:nowrap;display:block;text-align:center}
+
+  /* ---------- speech-bubble tag ---------- */
+  #bubble{position:absolute;z-index:6;background:#fff;border:7px solid var(--black);
+    border-radius:36px;padding:20px 38px;opacity:0;transform:scale(.3);
+    font-family:'Noto Sans TC';font-weight:900;color:var(--black);white-space:nowrap;
+    box-shadow:8px 8px 0 rgba(23,18,14,.85)}
+  .landscape #bubble{font-size:44px}.portrait #bubble{font-size:38px}
+  #bubble.on{animation:bubbleIn .45s cubic-bezier(.2,1.8,.4,1) forwards}
+  @keyframes bubbleIn{0%{opacity:0;transform:scale(.3) rotate(6deg)}
+    70%{opacity:1;transform:scale(1.08) rotate(-2deg)}
+    100%{opacity:1;transform:scale(1) rotate(0deg)}}
+  #bubble .tail{position:absolute;width:46px;height:46px;background:#fff;
+    border-right:7px solid var(--black);border-bottom:7px solid var(--black);
+    transform:rotate(35deg);bottom:-27px;right:60px}
+
+  /* ---------- onomatopoeia burst (corner) ---------- */
+  #pow{position:absolute;z-index:6;opacity:0;transform:scale(.2) rotate(14deg)}
+  .landscape #pow{top:96px;right:120px;width:300px;height:300px}
+  .portrait  #pow{top:110px;right:56px;width:230px;height:230px}
+  #pow.on{animation:powIn .4s cubic-bezier(.2,1.9,.4,1) forwards}
+  @keyframes powIn{0%{opacity:0;transform:scale(.2) rotate(14deg)}
+    65%{opacity:1;transform:scale(1.15) rotate(-4deg)}
+    100%{opacity:1;transform:scale(1) rotate(8deg)}}
+  #pow svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+  #pow .ptxt{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-family:'Archivo Black','Noto Sans TC',sans-serif;font-weight:900;font-size:64px;
+    color:var(--black);transform:rotate(-6deg)}
+
+  /* ---------- comic strips / furniture ---------- */
+  #stripes{position:absolute;left:0;right:0;height:26px;bottom:0;background:
+    repeating-linear-gradient(-45deg, var(--black) 0 26px, var(--yellow) 26px 52px)}
+  #kicker{position:absolute;z-index:4;left:50%;transform:translateX(-50%) rotate(-2deg);
+    background:var(--blue);color:#fff;font-family:'Noto Sans TC';font-weight:900;
+    padding:10px 34px;font-size:34px;letter-spacing:.14em;opacity:0;
+    border:6px solid var(--black);box-shadow:7px 7px 0 rgba(23,18,14,.85)}
+  .landscape #kicker{top:104px}.portrait #kicker{top:290px}
+  #kicker.on{animation:kickIn .42s cubic-bezier(.2,1.7,.35,1) forwards}
+  @keyframes kickIn{0%{opacity:0;transform:translateX(-50%) scale(.2) rotate(-2deg)}
+    58%{opacity:1;transform:translateX(-50%) scale(1.12,.9) rotate(-2deg)}
+    78%{transform:translateX(-50%) scale(.96,1.05) rotate(-2deg)}
+    100%{opacity:1;transform:translateX(-50%) scale(1) rotate(-2deg)}}
+
+  #flash{position:absolute;inset:0;z-index:9;opacity:0;pointer-events:none}
+  #flash.go{animation:flashGo .14s steps(2,end)}
+  @keyframes flashGo{0%{opacity:.9}100%{opacity:0}}
+  #cd{position:absolute;inset:0;z-index:20;display:none;align-items:center;justify-content:center;background:var(--cream)}
+  #cd span{font-family:'Archivo Black';font-size:340px;color:var(--black);
+    text-shadow:10px 10px 0 var(--red)}
+  #cues{position:absolute;right:24px;top:24px;z-index:21;display:none;background:rgba(23,18,14,.94);
+    color:#fdf3dc;font-family:monospace;font-size:15px;line-height:1.75;
+    padding:14px 18px;max-height:70%;overflow:auto}
+  .floaty{opacity:1 !important;animation:floaty 3.4s ease-in-out .1s infinite !important}
+  @keyframes floaty{0%,100%{transform:scale(1) rotate(0)}50%{transform:scale(1.015) rotate(1.2deg)}}
+  #burstWrap .btxt .ch{display:inline-block;opacity:0;transform:scale(.3) rotate(-9deg)}
+  #burstWrap .btxt .ch.chon{opacity:1;transform:none;
+    transition:all .26s cubic-bezier(.2,1.8,.4,1)}
+  /* O = outro: comic pop-out */
+  .outro #camera{animation:outPop .5s cubic-bezier(.55,-.25,.85,.5) forwards}
+  @keyframes outPop{25%{transform:scale(1.05) rotate(1deg)}100%{transform:scale(0) rotate(-9deg);opacity:0}}
+</style>
+</head>
+<body>
+<div id="fit"><div id="stage">
+  <div id="camera">
+    <div id="dotsA"></div><div id="rays"></div>
+    <div id="wedge"></div><div id="wedgeDots"></div>
+    <div id="kicker"></div>
+    <div id="headWrap"></div>
+    <div id="burstWrap"><svg viewBox="0 0 100 100" preserveAspectRatio="none"></svg>
+      <span class="btxt"></span></div>
+    <div id="bubble"><span></span><div class="tail"></div></div>
+    <div id="pow"><svg viewBox="0 0 100 100" preserveAspectRatio="none"></svg>
+      <div class="ptxt"></div></div>
+    <div id="stripes"></div>
+  </div>
+  <div id="flash"></div>
+</div></div>
+
+<script>
+/* ============================================================
+   CONFIG — Pop Art 普普・文字卡 (Lichtenstein comic energy).
+   Visual system: Ben-Day dots, flat primaries, fat black
+   outlines, CMYK misprint shadows, starburst key word,
+   speech-bubble tag, onomatopoeia burst. NOTHING hand-drawn.
+   word flags: key:true → the word lives INSIDE the starburst
+               x:true   → fat red ✗ slapped over it
+   ============================================================ */
+const CONFIG = {
+  orientation: "landscape",
+  kicker: "創作者生存法則",
+  lines: [
+    [ {t:"想紅"}, {t:"靠運氣", x:true} ],
+    [ {t:"靠的是"}, {t:"系統", key:true} ]
+  ],
+  bubble: "每天都能拍的那種",     // speech-bubble tag (points at the burst)
+  pow: "砰！",                    // onomatopoeia burst top-right, 2-3 chars
+  timing: { start: 0.9, stagger: 0.3 },
+  flashColor: "yellow",           // "yellow" | "red" | "white"
+  accent: ""                      // override --red if a brand needs it
+};
+/* ============================================================ */
+const $=q=>document.querySelector(q);
+const stagePx=()=>CONFIG.orientation==="portrait"?[1080,1920]:[1920,1080];
+document.body.parentElement.className=CONFIG.orientation;
+if(CONFIG.accent) document.documentElement.style.setProperty("--red",CONFIG.accent);
+function fit(){const[W,H]=stagePx();const s=Math.min(innerWidth/W,innerHeight/H);
+  $("#fit").style.cssText=`position:absolute;left:50%;top:50%;width:${W}px;height:${H}px;`+
+  `transform:translate(-50%,-50%) scale(${s});`;}
+addEventListener("resize",fit);fit();
+
+const CUES=[];const cue=(t,l)=>CUES.push([t,l]);
+(function(){const st=document.getElementById("stage");
+ const cd=document.createElement("div");cd.id="cd";cd.innerHTML="<span></span>";st.appendChild(cd);
+ const cp=document.createElement("div");cp.id="cues";st.appendChild(cp);
+ addEventListener("keydown",e=>{
+  if(e.key==="r"||e.key==="R"){let n=3;cd.style.display="flex";
+    const s=cd.querySelector("span");s.textContent=n;
+    const iv=setInterval(()=>{n--;if(n<1){clearInterval(iv);location.reload();}else s.textContent=n;},700);}
+  if(e.key==="o"||e.key==="O"){document.getElementById("stage").classList.add("outro");}
+  if(e.key==="s"||e.key==="S"){
+    cp.innerHTML="<b>SFX CUE SHEET（秒）</b><br>"+CUES.slice().sort((a,b)=>a[0]-b[0])
+      .map(c=>c[0].toFixed(2)+"s — "+c[1]).join("<br>");
+    cp.style.display=cp.style.display==="block"?"none":"block";}});})();
+
+/* starburst path generator (spiky polygon) */
+function burstPath(spikes,inner,outer){const pts=[];
+  for(let i=0;i<spikes*2;i++){const a=i/(spikes*2)*Math.PI*2-Math.PI/2;
+    const r=(i%2===0?outer:inner)*(0.96+Math.random()*.07);
+    pts.push((50+Math.cos(a)*r).toFixed(2)+","+(50+Math.sin(a)*r).toFixed(2));}
+  return "M"+pts.join(" L")+" Z";}
+function fillBurst(svgEl,fill,stroke,spikes,inner,outer){
+  const p=document.createElementNS("http://www.w3.org/2000/svg","path");
+  p.setAttribute("d",burstPath(spikes,inner,outer));
+  p.setAttribute("fill",fill);p.setAttribute("stroke",stroke);
+  p.setAttribute("stroke-width",3);p.setAttribute("vector-effect","non-scaling-stroke");
+  p.setAttribute("stroke-linejoin","round");svgEl.appendChild(p);}
+
+/* build headline */
+const wrap=$("#headWrap");const wordEls=[];let keyWord=null;
+CONFIG.lines.forEach(line=>{const div=document.createElement("div");div.className="hline";
+  line.forEach(w=>{
+    if(w.key){keyWord=w;const ph=document.createElement("span");ph.className="word keyslot";
+      ph.textContent=w.t;ph.style.visibility="hidden";ph.style.padding="0 .42em";
+      div.classList.add("keyline");
+      ph._flags=w;div.appendChild(ph);
+      wordEls.push(ph);return;}
+    const s=document.createElement("span");s.className="word";s.textContent=w.t;
+    s.style.setProperty("--tilt",(Math.random()*6-3).toFixed(2)+"deg");
+    s._flags=w;div.appendChild(s);wordEls.push(s);});
+  wrap.appendChild(div);});
+$("#kicker").textContent=CONFIG.kicker;
+$("#bubble span").textContent=CONFIG.bubble;
+$("#pow .ptxt").textContent=CONFIG.pow;
+fillBurst($("#pow svg"),"var(--yellow)","var(--black)",12,30,48);
+const flashColors={yellow:"var(--yellow)",red:"var(--red)",white:"#fff"};
+function flash(){const f=$("#flash");f.style.background=flashColors[CONFIG.flashColor]||"#fff";
+  f.classList.remove("go");void f.offsetWidth;f.classList.add("go");}
+function shake(){const c=$("#camera");c.classList.remove("shake");void c.offsetWidth;
+  c.classList.add("shake");}
+
+/* red X over rejected word */
+function slapX(el){const NS="http://www.w3.org/2000/svg";
+  const svg=document.createElementNS(NS,"svg");svg.setAttribute("class","xmark");
+  const r=el.getBoundingClientRect();
+  svg.setAttribute("viewBox","0 0 100 100");svg.setAttribute("preserveAspectRatio","none");
+  const mk=(x1,y1,x2,y2)=>{const l=document.createElementNS(NS,"line");
+    l.setAttribute("x1",x1);l.setAttribute("y1",y1);l.setAttribute("x2",x2);l.setAttribute("y2",y2);
+    l.setAttribute("vector-effect","non-scaling-stroke");
+    const len=140;l.style.setProperty("--len",len);l.style.strokeDasharray=len;
+    l.style.strokeDashoffset=len;return l;};
+  const a=mk(8,10,92,90),b=mk(92,10,8,90);
+  svg.append(a,b);el.appendChild(svg);
+  requestAnimationFrame(()=>{a.classList.add("go");a.style.strokeDashoffset=0;
+    setTimeout(()=>{b.classList.add("go");b.style.strokeDashoffset=0;},140);});}
+
+/* place burst around the key word slot — TEXT-FIRST sizing:
+   fit the font, measure the real text, wrap the burst around it with
+   guaranteed margin, and never exceed the whitespace the layout reserved. */
+function placeBurst(){const slot=document.querySelector(".keyslot");if(!slot)return;
+  const st=$("#stage").getBoundingClientRect(),[W,H]=stagePx();
+  const r=slot.getBoundingClientRect();const k=W/st.width;
+  const w=$("#burstWrap");
+  const t=w.querySelector(".btxt");
+  t.innerHTML=[...keyWord.t].map(c=>`<span class="ch">${c==" "?"&nbsp;":c}</span>`).join("");
+  let fs=r.height*k*.82;                       // slightly smaller than the slot text
+  t.style.fontSize=fs+"px";
+  let tw=t.scrollWidth;                        // real rendered text width
+  const bw=tw*1.34+fs*.5,                      // burst hugs the TEXT, not the slot
+        bh=r.height*k*1.36;
+  const bx=(r.left-st.left)*k+r.width*k/2-bw/2, by=(r.top-st.top)*k+r.height*k/2-bh/2;
+  w.style.cssText+=`left:${bx}px;top:${by}px;width:${bw}px;height:${bh}px`;
+  fillBurst(w.querySelector("svg"),"var(--red)","var(--black)",14,37,48);  // fatter body
+  t.style.lineHeight=bh+"px";
+  // silhouette outline via stacked shadows (CJK-safe), plus a hard comic drop
+  const B="var(--black)";
+  t.style.textShadow=`3px 0 0 ${B},-3px 0 0 ${B},0 3px 0 ${B},0 -3px 0 ${B},`+
+    `2.5px 2.5px 0 ${B},-2.5px -2.5px 0 ${B},2.5px -2.5px 0 ${B},-2.5px 2.5px 0 ${B},`+
+    `7px 7px 0 ${B}`;
+  // rays center on the burst
+  document.documentElement.style.setProperty("--rx",((bx+bw/2)/W*100)+"%");
+  document.documentElement.style.setProperty("--ry",((by+bh/2)/H*100)+"%");
+  // bubble sits below-left of burst
+  const bub=$("#bubble");
+  const bubX=Math.max(90,Math.min(bx-140,W-800)), bubY=Math.min(by+bh+60,H-240);
+  bub.style.left=bubX+"px";bub.style.top=bubY+"px";}
+
+/* timeline */
+document.fonts.ready.then(()=>{fit();
+  const T=CONFIG.timing;let t=T.start;
+  cue(t-.5,"彈簧 boing：kicker 彈入");
+  setTimeout(()=>$("#kicker").classList.add("on"),(t-.5)*1000);
+  wordEls.forEach((el)=>{
+    const f=el._flags;
+    if(f.key){t+=T.stagger*.6;
+      cue(t,"重擊 POW：爆炸框轉入 + 全畫面色閃 + 震動");
+      setTimeout(()=>{placeBurst();               // measure NOW — layout is final (Safari-safe)
+        $("#burstWrap").classList.add("on");$("#rays").classList.add("on");
+        flash();shake();
+        document.querySelectorAll("#burstWrap .ch").forEach((c,ci)=>
+          setTimeout(()=>c.classList.add("chon"),160+ci*75));},t*1000);
+      t+=T.stagger*1.5;return;}
+    cue(t,"啵 pop：字彈入");
+    if(f.x)cue(t+.35,"唰唰：紅色大 ✗");
+    setTimeout(()=>{el.classList.add("on");
+      if(f.x)setTimeout(()=>slapX(el),350);},t*1000);
+    t+=T.stagger;});
+  cue(t+.25,"啵嗯 boing：對話泡");
+  setTimeout(()=>{$("#bubble").classList.add("on");
+    setTimeout(()=>$("#bubble").classList.add("floaty"),650);},(t+.25)*1000);
+  cue(t+.7,"砰！onomatopoeia burst + 震動");
+  setTimeout(()=>{$("#pow").classList.add("on");shake();
+    setTimeout(()=>$("#pow").classList.add("floaty"),600);},(t+.7)*1000);});
+</script>
+</body>
+</html>

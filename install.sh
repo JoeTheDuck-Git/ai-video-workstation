@@ -5,41 +5,35 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 STATE_DIR="${HOME}/.local/share/ai-video-workstation"
 LOCAL_BIN="${HOME}/.local/bin"
 NODE_LINK="${STATE_DIR}/node22-current"
+PYTHON_VENV="${STATE_DIR}/python-venv"
 ALL_HYPERFRAMES_SKILLS=0
-IRENE_SOURCE=""
-IRENE_STAGE2_SOURCE=""
+INSTALL_CODEX=1
+INSTALL_CLAUDE=1
+INSTALL_TARGET_MODE="both"
 
 log() { printf '\n==> %s\n' "$*"; }
 die() { printf '\nERROR: %s\n' "$*" >&2; exit 1; }
 
 usage() {
   cat <<'EOF'
-Usage: ./install.sh [--all-hyperframes-skills] [--irene-source PATH] [--irene-stage2-source PATH]
+Usage: ./install.sh [--all-hyperframes-skills] [--codex-only|--claude-only]
 
   --all-hyperframes-skills  Install every published HyperFrames skill.
                             The default installs/updates the core set.
-  --irene-source PATH       Import footage-sifter, caption-doctor, and
-                            subtitle-translator from a locally owned
-                            hello-irene-codex package.
-  --irene-stage2-source PATH
-                            Import beat-cut-editor plus its core dependencies
-                            from a locally owned hello-irene-codex package.
+  --codex-only              Install bundled Skills only for Codex.
+  --claude-only             Install bundled Skills only for Claude Code.
 EOF
 }
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --all-hyperframes-skills) ALL_HYPERFRAMES_SKILLS=1; shift ;;
-    --irene-source)
-      [[ $# -ge 2 ]] || die "--irene-source requires a directory path."
-      IRENE_SOURCE="$2"
-      shift 2
-      ;;
-    --irene-stage2-source)
-      [[ $# -ge 2 ]] || die "--irene-stage2-source requires a directory path."
-      IRENE_STAGE2_SOURCE="$2"
-      shift 2
-      ;;
+    --codex-only)
+      [[ "$INSTALL_TARGET_MODE" != "claude" ]] || die "--codex-only and --claude-only cannot be combined."
+      INSTALL_TARGET_MODE="codex"; INSTALL_CODEX=1; INSTALL_CLAUDE=0; shift ;;
+    --claude-only)
+      [[ "$INSTALL_TARGET_MODE" != "codex" ]] || die "--codex-only and --claude-only cannot be combined."
+      INSTALL_TARGET_MODE="claude"; INSTALL_CODEX=0; INSTALL_CLAUDE=1; shift ;;
     -h|--help) usage; exit 0 ;;
     *) die "Unknown option: ${1}" ;;
   esac
@@ -143,6 +137,33 @@ install_ffmpeg() {
   fi
 }
 
+install_python_tools() {
+  if ! command -v python3 >/dev/null 2>&1 || ! python3 -m venv --help >/dev/null 2>&1; then
+    log "Installing Python 3 and venv support"
+    if [[ "$NODE_PLATFORM" == "darwin" ]]; then
+      command -v brew >/dev/null 2>&1 || die "Homebrew is required to install Python on macOS. Install it from https://brew.sh and rerun this script."
+      brew install python@3.12
+    elif command -v apt-get >/dev/null 2>&1; then
+      sudo apt-get update
+      sudo apt-get install -y python3 python3-venv
+    elif command -v dnf >/dev/null 2>&1; then
+      sudo dnf install -y python3
+    elif command -v pacman >/dev/null 2>&1; then
+      sudo pacman -S --needed python
+    else
+      die "No supported package manager was found. Install Python 3 with venv support, then rerun."
+    fi
+  fi
+  command -v python3 >/dev/null 2>&1 || die "Python 3 is required."
+  if [[ ! -x "${PYTHON_VENV}/bin/python3" ]]; then
+    log "Creating the isolated AI Video Workstation Python environment"
+    python3 -m venv "$PYTHON_VENV"
+  fi
+  log "Installing subtitle dependencies"
+  "${PYTHON_VENV}/bin/python3" -m pip install --disable-pip-version-check \
+    'opencc-python-reimplemented>=0.1.7' 'jieba>=0.42'
+}
+
 install_hyperframes() {
   log "Installing HyperFrames CLI"
   npm install -g --prefix "$HOME/.local" hyperframes@latest
@@ -154,16 +175,6 @@ install_hyperframes() {
     log "Installing/updating the HyperFrames core skill set"
     hyperframes skills update
   fi
-}
-
-install_dreamina() {
-  log "Downloading and running the official Dreamina Canvas installer"
-  local temp_script
-  temp_script="$(mktemp "${TMPDIR:-/tmp}/dreamina-canvas-install.XXXXXX.sh")"
-  curl -fsSL "https://jimeng.jianying.com/canvas-cli/install.sh" -o "$temp_script"
-  bash "$temp_script"
-  rm -f "$temp_script"
-  hash -r
 }
 
 install_canvas_video() {
@@ -179,13 +190,32 @@ install_canvas_video() {
 }
 
 install_bundled_skills() {
-  log "Installing bundled Codex skills"
-  local skill_name destination
-  for skill_name in video-delivery-qc canvas-video-pipeline; do
-    destination="${CODEX_HOME:-${HOME}/.codex}/skills/${skill_name}"
-    mkdir -p "$destination"
-    cp -R "${ROOT_DIR}/skills/${skill_name}/." "$destination/"
-    find "$destination" -type d -name __pycache__ -prune -exec rm -rf {} +
+  local skill_name destination skills_root agent_name tacky_engine
+  local -a targets=()
+  [[ "$INSTALL_CODEX" -eq 1 ]] && targets+=("Codex|${CODEX_HOME:-${HOME}/.codex}/skills")
+  [[ "$INSTALL_CLAUDE" -eq 1 ]] && targets+=("Claude Code|${CLAUDE_HOME:-${HOME}/.claude}/skills")
+
+  for target in "${targets[@]}"; do
+    agent_name="${target%%|*}"
+    skills_root="${target#*|}"
+    log "Installing bundled Skills for ${agent_name}"
+    mkdir -p "$skills_root"
+    for skill_name in video-delivery-qc canvas-video-pipeline footage-sifter caption-doctor subtitle-translator; do
+      destination="${skills_root}/${skill_name}"
+      mkdir -p "$destination"
+      cp -R "${ROOT_DIR}/skills/${skill_name}/." "$destination/"
+      find "$destination" -type d -name __pycache__ -prune -exec rm -rf {} +
+    done
+
+    tacky_engine="${skills_root}/canvas-video-pipeline/assets/tacky-templates/engine"
+    if [[ -f "${tacky_engine}/package-lock.json" ]]; then
+      log "Preparing the isolated Tacky Templates renderer for ${agent_name}"
+      (
+        cd "$tacky_engine"
+        npm ci --no-audit --no-fund
+        ./node_modules/.bin/playwright-core install chromium
+      )
+    fi
   done
 }
 
@@ -194,28 +224,23 @@ configure_path
 node --version
 npm --version
 install_ffmpeg
+install_python_tools
 install_hyperframes
-install_dreamina
 install_canvas_video
 install_bundled_skills
-if [[ -n "$IRENE_SOURCE" ]]; then
-  log "Importing selected Irene capability skills"
-  "${ROOT_DIR}/scripts/import-irene-skills.sh" "$IRENE_SOURCE"
-fi
-if [[ -n "$IRENE_STAGE2_SOURCE" ]]; then
-  log "Importing Irene stage-two beat editing Skill"
-  "${ROOT_DIR}/scripts/import-irene-stage2.sh" "$IRENE_STAGE2_SOURCE"
-fi
 
 log "Running availability checks"
-"${ROOT_DIR}/scripts/verify.sh"
+VERIFY_ARGS=()
+[[ "$INSTALL_CODEX" -eq 1 && "$INSTALL_CLAUDE" -eq 0 ]] && VERIFY_ARGS+=(--codex-only)
+[[ "$INSTALL_CODEX" -eq 0 && "$INSTALL_CLAUDE" -eq 1 ]] && VERIFY_ARGS+=(--claude-only)
+"${ROOT_DIR}/scripts/verify.sh" "${VERIFY_ARGS[@]}"
 
 cat <<'EOF'
 
 Installation finished.
 
 Next:
-  1. Open a new terminal, or reload your shell profile.
-  2. Run ./scripts/login.sh to authorize Dreamina Canvas.
-  3. Run ./scripts/verify.sh again to confirm the login state.
+  1. Open a new terminal, or reload your shell profile, then restart the installed AI coding app(s).
+  2. Run ./scripts/verify.sh to check the local video toolchain.
+  3. Optional: run ./scripts/login.sh only if you need HyperFrames / HeyGen cloud features.
 EOF

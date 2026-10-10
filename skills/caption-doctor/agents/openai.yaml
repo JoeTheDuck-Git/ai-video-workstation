@@ -1,0 +1,4 @@
+interface:
+  display_name: "Caption Doctor 字幕醫生"
+  short_description: "校對語音辨識錯字、台灣繁中斷句、時間碼與跨軟體字幕格式"
+  default_prompt: "Use $caption-doctor to clean this SRT while preserving its timing."

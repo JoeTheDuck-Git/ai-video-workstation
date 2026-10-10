@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>Vox 紀錄片・剪報卡 — Tacky Templates</title>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Caveat:wght@700&family=LXGW+WenKai+TC:wght@700&family=Noto+Sans+TC:wght@500;700&family=Noto+Serif+TC:wght@600;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{--paper:#ece5d3;--paper2:#ddd3ba;--ink:#191510;--accent:#c94f34;
+        --hilite:#f5c842;--mono:#6b6252;--news:#f6f1e2;--news2:#efe7d0}
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:100%;height:100%;background:#111;overflow:hidden}
+  #fit{position:absolute}
+  #stage{position:relative;overflow:hidden;background:var(--paper)}
+  .landscape #stage{width:1920px;height:1080px}
+  .portrait  #stage{width:1080px;height:1920px}
+  #camera{position:absolute;inset:0;will-change:transform}
+  .plane{position:absolute;inset:-70px;will-change:transform}
+  #plane-fg{inset:0 !important}
+  #plane-bg{z-index:1}#plane-mid{z-index:3}#plane-fg{z-index:6;pointer-events:none}
+  #paperGrad{position:absolute;inset:0;background:
+    radial-gradient(120% 95% at 35% 25%, var(--paper) 0%, var(--paper2) 85%)}
+  #blotch{position:absolute;inset:0;opacity:.55;background:
+    radial-gradient(360px 240px at 80% 15%, rgba(140,120,80,.16), transparent 70%),
+    radial-gradient(420px 320px at 10% 85%, rgba(140,120,80,.13), transparent 70%)}
+  #vignette{position:absolute;inset:0;z-index:7;pointer-events:none;background:
+    radial-gradient(115% 100% at 50% 46%, transparent 58%, rgba(40,30,12,.3) 100%)}
+
+  #kicker{position:absolute;left:50%;transform:translateX(-50%);z-index:5;opacity:0;
+    display:flex;align-items:center;gap:24px;transition:opacity .5s}
+  .landscape #kicker{top:64px}.portrait #kicker{top:150px}
+  #kicker.on{opacity:1}
+  #kicker .txt{font-family:'Anton';font-size:32px;letter-spacing:.32em;color:var(--accent)}
+  #kicker .rule{width:96px;height:3px;background:var(--accent)}
+
+  .clip{position:absolute;background:linear-gradient(160deg,var(--news),var(--news2));
+    box-shadow:0 18px 50px rgba(30,20,5,.35), 0 4px 12px rgba(30,20,5,.22);
+    padding:34px 38px 30px;opacity:0}
+  .clip .mast{font-family:'Noto Serif TC';font-weight:900;letter-spacing:.06em;
+    border-bottom:3px double var(--ink);padding-bottom:8px;margin-bottom:6px;
+    display:flex;justify-content:space-between;align-items:baseline}
+  .clip .mast .name{font-size:34px;color:var(--ink)}
+  .clip .mast .date{font-family:'Space Mono';font-size:19px;color:var(--mono)}
+  .clip h2{font-family:'Noto Serif TC';font-weight:900;color:var(--ink);
+    font-size:46px;line-height:1.32;margin:14px 0 16px}
+  .clip h2 mark{color:inherit;position:relative;background-color:transparent;
+    background-image:linear-gradient(var(--hilite),var(--hilite));
+    background-repeat:no-repeat;background-size:0% 62%;background-position:0% 72%;
+    padding:0 .05em}
+  .clip h2 mark.swept{transition:background-size .4s cubic-bezier(.3,.7,.3,1);
+    background-size:102% 62%}
+  .clip .cols{height:92px;display:flex;gap:26px}
+  .clip .cols div{flex:1;background:
+    repeating-linear-gradient(180deg, rgba(25,21,16,.30) 0 3px, transparent 3px 13px);
+    -webkit-mask-image:linear-gradient(180deg,#000 50%,transparent);
+    mask-image:linear-gradient(180deg,#000 50%,transparent)}
+  /* first line of each column slightly bolder = newsprint feel */
+  .clip .cols div::before{content:"";display:block;height:4px;background:rgba(25,21,16,.4);margin-bottom:9px}
+  .clip .tape{position:absolute;width:150px;height:44px;background:rgba(250,244,210,.55);
+    box-shadow:0 2px 6px rgba(30,20,5,.12);-webkit-backdrop-filter:blur(1px);backdrop-filter:blur(1px)}
+  .clip.on{animation:drop .55s cubic-bezier(.2,1.25,.3,1) forwards}
+  @keyframes drop{
+    0%{opacity:0;transform:translateY(-70px) rotate(var(--rot)) scale(1.06)}
+    70%{opacity:1;transform:translateY(6px) rotate(var(--rot)) scale(.995)}
+    100%{opacity:1;transform:translateY(0) rotate(var(--rot)) scale(1)}}
+
+  #inkSvg{position:absolute;inset:0;width:100%;height:100%;z-index:5;pointer-events:none}
+  .inkStroke{fill:none;stroke:var(--accent);stroke-linecap:round;stroke-linejoin:round}
+  .hiliteStroke{stroke:var(--hilite);mix-blend-mode:multiply;opacity:.85;stroke-linecap:butt}
+  #tag{font-family:'Caveat','LXGW WenKai TC','Noto Sans TC',cursive;font-weight:700;
+    fill:var(--accent);opacity:0}
+  #tag.on{animation:tagIn .45s cubic-bezier(.2,1.5,.4,1) forwards}
+  @keyframes tagIn{from{opacity:0;transform:translateY(10px) rotate(-2deg)}to{opacity:1;transform:translateY(0) rotate(-2deg)}}
+
+  .meta{position:absolute;font-family:'Space Mono';font-size:21px;color:var(--mono);
+    letter-spacing:.08em;opacity:0;transition:opacity .6s}
+  .meta.on{opacity:.85}
+  .landscape #metaBL{bottom:52px;left:64px}.landscape #metaBR{bottom:52px;right:64px}
+  .portrait #metaBL{bottom:60px;left:52px}.portrait #metaBR{bottom:60px;right:52px}
+  #flash{position:absolute;inset:0;background:#fff;z-index:9;opacity:0;pointer-events:none}
+  #flash.go{animation:flashGo .12s steps(2,end)}
+  @keyframes flashGo{0%{opacity:.92}100%{opacity:0}}
+  #grain{position:absolute;inset:0;z-index:8;pointer-events:none;opacity:.09;mix-blend-mode:multiply}
+  #inkSvg .inkStroke{filter:url(#rough)}
+  .clip{transition:filter 1.1s ease}
+  .clip.defocus{filter:blur(3.5px) brightness(.97)}      /* focus pull onto the focus clipping */
+  .clip .nimg{width:100%;display:block;margin:12px 0 4px;
+    filter:grayscale(.25) contrast(1.05) sepia(.08)}      /* optional printed photo */
+  #cd{position:absolute;inset:0;z-index:20;display:none;align-items:center;justify-content:center;background:var(--paper)}
+  #cd span{font-family:'Anton',sans-serif;font-size:340px;color:var(--ink)}
+  #cues{position:absolute;right:24px;top:24px;z-index:21;display:none;background:rgba(20,16,10,.92);
+    color:#f4efe3;font-family:'Space Mono',monospace;font-size:15px;line-height:1.75;
+    padding:14px 18px;max-height:70%;overflow:auto}
+  /* O = outro: push through and fade (filmic) */
+  .outro #camera{transition:transform 1.1s cubic-bezier(.5,0,.8,.4),opacity 1.1s;transform:scale(1.14);opacity:0}
+  .outro #grain,.outro #vignette{transition:opacity 1.1s;opacity:0}
+</style>
+</head>
+<body>
+<div id="fit"><div id="stage">
+  <div id="camera">
+    <div class="plane" id="plane-bg"><div id="paperGrad"></div><div id="blotch"></div></div>
+    <div class="plane" id="plane-mid">
+      <div id="kicker"><div class="rule"></div><div class="txt"></div><div class="rule"></div></div>
+      <div id="board"></div>
+      <svg id="inkSvg"></svg>
+    </div>
+    <div class="plane" id="plane-fg">
+      <div class="meta" id="metaBL"></div><div class="meta" id="metaBR"></div>
+    </div>
+  </div>
+  <canvas id="grain"></canvas><div id="vignette"></div><div id="flash"></div>
+</div></div>
+
+<script>
+/* ============================================================
+   CONFIG — 剪報卡 (newspaper-cutout collage).
+   2–4 clippings; exactly ONE with focus:true — it gets the
+   highlighter + circle + tag, and the camera pushes into it.
+   ETHICS: use the user's REAL sources/headlines (paraphrase is
+   fine, invention is not). Real outlet + real date, or generic
+   masthead (「產業週報」) if the user has no source.
+   Position: x/y/w in % of stage; rot in degrees.
+   ============================================================ */
+const CONFIG = {
+  orientation: "landscape",
+  kicker: "大家都在報導",
+  clippings: [
+    {masthead:"創作者日報", date:"2025.11", rot:-3.5,
+     headline:"短影音淘金熱：人人都想當創作者",
+     x:7,  y:18, w:38},
+    {masthead:"產業週報", date:"2026.02", rot:2.2,
+     headline:"平台演算法再改版 創作者叫苦",
+     x:56, y:14, w:37},
+    {masthead:"數位觀察", date:"2026.06", rot:-1.6, focus:true,
+     headline:"九成新頻道 <mark>撐不過前六個月</mark>",
+     x:27, y:47, w:44}
+  ],
+  tag: "但你會是例外",
+  metaBL: "ARCHIVE ／ 剪報 07",
+  metaBR: "VOX ／ 紀錄片",
+  timing: { start: 0.8, stagger: 0.65 },
+  camera: { drift: 1, pushInto: 1.22 },   // final zoom INTO the focus clipping
+  accent: ""
+};
+/* ============================================================ */
+const $=q=>document.querySelector(q);
+const stagePx=()=>CONFIG.orientation==="portrait"?[1080,1920]:[1920,1080];
+document.body.parentElement.className=CONFIG.orientation;
+if(CONFIG.accent) document.documentElement.style.setProperty("--accent",CONFIG.accent);
+function fit(){const[W,H]=stagePx();const s=Math.min(innerWidth/W,innerHeight/H);
+  $("#fit").style.cssText=`position:absolute;left:50%;top:50%;width:${W}px;height:${H}px;`+
+  `transform:translate(-50%,-50%) scale(${s});`;}
+addEventListener("resize",fit);fit();
+
+/* ---- rough-ink turbulence filter + record helpers (R = 3·2·1 restart, S = SFX cues) ---- */
+document.querySelector("#inkSvg").insertAdjacentHTML("afterbegin",
+ '<defs><filter id="rough" x="-30%" y="-30%" width="160%" height="160%">'+
+ '<feTurbulence type="fractalNoise" baseFrequency="0.032" numOctaves="2" seed="8"/>'+
+ '<feDisplacementMap in="SourceGraphic" scale="7" xChannelSelector="R" yChannelSelector="G"/></filter></defs>');
+const CUES=[];const cue=(t,l)=>CUES.push([t,l]);
+(function(){const st=document.getElementById("stage");
+ const cd=document.createElement("div");cd.id="cd";cd.innerHTML="<span></span>";st.appendChild(cd);
+ const cp=document.createElement("div");cp.id="cues";st.appendChild(cp);
+ addEventListener("keydown",e=>{
+  if(e.key==="r"||e.key==="R"){let n=3;cd.style.display="flex";
+    const s=cd.querySelector("span");s.textContent=n;
+    const iv=setInterval(()=>{n--;if(n<1){clearInterval(iv);location.reload();}else s.textContent=n;},700);}
+  if(e.key==="o"||e.key==="O"){document.getElementById("stage").classList.add("outro");}
+  if(e.key==="s"||e.key==="S"){
+    cp.innerHTML="<b>SFX CUE SHEET（秒）</b><br>"+CUES.slice().sort((a,b)=>a[0]-b[0])
+      .map(c=>c[0].toFixed(2)+"s — "+c[1]).join("<br>");
+    cp.style.display=cp.style.display==="block"?"none":"block";}});})();
+
+$("#kicker .txt").textContent=CONFIG.kicker;
+$("#metaBL").textContent=CONFIG.metaBL;$("#metaBR").textContent=CONFIG.metaBR;
+
+const NS="http://www.w3.org/2000/svg";
+const jit=a=>(Math.random()*2-1)*a;
+function tornEdge(){ // irregular clip-path polygon = torn paper
+  const p=[];const step=7;
+  for(let x=0;x<=100;x+=step)p.push(`${x}% ${jit(1.2).toFixed(2)}%`);
+  for(let y=0;y<=100;y+=step)p.push(`${(100+jit(1)).toFixed(2)}% ${y}%`);
+  for(let x=100;x>=0;x-=step)p.push(`${x}% ${(100+jit(1.2)).toFixed(2)}%`);
+  for(let y=100;y>=0;y-=step)p.push(`${jit(1).toFixed(2)}% ${y}%`);
+  return `polygon(${p.join(",")})`;}
+function roughPath(pts,cl){let d=`M ${pts[0][0]} ${pts[0][1]}`;
+  for(let i=1;i<pts.length;i++){const[x,y]=pts[i],[px,py]=pts[i-1];
+    d+=` Q ${(px+x)/2+jit(3.5)} ${(py+y)/2+jit(3.5)} ${x} ${y}`;}return d+(cl?" Z":"");}
+function addStroke(d,{w=6,cls="inkStroke",delay=0,dur=.5}={}){
+  const p=document.createElementNS(NS,"path");p.setAttribute("d",d);
+  p.setAttribute("class",cls);p.setAttribute("stroke-width",w);
+  $("#inkSvg").appendChild(p);const L=p.getTotalLength();
+  p.style.strokeDasharray=L;p.style.strokeDashoffset=L;
+  p.style.transition=`stroke-dashoffset ${dur}s cubic-bezier(.3,.7,.3,1) ${delay}s`;
+  requestAnimationFrame(()=>requestAnimationFrame(()=>p.style.strokeDashoffset=0));return p;}
+function boxOf(el){const svg=$("#inkSvg"),sr=svg.getBoundingClientRect(),r=el.getBoundingClientRect();
+  const k=svg.clientWidth/sr.width;
+  return{x:(r.left-sr.left)*k,y:(r.top-sr.top)*k,w:r.width*k,h:r.height*k};}
+function flash(){const f=$("#flash");f.classList.remove("go");void f.offsetWidth;f.classList.add("go");}
+
+/* build clippings */
+const [SW,SH]=stagePx();
+let focusClip=null, focusMark=null;
+CONFIG.clippings.forEach((c,i)=>{
+  const div=document.createElement("div");div.className="clip";
+  div.style.left=c.x+"%";div.style.top=c.y+"%";div.style.width=c.w+"%";
+  div.style.setProperty("--rot",c.rot+"deg");div.style.zIndex=c.focus?4:3;
+  div.style.clipPath=tornEdge();
+  const hsize=CONFIG.orientation==="portrait"? 40 : Math.round(46*(c.w/40));
+  div.innerHTML=`<div class="mast"><span class="name">${c.masthead}</span>
+      <span class="date">${c.date}</span></div>
+    ${c.img?`<img class="nimg" src="${c.img}">`:""}
+    <h2 style="font-size:${hsize}px">${c.headline}</h2>
+    <div class="cols"><div></div><div></div><div></div></div>`;
+  // two tape strips on top corners
+  const t1=document.createElement("div");t1.className="tape";
+  t1.style.cssText+="top:-18px;left:8%;transform:rotate(-8deg)";
+  const t2=document.createElement("div");t2.className="tape";
+  t2.style.cssText+="top:-16px;right:6%;transform:rotate(6deg)";
+  div.append(t1,t2);
+  $("#board").appendChild(div);
+  if(c.focus){focusClip=div;focusMark=div.querySelector("mark");}
+});
+
+/* highlight + circle + tag on the focus mark, then camera pushes in */
+function annotate(){
+  const target=focusMark||focusClip.querySelector("h2");
+  const b=boxOf(target);
+  flash();
+  // focus pull: everything that isn't the focus clipping goes soft
+  document.querySelectorAll(".clip").forEach(el=>{
+    if(el!==focusClip) setTimeout(()=>el.classList.add("defocus"),650);});
+  if(focusMark) focusMark.classList.add("swept");   // highlighter UNDER the glyphs
+  const cx=b.x+b.w/2,cy=b.y+b.h*.5,rx=b.w*.58+16,ry=b.h*.85+8;
+  const pts=[];for(let i=0;i<=22;i++){const a=-.6+i/22*Math.PI*2.15;
+    pts.push([cx+Math.cos(a)*rx+jit(3),cy+Math.sin(a)*ry+jit(3)]);}
+  addStroke(roughPath(pts),{w:6,delay:.35,dur:.55});
+  // tag
+  const tag=document.createElementNS(NS,"text");tag.id="tag";
+  const below=b.y<SH*.6, ty=below? b.y+b.h+110 : b.y-120;
+  const tx=Math.min(Math.max(b.x-140,130),SW-480);
+  tag.setAttribute("x",tx);tag.setAttribute("y",ty+50);
+  tag.setAttribute("font-size",CONFIG.orientation==="portrait"?54:62);
+  tag.textContent=CONFIG.tag;$("#inkSvg").appendChild(tag);
+  setTimeout(()=>tag.classList.add("on"),900);
+  setTimeout(()=>{const tlen=tag.getComputedTextLength();
+    const sx=tx+tlen+16,sy=ty+30,ex=b.x+b.w*.5,ey=below?b.y+b.h+12:b.y-8;
+    addStroke(`M ${sx} ${sy} Q ${(sx+ex)/2+60} ${(sy+ey)/2+(below?40:-40)} ${ex} ${ey}`,{w:5,dur:.4});
+    const mx=(sx+ex)/2+60,my=(sy+ey)/2+(below?40:-40);
+    const ang=Math.atan2(ey-my,ex-mx);
+    addStroke(`M ${ex-24*Math.cos(ang-.5)} ${ey-24*Math.sin(ang-.5)} L ${ex} ${ey} L ${ex-24*Math.cos(ang+.5)} ${ey-24*Math.sin(ang+.5)}`,{w:5,delay:.35,dur:.15});},950);
+  // camera push INTO the focus clipping
+  const fcx=b.x+b.w/2, fcy=b.y+b.h/2, z=CONFIG.camera.pushInto;
+  const dx=(SW/2-fcx)*(z-1), dy=(SH/2-fcy)*(z-1);
+  $("#camera").animate(
+    [{transform:"translate(0px,0px) scale(1)"},
+     {transform:`translate(${dx}px,${dy}px) scale(${z})`}],
+    {duration:2600,delay:600,easing:"cubic-bezier(.4,.1,.2,1)",fill:"forwards"});}
+
+(function(){const c=$("#grain");c.width=SW/2;c.height=SH/2;
+  const ctx=c.getContext("2d");c.style.width="100%";c.style.height="100%";
+  (function loop(){const img=ctx.createImageData(c.width,c.height),d=img.data;
+    for(let i=0;i<d.length;i+=4){const v=Math.random()*255|0;d[i]=d[i+1]=d[i+2]=v;d[i+3]=30;}
+    ctx.putImageData(img,0,0);setTimeout(loop,66);})();})();
+(function(){const k=CONFIG.camera.drift;if(!k)return;const t1=performance.now();
+  (function loop(){const e=(performance.now()-t1)/1000;
+    const x=(Math.sin(e*.21)+.45*Math.sin(e*.57+1.7)+.22*Math.sin(e*1.33+4.2))*5.5*k;
+    const y=(Math.cos(e*.17)+.45*Math.sin(e*.49+.8)+.22*Math.sin(e*1.21+2.6))*4.5*k;
+    const r=(Math.sin(e*.23+1.1)+.5*Math.sin(e*.61+3))*.09*k;
+    $("#plane-bg").style.transform=`translate(${x*.4}px,${y*.4}px)`;
+    $("#plane-mid").style.transform=`translate(${x}px,${y}px) rotate(${r}deg)`;
+    $("#plane-fg").style.transform=`translate(${x*1.7}px,${y*1.7}px)`;
+    requestAnimationFrame(loop);})();})();
+
+document.fonts.ready.then(()=>{fit();
+  $("#kicker").classList.add("on");
+  document.querySelectorAll(".meta").forEach((m,i)=>setTimeout(()=>m.classList.add("on"),400+i*120));
+  const T=CONFIG.timing;const clips=[...document.querySelectorAll(".clip")];
+  // non-focus clippings first, focus clipping lands LAST
+  const order=clips.map((el,i)=>({el,f:CONFIG.clippings[i].focus?1:0})).sort((a,b)=>a.f-b.f);
+  order.forEach((o,k)=>{
+    cue(T.start+k*T.stagger,"啪 slap：剪報落下"+(o.f?"（主角）":""));
+    if(o.f){cue(T.start+k*T.stagger+.65,"喀擦 splice + 麥克筆 marker");
+      cue(T.start+k*T.stagger+1.25,"低頻 rumble：鏡頭推進 + 失焦");}
+    setTimeout(()=>{o.el.classList.add("on");if(o.f)setTimeout(annotate,650);},
+    (T.start+k*T.stagger)*1000);});});
+</script>
+</body>
+</html>

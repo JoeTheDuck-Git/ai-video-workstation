@@ -1,0 +1,4 @@
+interface:
+  display_name: "Subtitle Translator 字幕翻譯師"
+  short_description: "保留原始時間碼並自然翻譯多語字幕、專有名詞與閱讀速度檢查"
+  default_prompt: "Use $subtitle-translator to translate this clean SRT while preserving timecodes."

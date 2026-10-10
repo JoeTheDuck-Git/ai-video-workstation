@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>Liquid Glass 液態玻璃・小工具卡 — Tacky Templates</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&family=Noto+Sans+TC:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{--ink:rgba(255,255,255,.96)}
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:100%;height:100%;background:#000;overflow:hidden}
+  #fit{position:absolute}
+  #stage{position:relative;overflow:hidden;background:#0e1424}
+  .landscape #stage{width:1920px;height:1080px}
+  .portrait  #stage{width:1080px;height:1920px}
+  #camera{position:absolute;inset:0}
+
+  #aurora{position:absolute;inset:-10%;transition:filter 1.4s ease}
+  #aurora.key{filter:saturate(1.4) brightness(1.12)}
+  .blob{position:absolute;border-radius:50%;filter:blur(110px);opacity:.85;will-change:transform}
+  .b1{width:1100px;height:1100px;left:-220px;top:-260px;background:#2e6cf6;animation:drift1 26s ease-in-out infinite alternate}
+  .b2{width:950px;height:950px;right:-180px;top:-140px;background:#8a3ff0;animation:drift2 31s ease-in-out infinite alternate}
+  .b3{width:820px;height:820px;left:26%;bottom:-320px;background:#ff7ab8;animation:drift3 23s ease-in-out infinite alternate}
+  .b4{width:700px;height:700px;right:14%;bottom:-200px;background:#ff9f3c;opacity:.7;animation:drift1 29s ease-in-out infinite alternate-reverse}
+  @keyframes drift1{0%{transform:translate(0,0) scale(1)}100%{transform:translate(140px,90px) scale(1.12)}}
+  @keyframes drift2{0%{transform:translate(0,0) scale(1.08)}100%{transform:translate(-120px,70px) scale(.96)}}
+  @keyframes drift3{0%{transform:translate(0,0) scale(1)}100%{transform:translate(110px,-80px) scale(1.15)}}
+
+  .glass{position:relative;background:linear-gradient(135deg,rgba(255,255,255,.17),rgba(255,255,255,.06));
+    backdrop-filter:blur(26px) saturate(1.7);-webkit-backdrop-filter:blur(26px) saturate(1.7);
+    box-shadow:inset 0 1.5px 0 rgba(255,255,255,.55),inset 0 -1px 0 rgba(255,255,255,.10),
+      inset 1px 0 0 rgba(255,255,255,.18),0 24px 60px rgba(4,8,20,.35);
+    border-radius:36px}
+  .glass .rim{position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+    backdrop-filter:blur(46px) saturate(2.4) brightness(1.24);
+    -webkit-backdrop-filter:blur(46px) saturate(2.4) brightness(1.24);
+    padding:9px;
+    -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+    -webkit-mask-composite:xor;
+    mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+    mask-composite:exclude}
+  .glass .sheenWrap{position:absolute;inset:0;border-radius:inherit;overflow:hidden;pointer-events:none}
+  .glass .sheen{position:absolute;top:-20%;bottom:-20%;width:34%;left:0;
+    background:linear-gradient(105deg,transparent,rgba(255,255,255,.34) 50%,transparent);
+    transform:translateX(-260%) skewX(-14deg)}
+  .glass.shine .sheen{animation:sweep 1.1s cubic-bezier(.4,.1,.2,1) forwards}
+  @keyframes sweep{0%{transform:translateX(-260%) skewX(-14deg)}100%{transform:translateX(1050%) skewX(-14deg)}}
+
+  #bar{position:absolute;display:flex;align-items:center;gap:20px;padding:18px 30px;border-radius:26px;opacity:0}
+  .landscape #bar{top:84px;left:96px}.portrait #bar{top:96px;left:72px}
+  #bar .lights{display:flex;gap:12px}
+  #bar .lights i{width:18px;height:18px;border-radius:50%;display:block}
+  #bar .lights i:nth-child(1){background:#ff5f57}#bar .lights i:nth-child(2){background:#febc2e}
+  #bar .lights i:nth-child(3){background:#28c840}
+  #bar .app{font-family:'Inter',sans-serif;font-weight:600;font-size:24px;color:var(--ink);letter-spacing:.04em}
+  #bar.on{animation:panelIn .8s cubic-bezier(.2,1.1,.3,1) forwards}
+  #clock{position:absolute;padding:16px 28px;border-radius:24px;opacity:0;
+    font-family:'Inter',sans-serif;font-weight:600;font-size:24px;color:var(--ink);letter-spacing:.06em}
+  .landscape #clock{top:84px;right:96px}.portrait #clock{top:96px;right:72px}
+  #clock.on{animation:panelIn .8s cubic-bezier(.2,1.1,.3,1) .12s forwards}
+
+  /* ---------- title ---------- */
+  #title{position:absolute;left:50%;transform:translateX(-50%);white-space:nowrap;
+    font-family:'Noto Sans TC',sans-serif;font-weight:900;color:var(--ink);opacity:0;
+    text-shadow:0 2px 12px rgba(4,8,20,.3);transition:opacity 1s ease}
+  .landscape #title{top:200px;font-size:56px;letter-spacing:.12em;text-indent:.12em}
+  .portrait  #title{top:420px;font-size:52px;letter-spacing:.1em;text-indent:.1em}
+  #title.on{opacity:1}
+
+  /* ---------- widget grid ---------- */
+  #grid{position:absolute;display:flex;justify-content:center;align-items:stretch}
+  .landscape #grid{left:0;right:0;top:50%;transform:translateY(-46%);gap:64px}
+  .portrait  #grid{left:50%;transform:translateX(-50%);top:50%;
+    flex-direction:column;transform:translate(-50%,-50%);gap:56px;width:760px}
+  .widget{display:flex;flex-direction:column;align-items:center;gap:20px;
+    padding:56px 60px;border-radius:48px;opacity:0;will-change:transform,opacity}
+  .landscape .widget{width:420px}
+  .widget.on{animation:panelIn .95s cubic-bezier(.2,1.15,.3,1) forwards}
+  @keyframes panelIn{0%{opacity:0;transform:translateY(52px) scale(.94);border-radius:60px}
+    58%{opacity:1;transform:translateY(-8px) scale(1.022,.982);border-radius:40px}
+    76%{transform:translateY(2px) scale(.992,1.012);border-radius:52px}
+    100%{opacity:1;transform:translateY(0) scale(1,1);border-radius:48px}}
+  .widget.drift{animation:floatP var(--fd,7.3s) ease-in-out infinite alternate;opacity:1!important}
+  #bar.drift,#clock.drift{animation:floatP var(--fd,9.7s) ease-in-out infinite alternate;opacity:1!important}
+  @keyframes floatP{0%{transform:translateY(0)}100%{transform:translateY(-6px)}}
+  .widget .lab{font-family:'Noto Sans TC',sans-serif;font-weight:700;font-size:27px;
+    color:rgba(255,255,255,.78);letter-spacing:.2em;text-indent:.2em;white-space:nowrap}
+  .widget .num{font-family:'Inter','Noto Sans TC',sans-serif;font-weight:800;font-size:118px;
+    color:var(--ink);line-height:1;white-space:nowrap;font-variant-numeric:tabular-nums;
+    text-shadow:0 2px 12px rgba(4,8,20,.25)}
+  .widget .num .unit{font-size:.42em;font-weight:700;margin-left:.06em}
+  .widget .sub{font-family:'Noto Sans TC',sans-serif;font-weight:500;font-size:23px;
+    color:rgba(255,255,255,.62);letter-spacing:.08em;white-space:nowrap}
+
+  /* hl widget — the saturated one */
+  .widget.hl.lit{background:linear-gradient(135deg,rgba(255,160,225,.34),rgba(160,190,255,.16));
+    box-shadow:inset 0 2px 0 rgba(255,255,255,.7),inset 0 -1px 0 rgba(255,255,255,.16),
+      0 30px 80px rgba(4,8,20,.4),0 0 120px rgba(255,140,220,.22)}
+  .widget.hl .num{font-size:132px}
+
+  /* ---------- source ---------- */
+  #source{position:absolute;left:50%;transform:translateX(-50%);white-space:nowrap;
+    font-family:'Noto Sans TC',sans-serif;font-weight:500;font-size:24px;
+    color:rgba(255,255,255,.6);letter-spacing:.12em;opacity:0;transition:opacity 1.2s ease;
+    text-shadow:0 2px 10px rgba(4,8,20,.3)}
+  .landscape #source{bottom:96px}.portrait #source{bottom:330px}
+  #source.on{opacity:1}
+
+  #cd{position:absolute;inset:0;z-index:20;display:none;align-items:center;justify-content:center;background:#0e1424}
+  #cd span{font-family:'Inter',sans-serif;font-weight:700;font-size:300px;color:#fff}
+  #cues{position:absolute;right:24px;top:24px;z-index:21;display:none;background:rgba(10,14,26,.94);
+    color:#fff;font-family:monospace;font-size:15px;line-height:1.75;
+    padding:14px 18px;max-height:70%;overflow:auto;border-radius:14px}
+  .outro .widget,.outro #bar,.outro #clock,.outro #title{
+    transition:opacity .9s ease,transform .9s cubic-bezier(.5,0,.7,.4),filter .9s ease;
+    animation:none!important;
+    opacity:0!important;transform:translateY(-34px) scale(1.02);filter:blur(16px)}
+  .outro #source{transition:opacity .6s;opacity:0!important}
+</style>
+</head>
+<body>
+<div id="fit"><div id="stage">
+  <div id="camera">
+    <div id="aurora"><div class="blob b1"></div><div class="blob b2"></div>
+      <div class="blob b3"></div><div class="blob b4"></div></div>
+    <div id="bar" class="glass"><div class="lights"><i></i><i></i><i></i></div>
+      <span class="app"></span></div>
+    <div id="clock" class="glass"></div>
+    <div id="title"></div>
+    <div id="grid"></div>
+    <div id="source"></div>
+  </div>
+</div></div>
+
+<script>
+/* ============================================================
+   CONFIG — Liquid Glass・小工具卡 (glass widgets dashboard)
+   For numbers/stats — served as floating glass widgets that
+   jelly-land and COUNT UP. 2–3 stats.
+   stats: {v:38, unit:"%", prefix:"+", dec:0, lab:"觀看時長",
+           sub:"vs 上個月", hl:true → lands last, saturated pink
+           glass + rim glow + wallpaper saturates}
+   ONE hl stat. source line is MANDATORY — never invent data;
+   ask for real numbers or mark 示意.
+   ============================================================ */
+const CONFIG = {
+  orientation: "landscape",
+  app: "b-roll.app",
+  clock: "auto",
+  title: "本月成績單",
+  stats: [
+    { v:38,  unit:"%", prefix:"+", lab:"觀看時長", sub:"vs 上個月" },
+    { v:52,  unit:"%",             lab:"完播率",   sub:"60 秒短片" },
+    { v:3.2, unit:"萬", dec:1,     lab:"新訂閱",   sub:"歷史新高", hl:true }
+  ],
+  source: "資料來源：頻道後台 2026.06（示意數據）",
+  timing: { start: 1.2, stagger: 0.55, count: 1.1 }
+};
+/* ============================================================ */
+const $=q=>document.querySelector(q);
+const stagePx=()=>CONFIG.orientation==="portrait"?[1080,1920]:[1920,1080];
+document.body.parentElement.className=CONFIG.orientation;
+function fit(){const[W,H]=stagePx();const s=Math.min(innerWidth/W,innerHeight/H);
+  $("#fit").style.cssText=`position:absolute;left:50%;top:50%;width:${W}px;height:${H}px;`+
+  `transform:translate(-50%,-50%) scale(${s});`;}
+addEventListener("resize",fit);fit();
+
+const CUES=[];const cue=(t,l)=>CUES.push([t,l]);
+(function(){const st=document.getElementById("stage");
+ const cd=document.createElement("div");cd.id="cd";cd.innerHTML="<span></span>";st.appendChild(cd);
+ const cp=document.createElement("div");cp.id="cues";st.appendChild(cp);
+ addEventListener("keydown",e=>{
+  if(e.key==="r"||e.key==="R"){let n=3;cd.style.display="flex";
+    const s=cd.querySelector("span");s.textContent=n;
+    const iv=setInterval(()=>{n--;if(n<1){clearInterval(iv);location.reload();}else s.textContent=n;},700);}
+  if(e.key==="o"||e.key==="O"){document.getElementById("stage").classList.add("outro");}
+  if(e.key==="s"||e.key==="S"){
+    cp.innerHTML="<b>SFX CUE SHEET（秒）</b><br>"+CUES.slice().sort((a,b)=>a[0]-b[0])
+      .map(c=>c[0].toFixed(2)+"s — "+c[1]).join("<br>");
+    cp.style.display=cp.style.display==="block"?"none":"block";}});})();
+
+function dressGlass(el){
+  const r=document.createElement("div");r.className="rim";el.appendChild(r);
+  const sw=document.createElement("div");sw.className="sheenWrap";
+  sw.innerHTML="<div class=\"sheen\"></div>";el.appendChild(sw);}
+
+/* build */
+const grid=$("#grid");const widgets=[];
+CONFIG.stats.forEach(st=>{
+  const d=document.createElement("div");d.className="widget glass"+(st.hl?" hl":"");
+  const lab=document.createElement("div");lab.className="lab";lab.textContent=st.lab;
+  const num=document.createElement("div");num.className="num";
+  const val=document.createElement("span");
+  val.textContent=(st.prefix||"")+(0).toFixed(st.dec||0);
+  const unit=document.createElement("span");unit.className="unit";unit.textContent=st.unit||"";
+  num.appendChild(val);num.appendChild(unit);
+  const sub=document.createElement("div");sub.className="sub";sub.textContent=st.sub||"";
+  d.appendChild(lab);d.appendChild(num);d.appendChild(sub);
+  dressGlass(d);
+  d._flags=st;d._val=val;grid.appendChild(d);widgets.push(d);});
+$("#bar .app").textContent=CONFIG.app;
+$("#title").textContent=CONFIG.title;
+$("#source").textContent=CONFIG.source;
+dressGlass($("#bar"));dressGlass($("#clock"));
+(function(){const el=$("#clock");
+  if(CONFIG.clock!=="auto"){el.textContent=CONFIG.clock;return;}
+  const tick=()=>{const d=new Date();
+    el.textContent=String(d.getHours()).padStart(2,"0")+":"+
+      String(d.getMinutes()).padStart(2,"0");};
+  tick();setInterval(tick,15000);})();
+
+function countUp(el,st,dur){const t0=performance.now();
+  const dec=st.dec||0,target=st.v,pre=st.prefix||"";
+  (function tick(now){const p=Math.min((now-t0)/(dur*1000),1);
+    const eased=1-Math.pow(1-p,2.4);
+    el.textContent=pre+(target*eased).toFixed(dec);
+    if(p<1)requestAnimationFrame(tick);})(performance.now());}
+
+document.fonts.ready.then(()=>{fit();
+  const T=CONFIG.timing;let t=T.start;
+  cue(t-.6,"水滴 drop / 玻璃輕響：工具列浮入");
+  setTimeout(()=>{
+    const b=$("#bar"),c=$("#clock");
+    b.classList.add("on");c.classList.add("on");$("#title").classList.add("on");
+    setTimeout(()=>{b.classList.add("drift");b.style.setProperty("--fd","9.7s");
+      c.classList.add("drift");c.style.setProperty("--fd","11.3s");},1100);
+  },(t-.6)*1000);
+  let hlEl=null;
+  widgets.forEach((d,i)=>{
+    if(d._flags.hl){hlEl=d;return;}              // the record lands last
+    cue(t,"玻璃浮入 glass thunk＋數字滾動：小工具落定");
+    setTimeout(()=>{d.classList.add("on");
+      countUp(d._val,d._flags,T.count);
+      setTimeout(()=>d.classList.add("shine"),560);
+      setTimeout(()=>{d.classList.add("drift");
+        d.style.setProperty("--fd",(7.3+i*1.6)+"s");},1000);
+    },t*1000);
+    t+=T.stagger;});
+  if(hlEl){const tK=t+.5;
+    cue(tK,"低音水滴 bloom：主數字玻璃轉粉紅＋壁紙飽和");
+    cue(tK+.9,"高光掠過 shimmer：鏡面反光");
+    setTimeout(()=>{hlEl.classList.add("on","lit");
+      countUp(hlEl._val,hlEl._flags,T.count+.3);
+      $("#aurora").classList.add("key");
+      setTimeout(()=>hlEl.classList.add("shine"),900);
+      setTimeout(()=>{hlEl.classList.add("drift");
+        hlEl.style.setProperty("--fd","6.1s");},1200);
+    },tK*1000);
+    t=tK+1.6;}
+  cue(t+.3,"氣音：資料來源浮現");
+  setTimeout(()=>$("#source").classList.add("on"),(t+.3)*1000);});
+</script>
+</body>
+</html>

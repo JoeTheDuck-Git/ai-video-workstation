@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>Neon 霓虹・菜單卡 — Tacky Templates</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@500;700;900&family=Mr+Dafoe&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#07090f;
+    --coreB:#f2fbff; --glowB:#3ec6ff;
+    --coreK:#fff2fb; --glowK:#ff4fc8;
+    --dead:#27303f; --dim:#5a6b80}
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:100%;height:100%;background:#000;overflow:hidden}
+  #fit{position:absolute}
+  #stage{position:relative;overflow:hidden;background:var(--bg)}
+  .landscape #stage{width:1920px;height:1080px}
+  .portrait  #stage{width:1080px;height:1920px}
+  #camera{position:absolute;inset:0}
+
+  #wall{position:absolute;inset:0;
+    background:radial-gradient(ellipse 70% 55% at 50% 46%,#10141f 0%,#0a0d16 55%,#05060a 100%)}
+  #pool{position:absolute;inset:0;opacity:.35;transition:opacity 1.4s ease;
+    background:radial-gradient(ellipse 46% 40% at 50% 46%,rgba(62,198,255,.13),transparent 70%)}
+  #pool.key{opacity:.8;
+    background:radial-gradient(ellipse 46% 40% at 50% 52%,rgba(255,79,200,.15),transparent 70%),
+               radial-gradient(ellipse 52% 46% at 50% 42%,rgba(62,198,255,.09),transparent 72%)}
+  #cable{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+  #cable path{fill:none;stroke:#161b25;stroke-width:7;stroke-linecap:round}
+
+  @keyframes ignite{0%{filter:brightness(.15)}4%{filter:brightness(1.25)}
+    9%{filter:brightness(.2)}14%{filter:brightness(1.1)}17%{filter:brightness(.25)}
+    23%{filter:brightness(1.2)}56%{filter:brightness(1)}62%{filter:brightness(.85)}
+    66%{filter:brightness(1.05)}100%{filter:brightness(1)}}
+  @keyframes keyIgnite{0%{filter:brightness(.12)}5%{filter:brightness(.9)}
+    8%{filter:brightness(.15)}13%{filter:brightness(.7)}15%{filter:brightness(.12)}
+    22%{filter:brightness(.15)}27%{filter:brightness(1.05)}31%{filter:brightness(.2)}
+    36%{filter:brightness(1.45)}52%{filter:brightness(1.12)}100%{filter:brightness(1)}}
+
+  /* ---------- sign title ---------- */
+  #title{position:absolute;left:50%;transform:translateX(-50%);white-space:nowrap;
+    font-family:'Noto Sans TC',sans-serif;font-weight:900;color:var(--coreB);opacity:0;
+    text-shadow:0 0 5px rgba(62,198,255,.95),0 0 16px rgba(62,198,255,.7),
+      0 0 40px rgba(62,198,255,.45),0 0 90px rgba(62,198,255,.28)}
+  .landscape #title{top:150px;font-size:76px;letter-spacing:.18em;text-indent:.18em}
+  .portrait  #title{top:360px;font-size:64px;letter-spacing:.14em;text-indent:.14em}
+  #title.on{opacity:1;animation:ignite .85s steps(1,end) forwards}
+
+  /* ---------- menu rows ---------- */
+  #menu{position:absolute;display:flex;flex-direction:column}
+  .landscape #menu{left:50%;transform:translateX(-50%);top:320px;width:1150px;gap:56px}
+  .portrait  #menu{left:50%;transform:translateX(-50%);top:600px;width:840px;gap:64px}
+  .row{display:flex;align-items:baseline;gap:34px;position:relative;
+    font-family:'Noto Sans TC',sans-serif;font-weight:700;color:var(--dead)}
+  .landscape .row{font-size:58px}
+  .portrait  .row{font-size:50px}
+  .row .name{white-space:nowrap}
+  .row .leader{flex:1;height:0;border-bottom:6px dotted #1b222e;
+    transform:translateY(-14px)}
+  .row .val{white-space:nowrap;font-weight:900}
+  .row.lit{color:var(--coreB);
+    text-shadow:0 0 5px rgba(62,198,255,.9),0 0 15px rgba(62,198,255,.6),
+      0 0 38px rgba(62,198,255,.4)}
+  .row.lit .leader{border-color:#22303f}
+  .row.on{animation:ignite .85s steps(1,end) forwards}
+
+  /* focus row — tonight's special */
+  .row.focus{z-index:2}
+  .landscape .row.focus{font-size:70px}
+  .portrait  .row.focus{font-size:58px}
+  .row.focus.lit{color:var(--coreK);
+    text-shadow:0 0 6px rgba(255,79,200,.95),0 0 18px rgba(255,79,200,.75),
+      0 0 46px rgba(255,79,200,.5),0 0 110px rgba(255,79,200,.32)}
+  .row.focus.on{animation:keyIgnite 1.5s steps(1,end) forwards}
+  .row.focus .tag{position:absolute;right:-26px;top:-58px;transform:rotate(6deg);
+    font-family:'Mr Dafoe',cursive;font-weight:400;font-size:.62em;color:var(--coreK);
+    opacity:0;white-space:nowrap;
+    text-shadow:0 0 6px rgba(255,79,200,.9),0 0 20px rgba(255,79,200,.6),0 0 48px rgba(255,79,200,.35)}
+  .portrait .row.focus .tag{right:-8px;top:-64px}
+  .row.focus .tag.on{opacity:1;animation:ignite .7s steps(1,end) forwards,
+    tagBlink 8s steps(1,end) 3s infinite}
+  @keyframes tagBlink{0%,90%,94%,100%{opacity:1}91%{opacity:.45}92%{opacity:1}93%{opacity:.6}}
+
+  /* ---------- note + corners ---------- */
+  #note{position:absolute;left:50%;transform:translateX(-50%);
+    font-family:'Noto Sans TC',sans-serif;font-weight:500;font-size:27px;
+    color:var(--dim);letter-spacing:.18em;opacity:0;transition:opacity 1.2s ease;white-space:nowrap}
+  .landscape #note{bottom:96px}.portrait #note{bottom:330px}
+  #note.on{opacity:.85}
+  .meta{position:absolute;font-family:'Noto Sans TC',sans-serif;font-weight:700;
+    font-size:18px;letter-spacing:.26em;color:var(--dim);opacity:0;transition:opacity 1.4s}
+  .meta.on{opacity:.6}
+  .landscape #metaTL{top:96px;left:104px}.landscape #metaBR{bottom:92px;right:104px}
+  .portrait #metaTL{top:104px;left:76px}.portrait #metaBR{bottom:100px;right:76px}
+
+  #cd{position:absolute;inset:0;z-index:20;display:none;align-items:center;justify-content:center;background:var(--bg)}
+  #cd span{font-family:'Noto Sans TC',sans-serif;font-weight:900;font-size:300px;color:var(--coreB);
+    text-shadow:0 0 18px rgba(62,198,255,.7)}
+  #cues{position:absolute;right:24px;top:24px;z-index:21;display:none;background:rgba(7,9,15,.94);
+    color:#f2fbff;font-family:monospace;font-size:15px;line-height:1.75;
+    padding:14px 18px;max-height:70%;overflow:auto;border:1px solid #1c2430}
+</style>
+</head>
+<body>
+<div id="fit"><div id="stage">
+  <div id="camera">
+    <div id="wall"></div><div id="pool"></div>
+    <svg id="cable" viewBox="0 0 1920 1080" preserveAspectRatio="none">
+      <path d="M -20 130 Q 480 250 960 190 T 1940 150"/>
+    </svg>
+    <div id="title"></div>
+    <div id="menu"></div>
+    <div id="note"></div>
+    <div class="meta" id="metaTL"></div><div class="meta" id="metaBR"></div>
+  </div>
+</div></div>
+
+<script>
+/* ============================================================
+   CONFIG — Neon 霓虹・菜單卡 (night-diner menu)
+   For lists, routines, frameworks, step menus — served as a
+   late-night diner menu. Rows ignite one by one down the board.
+   items: {t:"dish", v:"price/value", focus:true → tonight's
+           special: bigger, hot pink, script tag blinks beside it}
+   ONE focus item. 3–5 items. tag = Latin-only neon script.
+   ============================================================ */
+const CONFIG = {
+  orientation: "landscape",
+  title: "深夜剪輯食堂",
+  items: [
+    { t:"拉片一支",     v:"10 分鐘" },
+    { t:"粗剪初稿",     v:"45 分鐘" },
+    { t:"排程上傳",     v:"5 分鐘" },
+    { t:"準時睡覺",     v:"無價",  focus:true }
+  ],
+  tag: "tonight's special",
+  note: "創作者的深夜時段 · 02:47 AM",
+  metaTL: "NO. 08 · 深夜場",
+  metaBR: "TAIPEI · 霓虹",
+  timing: { start: 1.1, stagger: 0.5 },
+  accentKey: "", accentBase: ""
+};
+/* ============================================================ */
+const $=q=>document.querySelector(q);
+const stagePx=()=>CONFIG.orientation==="portrait"?[1080,1920]:[1920,1080];
+document.body.parentElement.className=CONFIG.orientation;
+const R=document.documentElement.style;
+if(CONFIG.accentKey)R.setProperty("--glowK",CONFIG.accentKey);
+if(CONFIG.accentBase)R.setProperty("--glowB",CONFIG.accentBase);
+function fit(){const[W,H]=stagePx();const s=Math.min(innerWidth/W,innerHeight/H);
+  $("#fit").style.cssText=`position:absolute;left:50%;top:50%;width:${W}px;height:${H}px;`+
+  `transform:translate(-50%,-50%) scale(${s});`;}
+addEventListener("resize",fit);fit();
+
+const CUES=[];const cue=(t,l)=>CUES.push([t,l]);
+(function(){const st=document.getElementById("stage");
+ const cd=document.createElement("div");cd.id="cd";cd.innerHTML="<span></span>";st.appendChild(cd);
+ const cp=document.createElement("div");cp.id="cues";st.appendChild(cp);
+ addEventListener("keydown",e=>{
+  if(e.key==="r"||e.key==="R"){let n=3;cd.style.display="flex";
+    const s=cd.querySelector("span");s.textContent=n;
+    const iv=setInterval(()=>{n--;if(n<1){clearInterval(iv);location.reload();}else s.textContent=n;},700);}
+  if(e.key==="o"||e.key==="O"){powerCut();}
+  if(e.key==="s"||e.key==="S"){
+    cp.innerHTML="<b>SFX CUE SHEET（秒）</b><br>"+CUES.slice().sort((a,b)=>a[0]-b[0])
+      .map(c=>c[0].toFixed(2)+"s — "+c[1]).join("<br>");
+    cp.style.display=cp.style.display==="block"?"none":"block";}});})();
+
+function powerCut(){
+  const glow=[...document.querySelectorAll(".row.lit,#title,.tag")];
+  glow.forEach((el,i)=>setTimeout(()=>{
+    el.classList.remove("lit");
+    el.style.animation="none";el.style.color="var(--dead)";el.style.textShadow="none";
+    el.style.opacity=el.classList.contains("tag")?0:1;
+  },i*70+Math.random()*50));
+  setTimeout(()=>{$("#pool").style.opacity=0;$("#note").style.opacity=0;
+    document.querySelectorAll(".meta").forEach(m=>m.style.opacity=0);},glow.length*70);
+}
+
+/* build */
+const menu=$("#menu");const rowEls=[];
+CONFIG.items.forEach(it=>{
+  const r=document.createElement("div");r.className="row"+(it.focus?" focus":"");
+  const n=document.createElement("span");n.className="name";n.textContent=it.t;
+  const l=document.createElement("span");l.className="leader";
+  const v=document.createElement("span");v.className="val";v.textContent=it.v||"";
+  r.appendChild(n);r.appendChild(l);r.appendChild(v);
+  if(it.focus&&CONFIG.tag){const g=document.createElement("span");g.className="tag";
+    g.textContent=CONFIG.tag;r.appendChild(g);}
+  r._flags=it;menu.appendChild(r);rowEls.push(r);});
+$("#title").textContent=CONFIG.title;
+$("#note").textContent=CONFIG.note;
+$("#metaTL").textContent=CONFIG.metaTL;$("#metaBR").textContent=CONFIG.metaBR;
+
+document.fonts.ready.then(()=>{fit();
+  const T=CONFIG.timing;let t=T.start;
+  cue(t-.5,"低頻電流 hum 進場（整段墊底）");
+  cue(t-.3,"嗡＋嘶 buzz-flicker：店名亮起");
+  setTimeout(()=>$("#title").classList.add("on"),(t-.3)*1000);
+  document.querySelectorAll(".meta").forEach(m=>setTimeout(()=>m.classList.add("on"),(t-.1)*1000));
+  let focusRow=null;
+  rowEls.forEach(r=>{
+    if(r._flags.focus){focusRow=r;return;}       // special is served last
+    cue(t,"buzz-flicker：菜單亮一行");
+    setTimeout(()=>r.classList.add("on","lit"),t*1000);
+    t+=T.stagger;});
+  if(focusRow){const tK=t+.5;
+    cue(tK,"接觸不良 stutter → 砰！低音 bloom：本日特餐粉紅全亮");
+    setTimeout(()=>{focusRow.classList.add("on","lit");
+      $("#pool").classList.add("key");},tK*1000);
+    cue(tK+1.5,"嗡：草寫小牌亮起");
+    setTimeout(()=>{const g=focusRow.querySelector(".tag");
+      if(g)g.classList.add("on");},(tK+1.5)*1000);
+    t=tK+1.9;}
+  setTimeout(()=>$("#note").classList.add("on"),(t+.3)*1000);});
+</script>
+</body>
+</html>

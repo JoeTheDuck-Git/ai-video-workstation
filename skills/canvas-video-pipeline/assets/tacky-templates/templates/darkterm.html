@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>Dark Terminal 深夜終端・文字卡 — Tacky Templates</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Noto+Sans+TC:wght@700;900&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0c1016;--panel:#10151d;--frame:#2b3340;
+        --text:#c9d1d9;--dim:#8b949e;--green:#7ee787;--cyan:#79c0ff;
+        --amber:#ffa657;--red:#ff7b72;--purple:#d2a8ff;--sel:#153b26}
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:100%;height:100%;background:#05070a;overflow:hidden}
+  #fit{position:absolute}
+  #stage{position:relative;overflow:hidden;background:var(--bg)}
+  .landscape #stage{width:1920px;height:1080px}
+  .portrait  #stage{width:1080px;height:1920px}
+  #camera{position:absolute;inset:0;will-change:transform}
+  #vig{position:absolute;inset:0;z-index:7;pointer-events:none;background:
+    radial-gradient(120% 105% at 50% 42%, transparent 60%, rgba(0,0,0,.5) 100%)}
+
+  /* ---------- terminal frame (box-drawing feel) ---------- */
+  #frame{position:absolute;border:2px solid var(--frame);border-radius:14px;z-index:3}
+  .landscape #frame{inset:64px 84px 96px}
+  .portrait  #frame{inset:84px 56px 120px}
+  #tbar{position:absolute;top:0;left:0;right:0;height:64px;display:flex;align-items:center;
+    padding:0 34px;border-bottom:2px solid var(--frame);
+    font-family:'JetBrains Mono',monospace;color:var(--dim);font-size:26px;
+    letter-spacing:.03em}
+  #tbar .tdots{display:flex;gap:13px;margin-right:28px}
+  #tbar .tdots span{width:17px;height:17px;border-radius:50%;background:#2f3742}
+  #tbar .path{color:var(--dim)}
+  #tbar .path b{color:var(--green);font-weight:700}
+
+  /* ---------- scrollback ---------- */
+  #scroll{position:absolute;left:0;right:0;top:64px;bottom:0;padding:44px 58px;
+    overflow:hidden;font-family:'JetBrains Mono','Noto Sans TC',monospace}
+  .cline{color:var(--text);opacity:0;white-space:nowrap;margin-bottom:14px}
+  .landscape .cline{font-size:37px}
+  .portrait  .cline{font-size:31px}
+  .cline.on{opacity:1}
+  .cline .ps{color:var(--green);font-weight:700;margin-right:20px}
+  .cline .cm{color:var(--cyan)}
+  .cline .arg{color:var(--text)}
+  .cline .flag{color:var(--purple)}
+  .cursor{display:inline-block;width:.55em;height:1em;background:var(--green);
+    vertical-align:-.12em;animation:blink .7s steps(1) infinite;
+    box-shadow:0 0 10px rgba(126,231,135,.5)}
+  @keyframes blink{0%,55%{opacity:1}56%,100%{opacity:0}}
+  .spin{color:var(--dim)}
+
+  /* big outputs — the actual message */
+  .out{opacity:0;margin:26px 0 40px;white-space:nowrap;
+    font-family:'Noto Sans TC',sans-serif;font-weight:900;color:var(--text)}
+  .landscape .out{font-size:104px;line-height:1.25}
+  .portrait  .out{font-size:80px;line-height:1.3}
+  .out.on{opacity:1}
+  .out .hotWord{color:var(--amber)}
+  /* key output: glowing green, selection block */
+  .out.key{color:var(--green);
+    text-shadow:0 0 24px rgba(126,231,135,.45),0 0 80px rgba(126,231,135,.18)}
+  .out.key .selWord{background:var(--sel);border-radius:8px;padding:0 .12em;
+    box-shadow:0 0 0 2px rgba(126,231,135,.35)}
+  .ok{display:inline-block;font-family:'JetBrains Mono',monospace;color:var(--green);
+    margin-left:30px;opacity:0;font-weight:700}
+  .landscape .ok{font-size:40px}.portrait .ok{font-size:34px}
+  .ok.on{opacity:1;animation:okPulse 1.4s ease-in-out 1}
+  @keyframes okPulse{0%,100%{text-shadow:0 0 10px rgba(126,231,135,.4)}
+    50%{text-shadow:0 0 26px rgba(126,231,135,.8)}}
+  /* comment tag */
+  .deleted{color:var(--dim);font-size:.4em;font-family:'JetBrains Mono',monospace}
+  .cmt{color:var(--dim);opacity:0;font-family:'JetBrains Mono','Noto Sans TC',monospace}
+  .landscape .cmt{font-size:34px}.portrait .cmt{font-size:29px}
+  .cmt.on{opacity:.9;transition:opacity .6s}
+
+  /* ---------- tmux status bar ---------- */
+  #tmux{position:absolute;left:0;right:0;bottom:0;height:52px;z-index:5;
+    display:flex;align-items:center;justify-content:space-between;
+    background:var(--panel);border-top:2px solid var(--frame);
+    font-family:'JetBrains Mono',monospace;font-size:23px;color:var(--dim);
+    padding:0 40px;opacity:0;transition:opacity .6s}
+  .landscape #tmux{left:84px;right:84px;bottom:96px;border:2px solid var(--frame);
+    border-radius:0 0 12px 12px;border-top-width:2px}
+  .portrait  #tmux{left:56px;right:56px;bottom:120px;border:2px solid var(--frame);
+    border-radius:0 0 12px 12px}
+  #tmux.on{opacity:1}
+  #tmux .sess b{color:var(--green);font-weight:700}
+  #tmux .clock{color:var(--dim)}
+
+  #cd{position:absolute;inset:0;z-index:20;display:none;align-items:center;justify-content:center;background:var(--bg)}
+  #cd span{font-family:'JetBrains Mono',monospace;font-size:340px;color:var(--green);
+    text-shadow:0 0 40px rgba(126,231,135,.5)}
+  #cues{position:absolute;right:24px;top:24px;z-index:21;display:none;background:rgba(5,8,12,.96);
+    color:var(--text);font-family:'JetBrains Mono',monospace;font-size:16px;line-height:1.7;
+    padding:14px 18px;max-height:70%;overflow:auto;border:1px solid var(--frame);border-radius:10px}
+  /* O = outro: screen wipes to black from bottom like clearing */
+  .outro #camera{animation:termOff .55s cubic-bezier(.55,0,.8,.4) forwards}
+  @keyframes termOff{60%{opacity:1;filter:brightness(1.6)}100%{opacity:0;filter:brightness(0)}}
+</style>
+</head>
+<body>
+<div id="fit"><div id="stage">
+  <div id="camera">
+    <div id="frame">
+      <div id="tbar"><span class="tdots"><span></span><span></span><span></span></span>
+        <span class="path"><b>creator@studio</b> : ~/影片工廠</span></div>
+      <div id="scroll"></div>
+    </div>
+    <div id="tmux">
+      <span class="sess">[<b>studio</b>] 0:filming*</span>
+      <span class="clock" id="clock"></span>
+    </div>
+  </div>
+  <div id="vig"></div>
+</div></div>
+
+<script>
+/* ============================================================
+   CONFIG — Dark Terminal 深夜終端・文字卡 (command narrative).
+   The card IS a terminal session. Script steps:
+     {cmd, out}              → command types, spinner, output
+                               prints BIG (mark ONE word with
+                               <hot>…</hot> for amber)
+     {cmd, rm:true}          → command types, then the PREVIOUS
+                               output gets BACKSPACE-DELETED
+                               character by character (the strike)
+     {cmd, out, key:true}    → the payoff: output in glowing
+                               green, <sel>…</sel> word gets the
+                               selection block, [✓] pulses
+   comment = final # line (the tag). Timing is monospace ticks —
+   no easing curves; the terminal never floats.
+   ============================================================ */
+const CONFIG = {
+  orientation: "landscape",
+  path: "~/影片工廠",
+  script: [
+    {cmd:'cat 大家的建議.txt',           out:'等準備好 <hot>再開始</hot>'},
+    {cmd:'rm -f 這個建議',               rm:true},
+    {cmd:'echo $真相',                   out:'邊拍 <sel>邊變好</sel>', key:true}
+  ],
+  comment: "# 深夜剪片的人都懂",
+  timing: { start: 1.0, typeChar: 0.05, spin: 0.55, outPause: 0.6 }
+};
+/* ============================================================ */
+const $=q=>document.querySelector(q);
+const stagePx=()=>CONFIG.orientation==="portrait"?[1080,1920]:[1920,1080];
+document.body.parentElement.className=CONFIG.orientation;
+function fit(){const[W,H]=stagePx();const s=Math.min(innerWidth/W,innerHeight/H);
+  $("#fit").style.cssText=`position:absolute;left:50%;top:50%;width:${W}px;height:${H}px;`+
+  `transform:translate(-50%,-50%) scale(${s});`;}
+addEventListener("resize",fit);fit();
+const CUES=[];const cue=(t,l)=>CUES.push([t,l]);
+(function(){const st=document.getElementById("stage");
+ const cd=document.createElement("div");cd.id="cd";cd.innerHTML="<span></span>";st.appendChild(cd);
+ const cp=document.createElement("div");cp.id="cues";st.appendChild(cp);
+ addEventListener("keydown",e=>{
+  if(e.key==="r"||e.key==="R"){let n=3;cd.style.display="flex";
+    const s=cd.querySelector("span");s.textContent=n;
+    const iv=setInterval(()=>{n--;if(n<1){clearInterval(iv);location.reload();}else s.textContent=n;},700);}
+  if(e.key==="o"||e.key==="O"){document.getElementById("stage").classList.add("outro");}
+  if(e.key==="s"||e.key==="S"){
+    cp.innerHTML="<b>SFX CUE SHEET（秒）</b><br>"+CUES.slice().sort((a,b)=>a[0]-b[0])
+      .map(c=>c[0].toFixed(2)+"s — "+c[1]).join("<br>");
+    cp.style.display=cp.style.display==="block"?"none":"block";}});})();
+
+document.querySelector("#tbar .path").innerHTML=
+  `<b>creator@studio</b> : ${CONFIG.path}`;
+setInterval(()=>{const d=new Date();
+  $("#clock").textContent=d.toTimeString().slice(0,5)+" ・ 深夜模式";},1000);
+
+const scroll=$("#scroll");
+const SPIN=["⠋","⠙","⠹","⠸","⠼","⠴","⠦","⠧"];
+function colorCmd(cmd){ // first token cyan, --flags purple
+  return cmd.split(" ").map((tok,i)=>
+    i===0?`<span class="cm">${tok}</span>`:
+    tok.startsWith("-")?`<span class="flag">${tok}</span>`:
+    `<span class="arg">${tok}</span>`).join(" ");}
+function markup(out,key){
+  return out.replace(/<hot>/g,'<span class="hotWord">').replace(/<\/hot>/g,"</span>")
+            .replace(/<sel>/g,'<span class="selWord">').replace(/<\/sel>/g,"</span>");}
+
+document.fonts.ready.then(()=>{fit();
+  cue(0,"鋪底：機箱風扇低鳴 + 微弱電流聲（整段）");
+  setTimeout(()=>$("#tmux").classList.add("on"),500);
+  const T=CONFIG.timing;let t=T.start;let lastOut=null;
+  CONFIG.script.forEach(step=>{
+    const plain=step.cmd;
+    // command line types
+    cue(t,"機械鍵盤敲擊 ×"+plain.length);
+    const cl=document.createElement("div");cl.className="cline";
+    scroll.appendChild(cl);
+    setTimeout(()=>{cl.classList.add("on");
+      let ci=0;(function type(){
+        cl.innerHTML='<span class="ps">❯</span>'+
+          colorCmd(plain.slice(0,ci))+'<span class="cursor"></span>';
+        ci++;
+        if(ci<=plain.length)setTimeout(type,T.typeChar*1000);
+        else cl.innerHTML='<span class="ps">❯</span>'+colorCmd(plain);
+      })();},t*1000);
+    t+=plain.length*T.typeChar+.15;
+
+    if(step.rm){
+      // backspace-delete the previous big output
+      cue(t,"連續 backspace 咔咔聲：上一句被刪掉");
+      const target=lastOut;
+      setTimeout(()=>{if(!target)return;
+        const full=target.textContent;let n=full.length;
+        target.classList.remove("key");target.style.color="var(--red)";
+        (function del(){
+          target.innerHTML=full.slice(0,n)+'<span class="cursor"></span>';
+          n--;
+          if(n>=0)setTimeout(del,45);
+          else{target.innerHTML='<span class="deleted">deleted ✕</span>';}
+        })();},t*1000);
+      t+=1.1;return;}
+
+    // spinner then output
+    cue(t,"處理中：spinner 滴答");
+    const sp=document.createElement("div");sp.className="cline";
+    scroll.appendChild(sp);
+    setTimeout(()=>{sp.classList.add("on");let f=0;
+      const iv=setInterval(()=>{sp.innerHTML=
+        `<span class="spin">${SPIN[f%8]} processing…</span>`;f++;},80);
+      setTimeout(()=>{clearInterval(iv);sp.remove();},T.spin*1000);
+    },t*1000);
+    t+=T.spin;
+
+    cue(t,step.key?"低音沉入 + 綠光起：關鍵句亮起":"輕 blip：輸出列印");
+    if(step.key)cue(t+.5,"清脆確認音：[✓]");
+    const out=document.createElement("div");
+    out.className="out"+(step.key?" key":"");
+    out.innerHTML=markup(step.out)+(step.key?'<span class="ok">[✓]</span>':"");
+    scroll.appendChild(out);
+    const self=out;
+    setTimeout(()=>{self.classList.add("on");
+      if(step.key)setTimeout(()=>self.querySelector(".ok").classList.add("on"),500);
+    },t*1000);
+    if(!step.key)lastOut=out;
+    t+=T.outPause;});
+  // comment tag
+  cue(t+.4,"鍵盤輕敲：註解");
+  const cm=document.createElement("div");cm.className="cline cmt";
+  scroll.appendChild(cm);
+  setTimeout(()=>{cm.classList.add("on");
+    let ci=0;const txt=CONFIG.comment;
+    (function type(){cm.innerHTML=txt.slice(0,ci)+'<span class="cursor"></span>';
+      ci++;if(ci<=txt.length)setTimeout(type,60);
+      else cm.innerHTML=txt+' <span class="cursor"></span>';})();
+  },(t+.4)*1000);});
+</script>
+</body>
+</html>

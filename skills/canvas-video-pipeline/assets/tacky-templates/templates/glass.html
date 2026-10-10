@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>Liquid Glass 液態玻璃 — Tacky Templates (exploration)</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&family=Noto+Sans+TC:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{--ink:rgba(255,255,255,.96)}
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:100%;height:100%;background:#000;overflow:hidden}
+  #fit{position:absolute}
+  #stage{position:relative;overflow:hidden;background:#0e1424}
+  .landscape #stage{width:1920px;height:1080px}
+  .portrait  #stage{width:1080px;height:1920px}
+  #camera{position:absolute;inset:0}
+
+  /* ---------- aurora wallpaper ---------- */
+  #aurora{position:absolute;inset:-10%;transition:filter 1.4s ease}
+  #aurora.key{filter:saturate(1.4) brightness(1.12)}
+  .blob{position:absolute;border-radius:50%;filter:blur(110px);opacity:.85;
+    will-change:transform}
+  .b1{width:1100px;height:1100px;left:-220px;top:-260px;background:#2e6cf6;
+    animation:drift1 26s ease-in-out infinite alternate}
+  .b2{width:950px;height:950px;right:-180px;top:-140px;background:#8a3ff0;
+    animation:drift2 31s ease-in-out infinite alternate}
+  .b3{width:820px;height:820px;left:26%;bottom:-320px;background:#ff7ab8;
+    animation:drift3 23s ease-in-out infinite alternate}
+  .b4{width:700px;height:700px;right:14%;bottom:-200px;background:#ff9f3c;opacity:.7;
+    animation:drift1 29s ease-in-out infinite alternate-reverse}
+  @keyframes drift1{0%{transform:translate(0,0) scale(1)}100%{transform:translate(140px,90px) scale(1.12)}}
+  @keyframes drift2{0%{transform:translate(0,0) scale(1.08)}100%{transform:translate(-120px,70px) scale(.96)}}
+  @keyframes drift3{0%{transform:translate(0,0) scale(1)}100%{transform:translate(110px,-80px) scale(1.15)}}
+
+  /* ---------- glass material ---------- */
+  .glass{position:relative;background:linear-gradient(135deg,rgba(255,255,255,.17),rgba(255,255,255,.06));
+    backdrop-filter:blur(26px) saturate(1.7);-webkit-backdrop-filter:blur(26px) saturate(1.7);
+    box-shadow:inset 0 1.5px 0 rgba(255,255,255,.55),inset 0 -1px 0 rgba(255,255,255,.10),
+      inset 1px 0 0 rgba(255,255,255,.18),0 24px 60px rgba(4,8,20,.35);
+    border-radius:36px}
+  /* EDGE LENSING — refraction rim: extra blur + brightness, ring-masked */
+  .glass .rim{position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+    backdrop-filter:blur(46px) saturate(2.4) brightness(1.24);
+    -webkit-backdrop-filter:blur(46px) saturate(2.4) brightness(1.24);
+    padding:9px;
+    -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+    -webkit-mask-composite:xor;
+    mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+    mask-composite:exclude}
+  .glass .sheenWrap{position:absolute;inset:0;border-radius:inherit;overflow:hidden;pointer-events:none}
+  .glass .sheen{position:absolute;top:-20%;bottom:-20%;width:34%;left:0;
+    background:linear-gradient(105deg,transparent,rgba(255,255,255,.34) 50%,transparent);
+    transform:translateX(-260%) skewX(-14deg)}
+  .glass.shine .sheen{animation:sweep 1.1s cubic-bezier(.4,.1,.2,1) forwards}
+  @keyframes sweep{0%{transform:translateX(-260%) skewX(-14deg)}100%{transform:translateX(1050%) skewX(-14deg)}}
+
+  /* ---------- top bar chip (mac furniture, Latin only) ---------- */
+  #bar{position:absolute;display:flex;align-items:center;gap:20px;
+    padding:18px 30px;border-radius:26px;opacity:0}
+  .landscape #bar{top:84px;left:96px}.portrait #bar{top:96px;left:72px}
+  #bar .lights{display:flex;gap:12px}
+  #bar .lights i{width:18px;height:18px;border-radius:50%;display:block}
+  #bar .lights i:nth-child(1){background:#ff5f57}#bar .lights i:nth-child(2){background:#febc2e}
+  #bar .lights i:nth-child(3){background:#28c840}
+  #bar .app{font-family:'Inter',sans-serif;font-weight:600;font-size:24px;color:var(--ink);
+    letter-spacing:.04em}
+  #bar.on{animation:panelIn .8s cubic-bezier(.2,1.1,.3,1) forwards}
+
+  /* ---------- clock chip (Latin/digits only, ticks live) ---------- */
+  #clock{position:absolute;padding:16px 28px;border-radius:24px;opacity:0;
+    font-family:'Inter',sans-serif;font-weight:600;font-size:24px;color:var(--ink);
+    letter-spacing:.06em}
+  .landscape #clock{top:84px;right:96px}.portrait #clock{top:96px;right:72px}
+  #clock.on{animation:panelIn .8s cubic-bezier(.2,1.1,.3,1) .12s forwards}
+
+  /* ---------- headline panels ---------- */
+  #headWrap{position:absolute;left:0;right:0;display:flex;flex-direction:column;
+    align-items:center}
+  .landscape #headWrap{top:50%;transform:translateY(-54%);gap:46px}
+  .portrait  #headWrap{top:50%;transform:translateY(-55%);gap:52px}
+  .panel{display:flex;align-items:baseline;white-space:nowrap;opacity:0;
+    will-change:transform,opacity}
+  .landscape .panel{font-size:108px;padding:.28em .55em}
+  .portrait  .panel{font-size:88px;padding:.3em .5em}
+  /* LIQUID PHYSICS — jelly landing: two-axis squash + radius morph */
+  .panel.on{animation:panelIn .95s cubic-bezier(.2,1.15,.3,1) forwards}
+  @keyframes panelIn{0%{opacity:0;transform:translateY(52px) scale(.94);border-radius:52px}
+    58%{opacity:1;transform:translateY(-8px) scale(1.022,.982);border-radius:30px}
+    76%{transform:translateY(2px) scale(.992,1.012);border-radius:42px}
+    100%{opacity:1;transform:translateY(0) scale(1,1);border-radius:36px}}
+  /* micro-parallax drift after landing (opacity guard — replaces the
+     entrance animation, which held opacity via forwards fill) */
+  .panel.drift{animation:floatP var(--fd,7.3s) ease-in-out infinite alternate;
+    opacity:1!important}
+  #bar.drift,#clock.drift{animation:floatP var(--fd,9.7s) ease-in-out infinite alternate;
+    opacity:1!important}
+  @keyframes floatP{0%{transform:translateY(0)}100%{transform:translateY(-6px)}}
+
+  .word{font-family:'Noto Sans TC','Inter',sans-serif;font-weight:900;font-size:1em;
+    color:var(--ink);display:inline-block;padding:0 .05em;line-height:1.32;
+    text-shadow:0 2px 10px rgba(4,8,20,.22);position:relative}
+  /* letter-stagger: chars rise inside the panel as it lands */
+  .ch{display:inline-block;opacity:0;transform:translateY(.34em);
+    position:relative;z-index:3}
+  .ch.on{animation:chRise .55s cubic-bezier(.16,.84,.24,1) forwards}
+  @keyframes chRise{0%{opacity:0;transform:translateY(.34em)}
+    100%{opacity:1;transform:translateY(0)}}
+
+  /* cut:true — DIRECTIONAL FROST: grows across from the left, crystalline
+     speckle, word contracts as it ices over */
+  .word.cut{transition:color 1.1s ease,transform 1.1s ease}
+  .word.cut .frost{position:absolute;inset:-4px -8px;border-radius:26px;z-index:1;
+    backdrop-filter:blur(14px) brightness(1.22) saturate(1.35);
+    -webkit-backdrop-filter:blur(14px) brightness(1.22) saturate(1.35);
+    box-shadow:inset 0 1.5px 0 rgba(255,255,255,.7),inset 0 -1px 0 rgba(255,255,255,.25),
+      inset 0 0 24px rgba(255,255,255,.35),0 0 26px rgba(210,232,255,.25);
+    background-image:
+      linear-gradient(115deg,transparent 0 14%,rgba(255,255,255,.22) 15% 17%,transparent 18% 40%,
+        rgba(255,255,255,.16) 41% 43%,transparent 44% 72%,rgba(255,255,255,.20) 73% 75%,transparent 76%),
+      radial-gradient(circle at 18% 32%,rgba(255,255,255,.8) 0 2.2px,transparent 3.4px),
+      radial-gradient(circle at 64% 70%,rgba(255,255,255,.65) 0 1.8px,transparent 2.8px),
+      radial-gradient(circle at 84% 26%,rgba(255,255,255,.7) 0 1.6px,transparent 2.6px),
+      radial-gradient(circle at 38% 78%,rgba(255,255,255,.6) 0 2px,transparent 3px),
+      radial-gradient(circle at 50% 18%,rgba(255,255,255,.62) 0 1.5px,transparent 2.5px),
+      linear-gradient(160deg,rgba(255,255,255,.62),rgba(238,245,255,.46) 45%,rgba(255,255,255,.56));
+    -webkit-mask:linear-gradient(100deg,#000 42%,transparent 58%) no-repeat;
+    -webkit-mask-size:260% 100%;-webkit-mask-position:130% 0;
+    mask:linear-gradient(100deg,#000 42%,transparent 58%) no-repeat;
+    mask-size:260% 100%;mask-position:130% 0;
+    transition:-webkit-mask-position 1.15s cubic-bezier(.3,.1,.3,1),
+      mask-position 1.15s cubic-bezier(.3,.1,.3,1)}
+  .word.cut.frosted{color:rgba(24,32,48,.85);text-shadow:none;transform:scale(.98)}
+  .word.cut.frosted .frost{-webkit-mask-position:0% 0;mask-position:0% 0}
+
+  /* key capsule row — the word under its own magnifying glass */
+  #capRow{display:flex;justify-content:center;align-items:center;opacity:0}
+  .landscape #capRow{height:230px}.portrait #capRow{height:200px}
+  #capRow.on{animation:capIn 1s cubic-bezier(.2,1.25,.3,1) forwards}
+  @keyframes capIn{0%{opacity:0;transform:translateY(56px) scale(.86)}
+    55%{opacity:1;transform:translateY(-10px) scale(1.045,.965)}
+    74%{transform:translateY(3px) scale(.985,1.02)}
+    100%{opacity:1;transform:translateY(0) scale(1,1)}}
+  #capsule{position:relative;border-radius:999px;
+    background:linear-gradient(135deg,rgba(255,255,255,.28),rgba(255,255,255,.10));
+    backdrop-filter:blur(32px) saturate(2.1);-webkit-backdrop-filter:blur(32px) saturate(2.1);
+    box-shadow:inset 0 2px 0 rgba(255,255,255,.65),inset 0 -1px 0 rgba(255,255,255,.14),
+      0 30px 80px rgba(4,8,20,.4),0 0 90px rgba(255,255,255,.12)}
+  #capRow.float #capsule{animation:bob 4.5s ease-in-out infinite}
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+  #capsule svg{display:block}
+  #capsule text{font-weight:900}
+  /* caustic — light focused through the glass onto the wallpaper below */
+  #capsule .caustic{position:absolute;left:50%;bottom:-44px;
+    transform:translateX(-50%);width:118%;height:56px;pointer-events:none;
+    background:radial-gradient(ellipse 50% 50% at 50% 50%,rgba(255,255,255,.34),
+      rgba(190,214,255,.14) 55%,transparent 76%);
+    filter:blur(13px);opacity:0;transition:opacity 1.2s ease .3s}
+  #capRow.on #capsule .caustic{opacity:1}
+  #capRow.float #capsule .caustic{animation:causticBreathe 4.5s ease-in-out infinite}
+  @keyframes causticBreathe{0%,100%{transform:translateX(-50%) scaleX(1);opacity:1}
+    50%{transform:translateX(-50%) scaleX(1.08);opacity:.8}}
+
+  /* ---------- note ---------- */
+  #note{position:absolute;left:50%;transform:translateX(-50%);white-space:nowrap;
+    font-family:'Noto Sans TC',sans-serif;font-weight:700;font-size:29px;
+    color:rgba(255,255,255,.82);letter-spacing:.14em;opacity:0;transition:opacity 1.2s ease;
+    text-shadow:0 2px 12px rgba(4,8,20,.3)}
+  .landscape #note{bottom:104px}.portrait #note{bottom:340px}
+  #note.on{opacity:1}
+
+  #cd{position:absolute;inset:0;z-index:20;display:none;align-items:center;justify-content:center;
+    background:#0e1424}
+  #cd span{font-family:'Inter',sans-serif;font-weight:700;font-size:300px;color:#fff}
+  #cues{position:absolute;right:24px;top:24px;z-index:21;display:none;background:rgba(10,14,26,.94);
+    color:#fff;font-family:monospace;font-size:15px;line-height:1.75;
+    padding:14px 18px;max-height:70%;overflow:auto;border-radius:14px}
+
+  /* O = outro: everything defocuses THROUGH the glass and lifts away */
+  .outro .panel,.outro #capRow,.outro #bar,.outro #clock{
+    transition:opacity .9s ease,transform .9s cubic-bezier(.5,0,.7,.4),filter .9s ease;
+    animation:none!important;
+    opacity:0!important;transform:translateY(-34px) scale(1.02);filter:blur(16px)}
+  .outro #note{transition:opacity .6s;opacity:0!important}
+</style>
+</head>
+<body>
+<div id="fit"><div id="stage">
+  <div id="camera">
+    <div id="aurora"><div class="blob b1"></div><div class="blob b2"></div>
+      <div class="blob b3"></div><div class="blob b4"></div></div>
+    <div id="bar" class="glass"><div class="lights"><i></i><i></i><i></i></div>
+      <span class="app"></span></div>
+    <div id="clock" class="glass"></div>
+    <div id="headWrap"></div>
+    <div id="note"></div>
+  </div>
+</div></div>
+
+<script>
+/* ============================================================
+   CONFIG — Liquid Glass 液態玻璃 (macOS glass · EXPLORATION)
+   Frosted glass panels floating on an aurora wallpaper, with
+   edge refraction rims, jelly physics, and caustic light.
+   word flags: cut:true (the word FROSTS OVER — frost grows in
+               from the left, crystalline speckle, word contracts
+               = the strike)
+   key word: its OWN glass capsule (magnifying lens), pops in
+   last with jelly overshoot + light sweep + caustic below;
+   wallpaper saturates. app = Latin-only toolbar label.
+   clock: "auto" ticks live, or fix a string like "02:47".
+   ============================================================ */
+const CONFIG = {
+  orientation: "landscape",
+  app: "b-roll.app",
+  clock: "auto",
+  lines: [
+    [ {t:"十層"}, {t:"特效", cut:true}, {t:"，不如一層"} ]
+  ],
+  key: "質感",                              // the capsule word (one word)
+  note: "玻璃下的世界，反而更清楚",
+  timing: { start: 1.1, stagger: 0.5 },
+  capFS: 150                                // capsule font px (landscape; portrait ×.82)
+};
+/* ============================================================ */
+const $=q=>document.querySelector(q);
+const stagePx=()=>CONFIG.orientation==="portrait"?[1080,1920]:[1920,1080];
+document.body.parentElement.className=CONFIG.orientation;
+function fit(){const[W,H]=stagePx();const s=Math.min(innerWidth/W,innerHeight/H);
+  $("#fit").style.cssText=`position:absolute;left:50%;top:50%;width:${W}px;height:${H}px;`+
+  `transform:translate(-50%,-50%) scale(${s});`;}
+addEventListener("resize",fit);fit();
+
+const CUES=[];const cue=(t,l)=>CUES.push([t,l]);
+(function(){const st=document.getElementById("stage");
+ const cd=document.createElement("div");cd.id="cd";cd.innerHTML="<span></span>";st.appendChild(cd);
+ const cp=document.createElement("div");cp.id="cues";st.appendChild(cp);
+ addEventListener("keydown",e=>{
+  if(e.key==="r"||e.key==="R"){let n=3;cd.style.display="flex";
+    const s=cd.querySelector("span");s.textContent=n;
+    const iv=setInterval(()=>{n--;if(n<1){clearInterval(iv);location.reload();}else s.textContent=n;},700);}
+  if(e.key==="o"||e.key==="O"){document.getElementById("stage").classList.add("outro");}
+  if(e.key==="s"||e.key==="S"){
+    cp.innerHTML="<b>SFX CUE SHEET（秒）</b><br>"+CUES.slice().sort((a,b)=>a[0]-b[0])
+      .map(c=>c[0].toFixed(2)+"s — "+c[1]).join("<br>");
+    cp.style.display=cp.style.display==="block"?"none":"block";}});})();
+
+/* glass finishing: refraction rim + sheen injected into every .glass */
+function dressGlass(el){
+  const r=document.createElement("div");r.className="rim";el.appendChild(r);
+  const sw=document.createElement("div");sw.className="sheenWrap";
+  sw.innerHTML="<div class=\"sheen\"></div>";el.appendChild(sw);}
+
+/* build */
+const wrap=$("#headWrap");const panels=[];let cutEl=null;
+CONFIG.lines.forEach(line=>{
+  const p=document.createElement("div");p.className="panel glass";
+  line.forEach(w=>{const s=document.createElement("span");s.className="word";
+    [...w.t].forEach(c=>{const ch=document.createElement("span");
+      ch.className="ch";ch.textContent=c;s.appendChild(ch);});
+    if(w.cut){s.classList.add("cut");
+      const f=document.createElement("i");f.className="frost";s.appendChild(f);
+      cutEl=s;}
+    p.appendChild(s);});
+  dressGlass(p);
+  wrap.appendChild(p);panels.push(p);});
+const capRow=document.createElement("div");capRow.id="capRow";
+capRow.innerHTML="<div id=\"capsule\" class=\"glass\"></div>";
+wrap.appendChild(capRow);
+dressGlass($("#bar"));dressGlass($("#clock"));
+$("#bar .app").textContent=CONFIG.app;
+$("#note").textContent=CONFIG.note;
+
+/* live clock */
+(function(){const el=$("#clock");
+  if(CONFIG.clock!=="auto"){el.textContent=CONFIG.clock;return;}
+  const tick=()=>{const d=new Date();
+    el.textContent=String(d.getHours()).padStart(2,"0")+":"+
+      String(d.getMinutes()).padStart(2,"0");};
+  tick();setInterval(tick,15000);})();
+
+/* CJK-in-container rule: canvas-measure the ink, SVG text with
+   computed baseline inside a fixed-size capsule (measured LAZILY
+   at reveal — Safari fonts.ready fires before fonts apply).
+   Fill = aurora-tinted gradient: the glass transmits the light. */
+function buildCapsule(){
+  const fs=CONFIG.orientation==="portrait"?Math.round(CONFIG.capFS*.82):CONFIG.capFS;
+  const cv=document.createElement("canvas");const cx=cv.getContext("2d");
+  cx.font="900 "+fs+"px 'Noto Sans TC','Inter',sans-serif";
+  const m=cx.measureText(CONFIG.key);
+  const a=m.actualBoundingBoxAscent,b=m.actualBoundingBoxDescent;
+  const W=Math.ceil(m.width+fs*.92),H=Math.ceil(fs*1.42);
+  const y=(H+(a-b))/2;
+  const cap=$("#capsule");
+  cap.innerHTML="<svg width=\""+W+"\" height=\""+H+"\" viewBox=\"0 0 "+W+" "+H+"\">"+
+    "<defs><linearGradient id=\"capGrad\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\">"+
+    "<stop offset=\"0\" stop-color=\"#ffffff\"/>"+
+    "<stop offset=\"0.55\" stop-color=\"#edf3ff\"/>"+
+    "<stop offset=\"1\" stop-color=\"#ffdef2\"/></linearGradient></defs>"+
+    "<text x=\""+(W/2)+"\" y=\""+y+"\" text-anchor=\"middle\" font-size=\""+fs+"\" "+
+    "font-family=\"Noto Sans TC, Inter, sans-serif\" fill=\"url(#capGrad)\">"+
+    CONFIG.key+"</text></svg>"+
+    "<div class=\"caustic\"></div>";
+  dressGlass(cap);
+}
+
+document.fonts.ready.then(()=>{fit();
+  const T=CONFIG.timing;let t=T.start;
+  cue(t-.6,"水滴 drop / 玻璃輕響：工具列浮入");
+  setTimeout(()=>{
+    const b=$("#bar"),c=$("#clock");
+    b.classList.add("on");c.classList.add("on");
+    setTimeout(()=>{b.classList.add("drift");b.style.setProperty("--fd","9.7s");
+      c.classList.add("drift");c.style.setProperty("--fd","11.3s");},1100);
+  },(t-.6)*1000);
+  panels.forEach((p,pi)=>{
+    cue(t,"玻璃浮入 soft glass thunk：面板果凍落定");
+    cue(t+.35,"叮（極輕）glass ting：字浮現");
+    cue(t+.6,"高光掠過 shimmer：鏡面反光");
+    setTimeout(()=>{p.classList.add("on");
+      /* letter-stagger as the panel settles */
+      const chs=p.querySelectorAll(".ch");
+      chs.forEach((ch,i)=>setTimeout(()=>ch.classList.add("on"),330+i*42));
+      setTimeout(()=>p.classList.add("shine"),560);
+      /* hand over to micro-parallax drift (opacity-guarded) */
+      setTimeout(()=>{p.classList.add("drift");
+        p.style.setProperty("--fd",(7.3+pi*1.6)+"s");},1000);
+    },t*1000);
+    t+=T.stagger;});
+  if(cutEl){const tF=t+.7;
+    cue(tF,"呵氣結霜 frost breath：刪除字從左結霜（the strike）");
+    setTimeout(()=>cutEl.classList.add("frosted"),tF*1000);
+    t=tF+1;}
+  const tK=t+.4;
+  cue(tK,"低音水滴 bloom：關鍵字玻璃膠囊浮現，壁紙變飽和");
+  cue(tK+.9,"高光掠過 shimmer：膠囊鏡面反光");
+  setTimeout(()=>{buildCapsule();capRow.classList.add("on");
+    $("#aurora").classList.add("key");
+    setTimeout(()=>{capRow.classList.add("float");
+      $("#capsule").classList.add("shine");},950);},tK*1000);
+  cue(tK+1.3,"氣音：註解浮現");
+  setTimeout(()=>$("#note").classList.add("on"),(tK+1.3)*1000);});
+</script>
+</body>
+</html>

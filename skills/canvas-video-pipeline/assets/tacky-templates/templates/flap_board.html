@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>Split-flap 翻牌看板・時刻表卡 — Tacky Templates</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@600;700&family=Noto+Sans+TC:wght@700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --board:#0f1114;--tile1:#22262e;--tile2:#191c22;--char:#f2f0e6;
+    --amber:#ffb02e;--amberInk:#191204;--red:#e0483e;--dim:#6a707c}
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:100%;height:100%;background:#000;overflow:hidden}
+  #fit{position:absolute}
+  #stage{position:relative;overflow:hidden;background:var(--board)}
+  .landscape #stage{width:1920px;height:1080px}
+  .portrait  #stage{width:1080px;height:1920px}
+  #camera{position:absolute;inset:0}
+  #wall{position:absolute;inset:0;
+    background:linear-gradient(180deg,#13151a 0%,#0f1114 40%,#0b0d10 100%)}
+  #wall::after{content:"";position:absolute;inset:0;opacity:.35;
+    background:repeating-linear-gradient(90deg,transparent 0 90px,rgba(255,255,255,.012) 90px 92px)}
+
+  #head{position:absolute;display:flex;align-items:baseline;justify-content:space-between;
+    opacity:0;transition:opacity .9s ease}
+  .landscape #head{left:130px;right:130px;top:96px}
+  .portrait  #head{left:76px;right:76px;top:120px}
+  #head.on{opacity:1}
+  #head .dep{font-family:'Noto Sans TC',sans-serif;font-weight:900;font-size:40px;
+    color:var(--amber);letter-spacing:.3em;white-space:nowrap}
+  #head .dep .en{font-family:'Inter',sans-serif;font-weight:700;font-size:24px;
+    color:var(--dim);letter-spacing:.4em;margin-left:26px}
+  #head .clk{font-family:'Inter',sans-serif;font-weight:700;font-size:40px;
+    color:var(--amber);letter-spacing:.12em;font-variant-numeric:tabular-nums}
+  #rule{position:absolute;height:3px;background:linear-gradient(90deg,var(--amber),rgba(255,176,46,.15));
+    transform:scaleX(0);transform-origin:left;transition:transform 1s cubic-bezier(.2,.8,.2,1) .2s}
+  .landscape #rule{left:130px;right:130px;top:170px}
+  .portrait  #rule{left:76px;right:76px;top:196px}
+  #rule.on{transform:scaleX(1)}
+
+  /* ---------- timetable ---------- */
+  #tt{position:absolute;left:50%;transform:translateX(-50%);display:flex;
+    flex-direction:column}
+  .landscape #tt{top:226px;gap:34px}
+  .portrait  #tt{top:300px;gap:48px}
+  /* painted column headers */
+  #cols{display:flex;gap:calc(var(--ts)*.5);opacity:0;transition:opacity 1s ease}
+  #cols.on{opacity:1}
+  #cols span{font-family:'Noto Sans TC',sans-serif;font-weight:700;font-size:24px;
+    color:var(--dim);letter-spacing:.3em}
+  .row{display:flex;gap:calc(var(--ts)*.5);align-items:center}
+  .col{display:flex;gap:9px}
+  .tile{width:var(--ts);height:calc(var(--ts)*1.26);position:relative;border-radius:8px;
+    background:linear-gradient(180deg,var(--tile1) 0%,var(--tile1) 49%,var(--tile2) 51%,var(--tile2) 100%);
+    box-shadow:inset 0 2px 0 rgba(255,255,255,.07),inset 0 -2px 0 rgba(0,0,0,.4),
+      0 8px 18px rgba(0,0,0,.45);
+    display:flex;align-items:center;justify-content:center;overflow:hidden}
+  .tile::after{content:"";position:absolute;left:0;right:0;top:50%;height:2px;
+    margin-top:-1px;background:rgba(0,0,0,.55);z-index:3}
+  .tile .c{font-family:'Noto Sans TC';font-weight:900;color:var(--char);
+    font-size:calc(var(--ts)*.68);line-height:1;transform:translateY(2%);z-index:2}
+  .tile.flip .c{animation:clack .1s cubic-bezier(.3,0,.7,1)}
+  @keyframes clack{0%{transform:translateY(2%) scaleY(.55)}100%{transform:translateY(2%) scaleY(1)}}
+  .tile.amber{background:linear-gradient(180deg,#ffc85e 0%,var(--amber) 49%,#e89a18 51%,#d68d12 100%);
+    box-shadow:inset 0 2px 0 rgba(255,255,255,.45),inset 0 -2px 0 rgba(0,0,0,.25),
+      0 8px 24px rgba(255,176,46,.25)}
+  .tile.amber .c{color:var(--amberInk)}
+  .tile.delay .c{color:var(--red)}
+  .row.focus .fframe{position:absolute;left:-20px;right:-20px;top:-14px;bottom:-14px;
+    border:3px solid var(--amber);border-radius:14px;opacity:0;transform:scale(1.04);
+    pointer-events:none;transition:opacity .5s ease,transform .5s cubic-bezier(.2,1.2,.3,1)}
+  .row{position:relative}
+  .row.focus.locked .fframe{opacity:1;transform:scale(1)}
+
+  #note{position:absolute;left:50%;transform:translateX(-50%);display:flex;
+    align-items:center;gap:20px;opacity:0;transition:opacity 1s ease;white-space:nowrap}
+  .landscape #note{bottom:88px}.portrait #note{bottom:330px}
+  #note.on{opacity:1}
+  #note .arr{color:var(--amber);font-family:'Inter';font-size:26px}
+  #note .txt{font-family:'Noto Sans TC',sans-serif;font-weight:700;font-size:28px;
+    color:var(--dim);letter-spacing:.2em}
+  .meta{position:absolute;font-family:'Inter','Noto Sans TC',sans-serif;font-weight:700;
+    font-size:18px;letter-spacing:.26em;color:#3c424c;opacity:0;transition:opacity 1.2s}
+  .meta.on{opacity:1}
+  .landscape #metaBL{bottom:88px;left:130px}.landscape #metaBR{bottom:88px;right:130px}
+  .portrait #metaBL{bottom:120px;left:76px}.portrait #metaBR{bottom:120px;right:76px}
+
+  #cd{position:absolute;inset:0;z-index:20;display:none;align-items:center;justify-content:center;background:var(--board)}
+  #cd span{font-family:'Inter',sans-serif;font-weight:700;font-size:300px;color:var(--char)}
+  #cues{position:absolute;right:24px;top:24px;z-index:21;display:none;background:rgba(10,12,16,.95);
+    color:#f2f0e6;font-family:monospace;font-size:15px;line-height:1.75;
+    padding:14px 18px;max-height:70%;overflow:auto;border:1px solid #262b34}
+</style>
+</head>
+<body>
+<div id="fit"><div id="stage">
+  <div id="camera">
+    <div id="wall"></div>
+    <div id="head"><div class="dep"></div><div class="clk"></div></div>
+    <div id="rule"></div>
+    <div id="tt"><div id="cols"></div></div>
+    <div id="note"><span class="arr">▸</span><span class="txt"></span></div>
+    <div class="meta" id="metaBL"></div><div class="meta" id="metaBR"></div>
+  </div>
+</div></div>
+
+<script>
+/* ============================================================
+   CONFIG — Split-flap・時刻表卡 (timetable)
+   For schedules, routines, step lists — served as departure
+   rows: TIME | SERVICE | STATUS, all flap tiles, columns
+   aligned (short names padded with blank tiles).
+   rows: {time:"09:00", t:"拍攝日", status:"準時"}
+         status "延誤" renders red; focus:true → status flips
+         LAST to 登機中 on amber tiles + frame around the row.
+   ONE focus row. 3–4 rows ideal.
+   ============================================================ */
+const CONFIG = {
+  orientation: "landscape",
+  header: "今日班次",
+  headerEn: "CREATOR TIMETABLE",
+  clock: "auto",
+  cols: ["時間","班次","狀態"],
+  rows: [
+    { time:"09:00", t:"靈感蒐集", status:"準時" },
+    { time:"13:00", t:"拍攝日",   status:"準時" },
+    { time:"19:00", t:"剪輯夜車", status:"延誤" },
+    { time:"23:00", t:"上片",     status:"登機中", focus:true }
+  ],
+  note: "延誤不是取消 · 上片才算出發",
+  metaBL: "PLATFORM 10",
+  metaBR: "TAIPEI CENTRAL",
+  timing: { start: 1.2, rowGap: 0.55, tileStagger: 0.055 }
+};
+/* ============================================================ */
+const $=q=>document.querySelector(q);
+const stagePx=()=>CONFIG.orientation==="portrait"?[1080,1920]:[1920,1080];
+document.body.parentElement.className=CONFIG.orientation;
+function fit(){const[W,H]=stagePx();const s=Math.min(innerWidth/W,innerHeight/H);
+  $("#fit").style.cssText=`position:absolute;left:50%;top:50%;width:${W}px;height:${H}px;`+
+  `transform:translate(-50%,-50%) scale(${s});`;}
+addEventListener("resize",fit);fit();
+
+const CUES=[];const cue=(t,l)=>CUES.push([t,l]);
+(function(){const st=document.getElementById("stage");
+ const cd=document.createElement("div");cd.id="cd";cd.innerHTML="<span></span>";st.appendChild(cd);
+ const cp=document.createElement("div");cp.id="cues";st.appendChild(cp);
+ addEventListener("keydown",e=>{
+  if(e.key==="r"||e.key==="R"){let n=3;cd.style.display="flex";
+    const s=cd.querySelector("span");s.textContent=n;
+    const iv=setInterval(()=>{n--;if(n<1){clearInterval(iv);location.reload();}else s.textContent=n;},700);}
+  if(e.key==="o"||e.key==="O"){boardClear();}
+  if(e.key==="s"||e.key==="S"){
+    cp.innerHTML="<b>SFX CUE SHEET（秒）</b><br>"+CUES.slice().sort((a,b)=>a[0]-b[0])
+      .map(c=>c[0].toFixed(2)+"s — "+c[1]).join("<br>");
+    cp.style.display=cp.style.display==="block"?"none":"block";}});})();
+
+const POOL=("的一是在不了有台北車站機場出發到達準時延誤登機靈感拍攝剪輯上片"+
+  "0123456789:").split("");
+CONFIG.rows.forEach(r=>[...(r.time+r.t+r.status)].forEach(c=>{
+  if(!POOL.includes(c))POOL.push(c);}));
+const rnd=a=>a[Math.floor(Math.random()*a.length)];
+
+/* column widths */
+const maxT=Math.max(...CONFIG.rows.map(r=>[...r.t].length));
+const maxS=Math.max(...CONFIG.rows.map(r=>[...r.status].length),3);
+const totalTiles=5+maxT+maxS;
+const isP=CONFIG.orientation==="portrait";
+const TS=Math.min(isP?86:100,Math.floor((isP?940:1620)/(totalTiles+1)));
+document.documentElement.style.setProperty("--ts",TS+"px");
+
+/* build */
+const tt=$("#tt");const rowEls=[];
+const cols=$("#cols");
+CONFIG.cols.forEach((c,i)=>{const s=document.createElement("span");
+  s.textContent=c;
+  s.style.width=(i===0?5:i===1?maxT:maxS)*(TS+9)-9+"px";
+  cols.appendChild(s);});
+function makeCol(text,len){
+  const col=document.createElement("div");col.className="col";
+  const chars=[...text];
+  for(let i=0;i<len;i++){
+    const tl=document.createElement("div");tl.className="tile";
+    const c=document.createElement("span");c.className="c";c.textContent="";
+    tl.appendChild(c);tl._c=c;tl._target=chars[i]||"";
+    col.appendChild(tl);}
+  return col;}
+CONFIG.rows.forEach(r=>{
+  const row=document.createElement("div");row.className="row"+(r.focus?" focus":"");
+  row.appendChild(makeCol(r.time,5));
+  row.appendChild(makeCol(r.t,maxT));
+  const sc=makeCol(r.focus?"":r.status,maxS);   // focus status flips later
+  sc.classList.add("statcol");
+  row.appendChild(sc);
+  if(r.focus){const f=document.createElement("div");f.className="fframe";row.appendChild(f);}
+  row._flags=r;tt.appendChild(row);rowEls.push(row);});
+$("#head .dep").innerHTML=CONFIG.header+"<span class=\"en\">"+CONFIG.headerEn+"</span>";
+$("#note .txt").textContent=CONFIG.note;
+$("#metaBL").textContent=CONFIG.metaBL;$("#metaBR").textContent=CONFIG.metaBR;
+(function(){const el=$("#head .clk");
+  if(CONFIG.clock!=="auto"){el.textContent=CONFIG.clock;return;}
+  const tick=()=>{const d=new Date();
+    el.textContent=String(d.getHours()).padStart(2,"0")+":"+
+      String(d.getMinutes()).padStart(2,"0");};
+  tick();setInterval(tick,15000);})();
+
+function flipTo(tile,target,steps,cls){
+  let n=0,delay=50;
+  (function step(){
+    tile.classList.remove("flip");void tile.offsetWidth;tile.classList.add("flip");
+    if(n>=steps){tile._c.textContent=target;
+      if(cls)tile.classList.add(cls);return;}
+    tile._c.textContent=rnd(POOL);n++;delay*=1.15;
+    setTimeout(step,delay);})();}
+
+function boardClear(){
+  const tiles=[...document.querySelectorAll(".tile")];
+  tiles.forEach((tl,i)=>setTimeout(()=>{
+    tl.classList.remove("amber","delay");
+    flipTo(tl,"",3+Math.floor(Math.random()*3));},i*40));
+  document.querySelectorAll(".row").forEach(r=>r.classList.remove("locked"));
+  setTimeout(()=>{$("#note").style.opacity=0;
+    document.querySelectorAll(".meta").forEach(m=>m.style.opacity=0);},tiles.length*40+400);}
+
+document.fonts.ready.then(()=>{fit();
+  const T=CONFIG.timing;let t=T.start;
+  cue(.3,"機械環境音 vestibule hum（墊底）");
+  cue(.4,"叮咚 station chime：看板亮起");
+  setTimeout(()=>{$("#head").classList.add("on");$("#rule").classList.add("on");
+    $("#cols").classList.add("on");},400);
+  document.querySelectorAll(".meta").forEach(m=>setTimeout(()=>m.classList.add("on"),700));
+  let focusRow=null;
+  rowEls.forEach((row,ri)=>{
+    cue(t,"嗒嗒嗒 flap clatter：第 "+(ri+1)+" 班翻牌");
+    const tiles=[...row.querySelectorAll(".tile")];
+    const isDelay=row._flags.status==="延誤";
+    tiles.forEach((tl,i)=>{
+      const inStat=tl.parentElement.classList.contains("statcol");
+      setTimeout(()=>flipTo(tl,tl._target,5+Math.floor(Math.random()*4),
+        (isDelay&&inStat&&tl._target)?"delay":null),
+        (t+i*T.tileStagger)*1000);});
+    if(row._flags.focus)focusRow=row;
+    t+=tiles.length*T.tileStagger+T.rowGap;});
+  /* the boarding call */
+  if(focusRow){const tK=t+.5;
+    cue(tK,"嗒嗒…咔！amber lock：焦點班次狀態翻成登機中");
+    const stat=[...focusRow.querySelectorAll(".statcol .tile")];
+    const chars=[...focusRow._flags.status];
+    stat.forEach((tl,i)=>setTimeout(()=>{
+      flipTo(tl,chars[i]||"",4,(chars[i]?"amber":null));},(tK+i*.15)*1000));
+    const tF=tK+stat.length*.15+.35;
+    cue(tF,"低音 thunk：琥珀框合上");
+    setTimeout(()=>focusRow.classList.add("locked"),tF*1000);
+    t=tF+.4;}
+  cue(t+.3,"叮：狀態列浮現");
+  setTimeout(()=>$("#note").classList.add("on"),(t+.3)*1000);
+  /* ambient re-adjust */
+  setTimeout(()=>{const amb=[...document.querySelectorAll(".tile:not(.amber)")]
+      .filter(tl=>tl._c.textContent);
+    setInterval(()=>{const tl=rnd(amb);
+      if(tl)flipTo(tl,tl._target,2,tl.classList.contains("delay")?"delay":null);},4200);},
+    (t+1)*1000);});
+</script>
+</body>
+</html>

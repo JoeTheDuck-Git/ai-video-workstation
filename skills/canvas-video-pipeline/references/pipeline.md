@@ -4,7 +4,7 @@
 
 | Stage | Owner | Output |
 |---|---|---|
-| Generative media | Dreamina Canvas CLI | Selected and downloaded image, video, voice, or music assets |
+| Source media | User-selected provider, local footage, or licensed stock | Selected local image, video, voice, or music assets |
 | Coded motion | canvas-video | MP4, ProRes, transparent MOV, or review PNG |
 | Editorial assembly | HyperFrames | Timed multi-scene composition and delivery render |
 | Delivery validation | video-delivery-qc | Technical report, subtitle/audio checks, and review evidence |
@@ -29,9 +29,9 @@ Never persist access tokens, cookies, signed URLs, provider payloads, or credit-
 
 For a commercial deliverable, verify that the provider and the exact voice or model permit the intended commercial use. Record the provider, voice or model identifier, version, license source, and review date in the production manifest. Do not assume an F5-TTS checkpoint or any pretrained voice model is commercially cleared. If the license cannot be verified, use it only as an explicitly marked temporary voice and replace it before final delivery.
 
-## Dreamina boundary
+## Source-media boundary
 
-Use the installed Dreamina CLI schema and model catalog as the executable authority. Credit approval happens before paid generation. Download only a completed, selected result. Canvas rendering never triggers or retries Dreamina generation.
+Do not assume or require a particular generative provider. Use local footage, licensed stock, or the provider the user explicitly selects. Confirm cost or credit use before paid generation, download only the selected result, and freeze it as a local input. Canvas rendering never triggers, retries, authenticates to, or spends credits with a generative provider.
 
 ## HyperFrames boundary
 

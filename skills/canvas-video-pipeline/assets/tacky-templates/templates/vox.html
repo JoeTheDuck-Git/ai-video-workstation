@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>Vox 紀錄片 — Tacky Templates</title>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Caveat:wght@700&family=LXGW+WenKai+TC:wght@700&family=Noto+Sans+TC:wght@500;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#f4efe3; --paper2:#e9e2cf; --ink:#191510; --accent:#c94f34;
+    --hilite:#f5c842; --mono:#6b6252; --rule:#c9bfa8;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:100%;height:100%;background:#111;overflow:hidden}
+  /* ---------- stage scales to fit any window; canvas is exact px ---------- */
+  #fit{position:absolute;top:50%;left:50%;transform-origin:center}
+  #stage{position:relative;overflow:hidden;background:var(--paper)}
+  .landscape #stage{width:1920px;height:1080px}
+  .portrait  #stage{width:1080px;height:1920px}
+
+  /* ---------- camera rig: push-in + drift + key punch ---------- */
+  #camera{position:absolute;inset:0;will-change:transform}
+  #camera.punch{animation:punch .38s cubic-bezier(.2,1.6,.3,1)}
+  @keyframes punch{0%{scale:1}30%{scale:1.035}100%{scale:1}}
+
+  /* ---------- parallax planes ---------- */
+  .plane{position:absolute;inset:-60px;will-change:transform}
+  #plane-fg{inset:0 !important}
+  #plane-bg{z-index:1} #plane-mid{z-index:3} #plane-fg{z-index:6;pointer-events:none}
+
+  /* ---------- paper world ---------- */
+  #paperGrad{position:absolute;inset:0;background:
+    radial-gradient(120% 90% at 30% 20%, var(--paper) 0%, var(--paper2) 78%, #ddd3ba 100%)}
+  #grid{position:absolute;inset:0;opacity:.35;background-image:
+    linear-gradient(var(--rule) 1px, transparent 1px),
+    linear-gradient(90deg, var(--rule) 1px, transparent 1px);
+    background-size:96px 96px;-webkit-mask-image:radial-gradient(80% 70% at 50% 45%,#000 40%,transparent 100%);mask-image:radial-gradient(80% 70% at 50% 45%,#000 40%,transparent 100%)}
+  #blotch{position:absolute;inset:0;opacity:.5;background:
+    radial-gradient(340px 220px at 82% 12%, rgba(160,140,95,.14), transparent 70%),
+    radial-gradient(420px 300px at 8% 88%, rgba(160,140,95,.12), transparent 70%),
+    radial-gradient(200px 160px at 60% 75%, rgba(160,140,95,.09), transparent 70%)}
+  #vignette{position:absolute;inset:0;z-index:7;pointer-events:none;background:
+    radial-gradient(115% 100% at 50% 46%, transparent 62%, rgba(40,30,12,.26) 100%)}
+  #mapSvg{position:absolute;inset:0;width:100%;height:100%;opacity:0}
+  .backdrop-map #mapSvg{opacity:1}
+  .contour{fill:none;stroke:#b7ab8d;stroke-width:1.4;opacity:.55}
+  #route{fill:none;stroke:var(--accent);stroke-width:5;stroke-dasharray:14 13;stroke-linecap:round;
+    filter:drop-shadow(0 1px 0 rgba(0,0,0,.12))}
+  #routeHead{fill:var(--accent)} #pin{opacity:0;transform-origin:center bottom}
+  #pin.drop{animation:pindrop .5s cubic-bezier(.2,1.8,.4,1) forwards}
+  @keyframes pindrop{0%{opacity:0;transform:translateY(-90px) scale(.6)}60%{opacity:1;transform:translateY(6px) scale(1.06)}100%{opacity:1;transform:translateY(0) scale(1)}}
+
+  /* ---------- headline ---------- */
+  #headWrap{position:absolute;z-index:4;left:0;right:0;display:flex;flex-direction:column;align-items:center;gap:.1em}
+  .landscape #headWrap{top:50%;transform:translateY(-54%)}
+  .portrait  #headWrap{top:50%;transform:translateY(-56%)}
+  .hline{display:flex;align-items:baseline;white-space:nowrap}
+  .word{font-family:'Noto Sans TC',sans-serif;font-weight:900;color:var(--ink);
+    position:relative;display:inline-block;opacity:0;letter-spacing:.01em;
+    padding:0 .028em;will-change:transform,filter}
+  .landscape .word{font-size:150px;line-height:1.22}
+  .portrait  .word{font-size:118px;line-height:1.26}
+  .word.on.m-rise{animation:rise .34s cubic-bezier(.18,.9,.22,1.04) forwards}
+  @keyframes rise{
+    0%{opacity:0;transform:translateY(.32em) rotate(var(--tilt,0deg)) scale(.97)}
+    62%{opacity:1}
+    80%{transform:translateY(-.012em) rotate(0deg) scale(1.012)}
+    100%{opacity:1;transform:translateY(0) rotate(0) scale(1)}}
+  .word.on.m-slam{animation:slam .5s cubic-bezier(.16,1.42,.3,1) forwards}
+  @keyframes slam{
+    0%{opacity:0;transform:translateY(.55em) rotate(var(--tilt,0deg)) scale(1.28);filter:blur(7px)}
+    55%{opacity:1;filter:blur(0)}
+    72%{transform:translateY(-.035em) rotate(0deg) scale(.985)}
+    100%{opacity:1;transform:translateY(0) rotate(0) scale(1);filter:blur(0)}}
+  .word .ch{display:inline-block;opacity:0;transform:translateY(.32em) scale(.97)}
+  .word .ch.chon{opacity:1;transform:none;transition:all .3s cubic-bezier(.18,.9,.22,1.04)}
+  .word.keyword{color:var(--ink);
+    background-image:linear-gradient(var(--hilite),var(--hilite));
+    background-repeat:no-repeat;background-size:0% 58%;background-position:0% 70%}
+  .word.keyword.swept{transition:background-size .38s cubic-bezier(.3,.7,.3,1);
+    background-size:102% 58%}
+  .word.keyword.lit{color:#241a05;text-shadow:0 0 26px rgba(245,200,66,.35)}
+
+  /* ---------- eyebrow / kicker ---------- */
+  #eyebrow{position:absolute;z-index:4;left:50%;transform:translateX(-50%);
+    display:flex;align-items:center;gap:26px;opacity:0}
+  .landscape #eyebrow{top:172px} .portrait #eyebrow{top:420px}
+  #eyebrow.on{animation:eyeIn .6s ease-out forwards}
+  @keyframes eyeIn{from{opacity:0;transform:translateX(-50%) translateY(14px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+  #eyebrow .txt{font-family:'Anton',sans-serif;font-size:34px;letter-spacing:.34em;
+    color:var(--accent);text-transform:uppercase}
+  #eyebrow .rule{width:110px;height:3px;background:var(--accent);transform:scaleX(0);transform-origin:center}
+  #eyebrow.on .rule{animation:ruleGrow .5s .15s cubic-bezier(.2,1,.3,1) forwards}
+  @keyframes ruleGrow{to{transform:scaleX(1)}}
+
+  /* ---------- ink overlay ---------- */
+  #inkSvg{position:absolute;inset:0;width:100%;height:100%;z-index:5;pointer-events:none}
+  .inkStroke{fill:none;stroke:var(--accent);stroke-linecap:round;stroke-linejoin:round}
+  .hiliteStroke{stroke:var(--hilite);mix-blend-mode:multiply;opacity:.85;stroke-linecap:butt}
+  #tag{font-family:'Caveat','LXGW WenKai TC','Noto Sans TC',cursive;font-weight:700;fill:var(--accent);opacity:0}
+  #tag.on{animation:tagIn .45s cubic-bezier(.2,1.5,.4,1) forwards}
+  @keyframes tagIn{from{opacity:0;transform:translateY(10px) rotate(-3deg)}to{opacity:1;transform:translateY(0) rotate(-3deg)}}
+
+  /* ---------- furniture (fg plane) ---------- */
+  .meta{position:absolute;font-family:'Space Mono',monospace;font-size:21px;color:var(--mono);
+    letter-spacing:.08em;opacity:0;transition:opacity .6s}
+  .meta.on{opacity:.85}
+  .landscape #metaTL{top:56px;left:64px} .landscape #metaTR{top:56px;right:64px;text-align:right}
+  .landscape #metaBL{bottom:52px;left:64px} .landscape #metaBR{bottom:52px;right:64px;text-align:right}
+  .portrait #metaTL{top:64px;left:52px} .portrait #metaTR{top:64px;right:52px;text-align:right}
+  .portrait #metaBL{bottom:60px;left:52px} .portrait #metaBR{bottom:60px;right:52px;text-align:right}
+  .reg{position:absolute;width:34px;height:34px;border:2.5px solid var(--mono);opacity:.4}
+  .reg.tl{top:44px;left:44px;border-right:0;border-bottom:0}
+  .reg.tr{top:44px;right:44px;border-left:0;border-bottom:0}
+  .reg.bl{bottom:44px;left:44px;border-right:0;border-top:0}
+  .reg.br{bottom:44px;right:44px;border-left:0;border-top:0}
+
+  /* ---------- splice flash & grain ---------- */
+  #flash{position:absolute;inset:0;background:#fff;z-index:9;opacity:0;pointer-events:none}
+  #flash.go{animation:flashGo .12s steps(2,end)}
+  @keyframes flashGo{0%{opacity:.92}100%{opacity:0}}
+  #scratch{position:absolute;top:0;bottom:0;width:2px;background:rgba(255,255,255,.9);z-index:9;opacity:0}
+  #grain{position:absolute;inset:0;z-index:8;pointer-events:none;opacity:.07;mix-blend-mode:multiply}
+  #inkSvg .inkStroke{filter:url(#rough)}
+  #cd{position:absolute;inset:0;z-index:20;display:none;align-items:center;justify-content:center;background:var(--paper)}
+  #cd span{font-family:'Anton',sans-serif;font-size:340px;color:var(--ink)}
+  #cues{position:absolute;right:24px;top:24px;z-index:21;display:none;background:rgba(20,16,10,.92);
+    color:#f4efe3;font-family:'Space Mono',monospace;font-size:15px;line-height:1.75;
+    padding:14px 18px;max-height:70%;overflow:auto}
+  /* O = outro: push through and fade (filmic) */
+  .outro #camera{transition:transform 1.1s cubic-bezier(.5,0,.8,.4),opacity 1.1s;transform:scale(1.14);opacity:0}
+  .outro #grain,.outro #vignette{transition:opacity 1.1s;opacity:0}
+</style>
+</head>
+<body>
+<div id="fit"><div id="stage">
+  <div id="camera">
+    <div class="plane" id="plane-bg">
+      <div id="paperGrad"></div><div id="grid"></div><div id="blotch"></div>
+      <svg id="mapSvg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice"></svg>
+    </div>
+    <div class="plane" id="plane-mid">
+      <div id="eyebrow"><div class="rule"></div><div class="txt"></div><div class="rule"></div></div>
+      <div id="headWrap"></div>
+      <svg id="inkSvg"></svg>
+    </div>
+    <div class="plane" id="plane-fg">
+      <div class="meta" id="metaTL"></div><div class="meta" id="metaTR"></div>
+      <div class="meta" id="metaBL"></div><div class="meta" id="metaBR"></div>
+      <div class="reg tl"></div><div class="reg tr"></div><div class="reg bl"></div><div class="reg br"></div>
+    </div>
+  </div>
+  <canvas id="grain"></canvas>
+  <div id="vignette"></div>
+  <div id="flash"></div><div id="scratch"></div>
+</div></div>
+
+<script>
+/* ============================================================
+   CONFIG — 只需要改這裡 (this is the only block to edit)
+   word flags: key:true (highlighter+circle+arrow, exactly ONE)
+               strike:true (red strike-through)  under:true (underline)
+   ============================================================ */
+const CONFIG = {
+  orientation: "landscape",          // "landscape" 1920x1080 | "portrait" 1080x1920
+  backdrop: "paper",                 // "paper" | "map" (topo contours + drawn route + pin)
+  eyebrow: "短影音的真相",
+  lines: [
+    [ {t:"你缺的"}, {t:"不是"}, {t:"流量", strike:true} ],
+    [ {t:"是"}, {t:"被記住", key:true} ]
+  ],
+  tag: "演算法搶不走",               // handwritten note the arrow points from
+  metaTL: "ARCHIVE ／ 檔案 042",
+  metaTR: "",                        // "" = live timecode
+  metaBL: "TACKY TEMPLATES",
+  metaBR: "VOX ／ 紀錄片",
+  timing: { start: 0.9, stagger: 0.34 },   // seconds; lower stagger = snappier
+  motion: "rise",                          // "rise" = snappy Vox settle (default) | "slam" = heavy crash-in
+  camera: { push: 1.06, drift: 1 },        // final zoom; drift 0=off 1=default 1.6=strong
+  accent: ""                                // e.g. "#00a8a0" to force brand teal, ""=default red
+};
+/* ============================================================ */
+
+const $=q=>document.querySelector(q);
+const stagePx = () => CONFIG.orientation==="portrait" ? [1080,1920] : [1920,1080];
+document.body.parentElement.className = CONFIG.orientation;
+document.body.classList.toggle("backdrop-map", CONFIG.backdrop==="map");
+if(CONFIG.accent) document.documentElement.style.setProperty("--accent", CONFIG.accent);
+
+/* ---- fit stage to window ---- */
+function fit(){ const [W,H]=stagePx(); const s=Math.min(innerWidth/W, innerHeight/H);
+  $("#fit").style.cssText =
+    `position:absolute;left:50%;top:50%;width:${W}px;height:${H}px;`+
+    `transform:translate(-50%,-50%) scale(${s});`;
+}
+addEventListener("resize",fit); fit();
+
+/* ---- rough-ink turbulence filter + record helpers (R = 3·2·1 restart, S = SFX cues) ---- */
+document.querySelector("#inkSvg").insertAdjacentHTML("afterbegin",
+ '<defs><filter id="rough" x="-30%" y="-30%" width="160%" height="160%">'+
+ '<feTurbulence type="fractalNoise" baseFrequency="0.032" numOctaves="2" seed="8"/>'+
+ '<feDisplacementMap in="SourceGraphic" scale="7" xChannelSelector="R" yChannelSelector="G"/></filter></defs>');
+const CUES=[];const cue=(t,l)=>CUES.push([t,l]);
+(function(){const st=document.getElementById("stage");
+ const cd=document.createElement("div");cd.id="cd";cd.innerHTML="<span></span>";st.appendChild(cd);
+ const cp=document.createElement("div");cp.id="cues";st.appendChild(cp);
+ addEventListener("keydown",e=>{
+  if(e.key==="r"||e.key==="R"){let n=3;cd.style.display="flex";
+    const s=cd.querySelector("span");s.textContent=n;
+    const iv=setInterval(()=>{n--;if(n<1){clearInterval(iv);location.reload();}else s.textContent=n;},700);}
+  if(e.key==="o"||e.key==="O"){document.getElementById("stage").classList.add("outro");}
+  if(e.key==="s"||e.key==="S"){
+    cp.innerHTML="<b>SFX CUE SHEET（秒）</b><br>"+CUES.slice().sort((a,b)=>a[0]-b[0])
+      .map(c=>c[0].toFixed(2)+"s — "+c[1]).join("<br>");
+    cp.style.display=cp.style.display==="block"?"none":"block";}});})();
+
+/* ---- build headline words ---- */
+const wrap=$("#headWrap"); const wordEls=[]; let keyEl=null;
+CONFIG.lines.forEach(line=>{
+  const div=document.createElement("div"); div.className="hline";
+  line.forEach(w=>{
+    const s=document.createElement("span"); s.className="word";
+    if(w.key) s.innerHTML=[...w.t].map(c=>`<span class="ch">${c}</span>`).join("");
+    else s.textContent=w.t;
+    s.style.setProperty("--tilt",(Math.random()*1.6-.8).toFixed(2)+"deg");
+    if(w.key){s.classList.add("keyword"); keyEl=s;}
+    s._flags=w; div.appendChild(s); wordEls.push(s);
+  });
+  wrap.appendChild(div);
+});
+$("#eyebrow .txt").textContent=CONFIG.eyebrow;
+$("#metaTL").textContent=CONFIG.metaTL; $("#metaBL").textContent=CONFIG.metaBL;
+$("#metaBR").textContent=CONFIG.metaBR;
+
+/* ---- live timecode ---- */
+const t0=performance.now();
+if(!CONFIG.metaTR){ setInterval(()=>{ const e=(performance.now()-t0)/1000;
+  const m=String(Math.floor(e/60)).padStart(2,"0"), s=String(Math.floor(e%60)).padStart(2,"0"),
+  f=String(Math.floor((e%1)*24)).padStart(2,"0");
+  $("#metaTR").textContent=`TC 00:${m}:${s}:${f}`; },41);
+}else $("#metaTR").textContent=CONFIG.metaTR;
+
+/* ---- rough-path helpers (hand-drawn ink) ---- */
+const NS="http://www.w3.org/2000/svg";
+const jit=a=>(Math.random()*2-1)*a;
+function roughPath(pts,closes){ let d=`M ${pts[0][0]} ${pts[0][1]}`;
+  for(let i=1;i<pts.length;i++){const [x,y]=pts[i],[px,py]=pts[i-1];
+    d+=` Q ${(px+x)/2+jit(3.5)} ${(py+y)/2+jit(3.5)} ${x} ${y}`;}
+  return d+(closes?" Z":"");}
+function addStroke(d,{w=7,cls="inkStroke",delay=0,dur=.5,el=null}={}){
+  const p=document.createElementNS(NS,"path");
+  p.setAttribute("d",d); p.setAttribute("class",cls); p.setAttribute("stroke-width",w);
+  (el||$("#inkSvg")).appendChild(p);
+  const L=p.getTotalLength(); p.style.strokeDasharray=L; p.style.strokeDashoffset=L;
+  p.style.transition=`stroke-dashoffset ${dur}s cubic-bezier(.3,.7,.3,1) ${delay}s`;
+  requestAnimationFrame(()=>requestAnimationFrame(()=>p.style.strokeDashoffset=0));
+  return p;}
+function boxOf(el){
+  // Measure relative to the ink SVG itself — it shares EVERY ancestor transform with the
+  // words (fit scale, camera push, parallax), so coordinates stay glued mid-animation.
+  const svg=$("#inkSvg"), sr=svg.getBoundingClientRect(), r=el.getBoundingClientRect();
+  const k=svg.clientWidth/sr.width;
+  return {x:(r.left-sr.left)*k, y:(r.top-sr.top)*k, w:r.width*k, h:r.height*k};}
+
+/* ---- ink recipes ---- */
+function inkStrike(el,delay){ const b=boxOf(el),y=b.y+b.h*.52;
+  addStroke(roughPath([[b.x-14,y+jit(4)],[b.x+b.w*.4,y+jit(6)],[b.x+b.w+16,y+jit(5)]]),
+    {w:9,delay,dur:.32}); }
+function inkUnder(el,delay){ const b=boxOf(el),y=b.y+b.h*.88;
+  addStroke(roughPath([[b.x-8,y],[b.x+b.w*.55,y+jit(5)],[b.x+b.w+10,y+jit(4)]]),
+    {w:6,delay,dur:.3}); }
+function inkHilite(el,delay){ const b=boxOf(el),y=b.y+b.h*.66;
+  addStroke(roughPath([[b.x-10,y+jit(3)],[b.x+b.w/2,y+jit(4)],[b.x+b.w+10,y+jit(3)]]),
+    {w:b.h*.56,cls:"inkStroke hiliteStroke",delay,dur:.38}); }
+function inkCircle(el,delay){ const b=boxOf(el);
+  const cx=b.x+b.w/2, cy=b.y+b.h*.55, rx=b.w*.56+14, ry=b.h*.60;
+  const pts=[]; for(let i=0;i<=22;i++){const a=-.6+i/22*Math.PI*2.15;
+    pts.push([cx+Math.cos(a)*rx+jit(3), cy+Math.sin(a)*ry+jit(3)]);}
+  addStroke(roughPath(pts),{w:7,delay,dur:.55}); }
+function inkArrowTag(el,delay){ const [W,H]=stagePx(); const b=boxOf(el);
+  const right=b.x+b.w/2 < W/2;             // tag goes to the emptier side
+  const tx=right? Math.min(b.x+b.w+150, W-360) : Math.max(b.x-420, 120);
+  const ty=Math.min(b.y+b.h+140, H-160);
+  const tag=document.createElementNS(NS,"text");
+  tag.setAttribute("id","tag"); tag.setAttribute("x",tx); tag.setAttribute("y",ty+54);
+  tag.setAttribute("font-size",CONFIG.orientation==="portrait"?58:64);
+  tag.textContent=CONFIG.tag; $("#inkSvg").appendChild(tag);
+  setTimeout(()=>tag.classList.add("on"),delay*1000);
+  const tlen=tag.getComputedTextLength();
+  const sx=right? tx-16 : tx+tlen+16, sy=ty+34,     // arrow starts just OUTSIDE the tag text
+        ex=b.x+b.w/2+jit(10), ey=b.y+b.h+18;
+  const mx=(sx+ex)/2+(right?-70:70), my=(sy+ey)/2+50;
+  addStroke(`M ${sx} ${sy} Q ${mx} ${my} ${ex} ${ey}`,{w:6,delay:delay+.15,dur:.4});
+  const ang=Math.atan2(ey-my,ex-mx);
+  const a1=[ex-26*Math.cos(ang-.5),ey-26*Math.sin(ang-.5)],
+        a2=[ex-26*Math.cos(ang+.5),ey-26*Math.sin(ang+.5)];
+  addStroke(`M ${a1[0]} ${a1[1]} L ${ex} ${ey} L ${a2[0]} ${a2[1]}`,{w:6,delay:delay+.5,dur:.18});}
+
+/* ---- map backdrop (topo contours + route + pin) ---- */
+function buildMap(){ const [W,H]=stagePx(); const svg=$("#mapSvg");
+  svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
+  for(let c=0;c<7;c++){ const cx=W*(.15+Math.random()*.7), cy=H*(.15+Math.random()*.7);
+    for(let r=1;r<=3;r++){ const pts=[]; const R=40+c*22+r*34;
+      for(let i=0;i<=16;i++){const a=i/16*Math.PI*2;
+        pts.push([cx+Math.cos(a)*R*(1+jit(.18)), cy+Math.sin(a)*R*(.72+jit(.15))]);}
+      const p=document.createElementNS(NS,"path");
+      p.setAttribute("d",roughPath(pts,true)); p.setAttribute("class","contour");
+      svg.appendChild(p);}}
+  const rp=document.createElementNS(NS,"path"); rp.setAttribute("id","route");
+  const d=`M ${W*.12} ${H*.78} C ${W*.3} ${H*.55}, ${W*.42} ${H*.8}, ${W*.58} ${H*.6} S ${W*.8} ${H*.3}, ${W*.86} ${H*.24}`;
+  rp.setAttribute("d",d); svg.appendChild(rp);
+  const L=rp.getTotalLength(); rp.style.strokeDashoffset=L; rp.style.strokeDasharray=`14 13`;
+  rp.style.opacity=0;
+  const pin=document.createElementNS(NS,"g"); pin.setAttribute("id","pin");
+  pin.innerHTML=`<circle cx="${W*.86}" cy="${H*.24-34}" r="17" fill="var(--accent)"/>
+    <path d="M ${W*.86-16} ${H*.24-30} Q ${W*.86} ${H*.24+8} ${W*.86+16} ${H*.24-30}" fill="var(--accent)"/>
+    <circle cx="${W*.86}" cy="${H*.24-34}" r="7" fill="var(--paper)"/>`;
+  svg.appendChild(pin);
+  setTimeout(()=>{ rp.style.opacity=.9;
+    rp.animate([{strokeDashoffset:L},{strokeDashoffset:0}],
+      {duration:1600,delay:0,easing:"cubic-bezier(.4,.6,.3,1)",fill:"forwards"});
+    setTimeout(()=>pin.classList.add("drop"),1500);
+  }, (CONFIG.timing.start+.2)*1000);}
+
+/* ---- flash ---- */
+function flash(withScratch){ const f=$("#flash"); f.classList.remove("go");
+  void f.offsetWidth; f.classList.add("go");
+  if(withScratch){const sc=$("#scratch"); sc.style.left=(20+Math.random()*60)+"%";
+    sc.style.opacity=.9; setTimeout(()=>sc.style.opacity=0,90);}}
+
+/* ---- grain ---- */
+(function(){ const c=$("#grain"),[W,H]=stagePx(); c.width=W/2;c.height=H/2;
+  const ctx=c.getContext("2d"); c.style.width="100%";c.style.height="100%";
+  (function loop(){ const img=ctx.createImageData(c.width,c.height);
+    const d=img.data; for(let i=0;i<d.length;i+=4){const v=Math.random()*255|0;
+      d[i]=d[i+1]=d[i+2]=v; d[i+3]=26;} ctx.putImageData(img,0,0);
+    setTimeout(loop,66);})();})();
+
+/* ---- parallax drift ---- */
+(function(){ const k=CONFIG.camera.drift; if(!k) return;
+  const t1=performance.now();
+  (function loop(){ const e=(performance.now()-t1)/1000;
+    /* layered incommensurate sines = handheld, not metronome */
+    const x=(Math.sin(e*.21)+.45*Math.sin(e*.57+1.7)+.22*Math.sin(e*1.33+4.2))*6*k;
+    const y=(Math.cos(e*.17)+.45*Math.sin(e*.49+.8)+.22*Math.sin(e*1.21+2.6))*5*k;
+    const r=(Math.sin(e*.23+1.1)+.5*Math.sin(e*.61+3))*.09*k;
+    $("#plane-bg").style.transform =`translate(${x*.4}px,${y*.4}px)`;
+    $("#plane-mid").style.transform=`translate(${x}px,${y}px) rotate(${r}deg)`;
+    $("#plane-fg").style.transform =`translate(${x*1.7}px,${y*1.7}px)`;
+    requestAnimationFrame(loop);})();})();
+
+/* ---- camera push-in ---- */
+$("#camera").animate([{transform:"scale(1)"},{transform:`scale(${CONFIG.camera.push})`}],
+  {duration:9000,easing:"cubic-bezier(.3,.2,.2,1)",fill:"forwards"});
+
+/* ---- master timeline ---- */
+document.fonts.ready.then(()=>{ fit();
+  if(CONFIG.backdrop==="map") buildMap();
+  const T=CONFIG.timing; let t=T.start;
+  setTimeout(()=>$("#eyebrow").classList.add("on"),(t-.55)*1000);
+  document.querySelectorAll(".meta").forEach((m,i)=>setTimeout(()=>m.classList.add("on"),(t-.7+i*.12)*1000));
+  wordEls.forEach((el,i)=>{
+    cue(t, i===0?"咻 whoosh 首字進 + 喀擦 splice flash":"咻 whoosh 字進");
+    if(el._flags.key){cue(t+.42,"重音 thunk：關鍵字 + splice + 鏡頭 punch");
+      cue(t+.72,"筆刷 scribble：圈字");cue(t+1.17,"筆刷 scribble：箭頭+手寫");}
+    setTimeout(()=>{
+      if(el._flags.key){ el.style.opacity=1;   // chars carry the motion, staggered
+        el.querySelectorAll(".ch").forEach((c,ci)=>
+          setTimeout(()=>c.classList.add("chon"),ci*48)); }
+      else el.classList.add("on","m-"+(CONFIG.motion||"rise"));
+      if(i===0) flash(false);
+      const f=el._flags, d=.42;
+      if(f.strike) setTimeout(()=>inkStrike(el,0),d*1000);
+      if(f.under)  setTimeout(()=>inkUnder(el,0),d*1000);
+      if(f.key){ flash(true); $("#camera").classList.add("punch");
+        setTimeout(()=>{ el.classList.add("lit","swept");
+          setTimeout(()=>inkCircle(el,0),300);
+          setTimeout(()=>inkArrowTag(el,0),750);},d*1000);}
+    }, t*1000);
+    t+=T.stagger*(el._flags.key? 1.7 : 1);   // breathe before the key word
+  });
+});
+</script>
+</body>
+</html>

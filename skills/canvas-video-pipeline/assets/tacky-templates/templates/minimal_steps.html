@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>Minimal 極簡・步驟卡 — Tacky Templates</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;500;600&family=Noto+Sans+TC:wght@300;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#fbfbfa;--ink:#16181d;--soft:#8a8f98;--accent:#2456e6;--rule:#e6e7e9}
+  .dark{--bg:#0f1013;--ink:#f2f3f5;--soft:#7f858e;--accent:#5b82ff;--rule:#24262b}
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:100%;height:100%;background:#111;overflow:hidden}
+  #fit{position:absolute}
+  #stage{position:relative;overflow:hidden;background:var(--bg)}
+  .landscape #stage{width:1920px;height:1080px}
+  .portrait  #stage{width:1080px;height:1920px}
+  #camera{position:absolute;inset:0;will-change:transform}
+
+  #eyebrow{position:absolute;left:50%;transform:translateX(-50%);display:flex;
+    flex-direction:column;align-items:center;gap:20px;opacity:0;transition:opacity .8s}
+  .landscape #eyebrow{top:100px}.portrait #eyebrow{top:270px}
+  #eyebrow.on{opacity:1}
+  #eyebrow .txt{font-family:'Inter','Noto Sans TC',sans-serif;font-weight:600;font-size:24px;
+    letter-spacing:.42em;text-indent:.42em;color:var(--soft);text-transform:uppercase}
+  #eyebrow .hair{width:56px;height:2px;background:var(--accent);transform:scaleX(0);
+    transition:transform .7s cubic-bezier(.2,.8,.2,1) .2s}
+  #eyebrow.on .hair{transform:scaleX(1)}
+  #title{position:absolute;left:50%;transform:translateX(-50%);opacity:0;white-space:nowrap;
+    font-family:'Noto Sans TC';font-weight:300;color:var(--ink)}
+  .landscape #title{top:176px;font-size:72px}
+  .portrait  #title{top:370px;font-size:58px}
+  #title b{font-weight:700}
+  #title.on{animation:rise .7s cubic-bezier(.16,.84,.24,1) forwards}
+  @keyframes rise{0%{opacity:0;transform:translateX(-50%) translateY(.3em)}
+    100%{opacity:1;transform:translateX(-50%) translateY(0)}}
+
+  #steps{position:absolute;display:flex;flex-direction:column;justify-content:space-evenly}
+  .landscape #steps{left:400px;right:400px;top:330px;bottom:150px}
+  .portrait  #steps{left:110px;right:110px;top:560px;bottom:360px}
+  .step{display:flex;align-items:center;gap:44px;opacity:0}
+  .step.on{animation:stepIn .6s cubic-bezier(.16,.84,.24,1) forwards}
+  @keyframes stepIn{0%{opacity:0;transform:translateY(26px)}
+    100%{opacity:1;transform:translateY(0)}}
+  .step .num{font-family:'Inter';font-weight:200;color:var(--accent);flex:0 0 auto;
+    font-variant-numeric:tabular-nums}
+  .landscape .step .num{font-size:88px;width:130px}
+  .portrait  .step .num{font-size:72px;width:106px}
+  .step .body{flex:1;padding-bottom:26px;position:relative}
+  .step .body::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1.5px;
+    background:var(--rule);transform:scaleX(0);transform-origin:left;
+    transition:transform .8s cubic-bezier(.2,.8,.2,1) .25s}
+  .step.on .body::after{transform:scaleX(1)}
+  .step .t{font-family:'Noto Sans TC';font-weight:700;color:var(--ink)}
+  .landscape .step .t{font-size:46px}.portrait .step .t{font-size:40px}
+  .step .d{font-family:'Noto Sans TC';font-weight:300;color:var(--soft);margin-top:6px}
+  .landscape .step .d{font-size:28px}.portrait .step .d{font-size:26px}
+  .step.focus .t{color:var(--accent)}
+  .step.focus .body::after{background:var(--accent);height:2.5px}
+
+  .meta{position:absolute;font-family:'Inter';font-weight:500;font-size:17px;
+    letter-spacing:.18em;color:var(--rule);opacity:0;transition:opacity 1s;filter:brightness(.75)}
+  .meta.on{opacity:1}
+  .landscape #metaTL{top:64px;left:72px}.landscape #metaBR{bottom:60px;right:72px}
+  .portrait #metaTL{top:70px;left:56px}.portrait #metaBR{bottom:66px;right:56px}
+
+  #cd{position:absolute;inset:0;z-index:20;display:none;align-items:center;justify-content:center;background:var(--bg)}
+  #cd span{font-family:'Inter';font-weight:300;font-size:300px;color:var(--ink)}
+  #cues{position:absolute;right:24px;top:24px;z-index:21;display:none;background:rgba(22,24,29,.94);
+    color:#fbfbfa;font-family:'Inter',monospace;font-size:15px;line-height:1.75;
+    padding:14px 18px;max-height:70%;overflow:auto}
+  /* O = outro: calm dissolve-away */
+  .outro #camera{transition:transform 1s cubic-bezier(.5,0,.7,.4),opacity 1s;transform:scale(.985);opacity:0}
+</style>
+</head>
+<body>
+<div id="fit"><div id="stage">
+  <div id="camera">
+    <div id="eyebrow"><div class="txt"></div><div class="hair"></div></div>
+    <div id="title"></div>
+    <div id="steps"></div>
+    <div class="meta" id="metaTL"></div><div class="meta" id="metaBR"></div>
+  </div>
+</div></div>
+
+<script>
+/* ============================================================
+   CONFIG — Minimal 極簡・步驟卡 (framework / how-to reveal).
+   3–5 steps. Optionally ONE step with focus:true (accent) —
+   use when the script says "the step everyone skips is…".
+   ============================================================ */
+const CONFIG = {
+  orientation: "landscape",
+  theme: "light",
+  eyebrow: "The Framework",
+  title: "三步驟，讓影片<b>被看完</b>",
+  steps: [
+    {num:"01", t:"鉤子", d:"前 3 秒給一個非看完不可的理由"},
+    {num:"02", t:"密度", d:"每 10 秒一個新資訊點，不留空檔", focus:true},
+    {num:"03", t:"回扣", d:"結尾回應開頭的承諾"}
+  ],
+  metaTL: "SHORT-FORM STUDIO", metaBR: "03 · 方法",
+  timing: { start: 1.2, stagger: 0.7 },
+  camera: { push: 1.015 },
+  accent: ""
+};
+/* ============================================================ */
+const $=q=>document.querySelector(q);
+const stagePx=()=>CONFIG.orientation==="portrait"?[1080,1920]:[1920,1080];
+document.body.parentElement.className=
+  CONFIG.orientation+(CONFIG.theme==="dark"?" dark":"");
+if(CONFIG.accent) document.documentElement.style.setProperty("--accent",CONFIG.accent);
+function fit(){const[W,H]=stagePx();const s=Math.min(innerWidth/W,innerHeight/H);
+  $("#fit").style.cssText=`position:absolute;left:50%;top:50%;width:${W}px;height:${H}px;`+
+  `transform:translate(-50%,-50%) scale(${s});`;}
+addEventListener("resize",fit);fit();
+
+const CUES=[];const cue=(t,l)=>CUES.push([t,l]);
+(function(){const st=document.getElementById("stage");
+ const cd=document.createElement("div");cd.id="cd";cd.innerHTML="<span></span>";st.appendChild(cd);
+ const cp=document.createElement("div");cp.id="cues";st.appendChild(cp);
+ addEventListener("keydown",e=>{
+  if(e.key==="r"||e.key==="R"){let n=3;cd.style.display="flex";
+    const s=cd.querySelector("span");s.textContent=n;
+    const iv=setInterval(()=>{n--;if(n<1){clearInterval(iv);location.reload();}else s.textContent=n;},700);}
+  if(e.key==="o"||e.key==="O"){document.getElementById("stage").classList.add("outro");}
+  if(e.key==="s"||e.key==="S"){
+    cp.innerHTML="<b>SFX CUE SHEET（秒）</b><br>"+CUES.slice().sort((a,b)=>a[0]-b[0])
+      .map(c=>c[0].toFixed(2)+"s — "+c[1]).join("<br>");
+    cp.style.display=cp.style.display==="block"?"none":"block";}});})();
+
+$("#eyebrow .txt").textContent=CONFIG.eyebrow;
+$("#title").innerHTML=CONFIG.title;
+$("#metaTL").textContent=CONFIG.metaTL;$("#metaBR").textContent=CONFIG.metaBR;
+if(CONFIG.camera.push)
+  $("#camera").animate([{transform:"scale(1)"},{transform:`scale(${CONFIG.camera.push})`}],
+    {duration:9000,easing:"cubic-bezier(.3,.2,.2,1)",fill:"forwards"});
+
+document.fonts.ready.then(()=>{fit();
+  const box=$("#steps");
+  CONFIG.steps.forEach(s=>{const d=document.createElement("div");
+    d.className="step"+(s.focus?" focus":"");
+    d.innerHTML=`<div class="num">${s.num}</div>
+      <div class="body"><div class="t">${s.t}</div><div class="d">${s.d}</div></div>`;
+    box.appendChild(d);});
+  const T=CONFIG.timing;
+  cue(T.start-.7,"氣音：標題浮現");
+  setTimeout(()=>$("#eyebrow").classList.add("on"),(T.start-.9)*1000);
+  setTimeout(()=>$("#title").classList.add("on"),(T.start-.7)*1000);
+  document.querySelectorAll(".meta").forEach(m=>setTimeout(()=>m.classList.add("on"),(T.start-.5)*1000));
+  [...box.children].forEach((el,i)=>{
+    cue(T.start+i*T.stagger,"細 tick：步驟 "+(i+1)+(CONFIG.steps[i].focus?"（重點・柔和 chime）":""));
+    setTimeout(()=>el.classList.add("on"),(T.start+i*T.stagger)*1000);});});
+</script>
+</body>
+</html>

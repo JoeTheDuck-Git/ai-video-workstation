@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>Minimal 極簡 — Tacky Templates (exploration)</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500;600&family=Noto+Sans+TC:wght@300;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#fbfbfa;--ink:#16181d;--soft:#8a8f98;--accent:#2456e6;--rule:#e6e7e9}
+  .dark{--bg:#0f1013;--ink:#f2f3f5;--soft:#7f858e;--accent:#5b82ff;--rule:#24262b}
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:100%;height:100%;background:#111;overflow:hidden}
+  #fit{position:absolute}
+  #stage{position:relative;overflow:hidden;background:var(--bg)}
+  .landscape #stage{width:1920px;height:1080px}
+  .portrait  #stage{width:1080px;height:1920px}
+  #camera{position:absolute;inset:0;will-change:transform}
+
+  /* ---------- eyebrow: tracked caps + hairline ---------- */
+  #eyebrow{position:absolute;left:50%;transform:translateX(-50%);display:flex;
+    flex-direction:column;align-items:center;gap:22px;opacity:0;transition:opacity .8s ease}
+  .landscape #eyebrow{top:200px}.portrait #eyebrow{top:460px}
+  #eyebrow.on{opacity:1}
+  #eyebrow .txt{font-family:'Inter','Noto Sans TC',sans-serif;font-weight:600;
+    font-size:26px;letter-spacing:.42em;text-indent:.42em;color:var(--soft);text-transform:uppercase}
+  #eyebrow .hair{width:56px;height:2px;background:var(--accent);transform:scaleX(0);
+    transition:transform .7s cubic-bezier(.2,.8,.2,1) .2s}
+  #eyebrow.on .hair{transform:scaleX(1)}
+
+  /* ---------- headline ---------- */
+  #headWrap{position:absolute;left:0;right:0;display:flex;flex-direction:column;
+    align-items:center;gap:.08em}
+  .landscape #headWrap{top:50%;transform:translateY(-52%)}
+  .portrait  #headWrap{top:50%;transform:translateY(-54%)}
+  .hline{display:flex;align-items:baseline;white-space:nowrap}
+  .word{font-family:'Noto Sans TC',sans-serif;font-weight:300;color:var(--ink);
+    display:inline-block;opacity:0;padding:0 .03em;will-change:transform;
+    letter-spacing:.015em}
+  .landscape .word{font-size:132px;line-height:1.28}
+  .portrait  .word{font-size:104px;line-height:1.32}
+  .word.on{animation:rise .6s cubic-bezier(.16,.84,.24,1) forwards}
+  @keyframes rise{0%{opacity:0;transform:translateY(.26em)}
+    100%{opacity:1;transform:translateY(0)}}
+  .word.keyword{font-weight:700;color:var(--accent);position:relative}
+  .word.keyword::after{content:"";position:absolute;left:.04em;right:.04em;bottom:-.06em;
+    height:3px;background:var(--accent);transform:scaleX(0);transform-origin:left;
+    transition:transform .6s cubic-bezier(.2,.8,.2,1)}
+  .word.keyword.uline::after{transform:scaleX(1)}
+  .word.dim{color:var(--soft)}
+
+  /* ---------- footnote caption ---------- */
+  #note{position:absolute;left:50%;transform:translateX(-50%);display:flex;
+    align-items:center;gap:18px;opacity:0;transition:opacity .8s ease}
+  .landscape #note{bottom:200px}.portrait #note{bottom:420px}
+  #note.on{opacity:1}
+  #note .dot{width:7px;height:7px;border-radius:50%;background:var(--accent)}
+  #note .txt{font-family:'Inter','Noto Sans TC',sans-serif;font-weight:500;
+    font-size:30px;color:var(--soft);letter-spacing:.04em}
+
+  /* ---------- corner meta (very quiet) ---------- */
+  .meta{position:absolute;font-family:'Inter',sans-serif;font-weight:500;font-size:17px;
+    letter-spacing:.18em;color:#c3c6cb;opacity:0;transition:opacity 1s}
+  .meta.on{opacity:1}
+  .landscape #metaTL{top:64px;left:72px}.landscape #metaBR{bottom:60px;right:72px}
+  .portrait #metaTL{top:70px;left:56px}.portrait #metaBR{bottom:66px;right:56px}
+
+  #cd{position:absolute;inset:0;z-index:20;display:none;align-items:center;justify-content:center;background:var(--bg)}
+  #cd span{font-family:'Inter',sans-serif;font-weight:300;font-size:300px;color:var(--ink)}
+  #cues{position:absolute;right:24px;top:24px;z-index:21;display:none;background:rgba(22,24,29,.94);
+    color:#fbfbfa;font-family:'Inter',monospace;font-size:15px;line-height:1.75;
+    padding:14px 18px;max-height:70%;overflow:auto}
+  /* O = outro: calm dissolve-away */
+  .outro #camera{transition:transform 1s cubic-bezier(.5,0,.7,.4),opacity 1s;transform:scale(.985);opacity:0}
+</style>
+</head>
+<body>
+<div id="fit"><div id="stage">
+  <div id="camera">
+    <div id="eyebrow"><div class="txt"></div><div class="hair"></div></div>
+    <div id="headWrap"></div>
+    <div id="note"><div class="dot"></div><div class="txt"></div></div>
+    <div class="meta" id="metaTL"></div><div class="meta" id="metaBR"></div>
+  </div>
+</div></div>
+
+<script>
+/* ============================================================
+   CONFIG — Minimal 極簡 (corporate clean · EXPLORATION)
+   word flags: key:true (accent weight + hairline underline)
+               dim:true (recede into gray — the de-emphasized idea)
+   No ink, no texture, no shake. Precision IS the style.
+   ============================================================ */
+const CONFIG = {
+  orientation: "landscape",
+  theme: "light",                          // "light" | "dark" (keynote black)
+  eyebrow: "Creator Economy 2026",
+  lines: [
+    [ {t:"流量是"}, {t:"租來的", dim:true} ],
+    [ {t:"觀眾是"}, {t:"你的資產", key:true} ]
+  ],
+  note: "自有受眾＝不受演算法波動影響的部分",
+  metaTL: "SHORT-FORM STUDIO",
+  metaBR: "01 · 觀點",
+  timing: { start: 1.0, stagger: 0.22 },
+  camera: { push: 1.018 },                 // barely-there; 0 = locked off
+  accent: ""                               // e.g. "#00a8a0" for brand teal
+};
+/* ============================================================ */
+const $=q=>document.querySelector(q);
+const stagePx=()=>CONFIG.orientation==="portrait"?[1080,1920]:[1920,1080];
+document.body.parentElement.className=
+  CONFIG.orientation+(CONFIG.theme==="dark"?" dark":"");
+if(CONFIG.accent) document.documentElement.style.setProperty("--accent",CONFIG.accent);
+function fit(){const[W,H]=stagePx();const s=Math.min(innerWidth/W,innerHeight/H);
+  $("#fit").style.cssText=`position:absolute;left:50%;top:50%;width:${W}px;height:${H}px;`+
+  `transform:translate(-50%,-50%) scale(${s});`;}
+addEventListener("resize",fit);fit();
+
+/* record helpers: R = 3·2·1 restart · S = SFX cue sheet */
+const CUES=[];const cue=(t,l)=>CUES.push([t,l]);
+(function(){const st=document.getElementById("stage");
+ const cd=document.createElement("div");cd.id="cd";cd.innerHTML="<span></span>";st.appendChild(cd);
+ const cp=document.createElement("div");cp.id="cues";st.appendChild(cp);
+ addEventListener("keydown",e=>{
+  if(e.key==="r"||e.key==="R"){let n=3;cd.style.display="flex";
+    const s=cd.querySelector("span");s.textContent=n;
+    const iv=setInterval(()=>{n--;if(n<1){clearInterval(iv);location.reload();}else s.textContent=n;},700);}
+  if(e.key==="o"||e.key==="O"){document.getElementById("stage").classList.add("outro");}
+  if(e.key==="s"||e.key==="S"){
+    cp.innerHTML="<b>SFX CUE SHEET（秒）</b><br>"+CUES.slice().sort((a,b)=>a[0]-b[0])
+      .map(c=>c[0].toFixed(2)+"s — "+c[1]).join("<br>");
+    cp.style.display=cp.style.display==="block"?"none":"block";}});})();
+
+/* build */
+const wrap=$("#headWrap");const wordEls=[];
+CONFIG.lines.forEach(line=>{const div=document.createElement("div");div.className="hline";
+  line.forEach(w=>{const s=document.createElement("span");s.className="word";
+    if(w.key)s.classList.add("keyword"); if(w.dim)s.classList.add("dim");
+    s.textContent=w.t;s._flags=w;div.appendChild(s);wordEls.push(s);});
+  wrap.appendChild(div);});
+$("#eyebrow .txt").textContent=CONFIG.eyebrow;
+$("#note .txt").textContent=CONFIG.note;
+$("#metaTL").textContent=CONFIG.metaTL;$("#metaBR").textContent=CONFIG.metaBR;
+
+if(CONFIG.camera.push)
+  $("#camera").animate([{transform:"scale(1)"},{transform:`scale(${CONFIG.camera.push})`}],
+    {duration:9000,easing:"cubic-bezier(.3,.2,.2,1)",fill:"forwards"});
+
+document.fonts.ready.then(()=>{fit();
+  const T=CONFIG.timing;let t=T.start;
+  cue(t-.6,"（極簡風：只需 2-3 個很輕的音效）");
+  setTimeout(()=>$("#eyebrow").classList.add("on"),(t-.6)*1000);
+  document.querySelectorAll(".meta").forEach(m=>setTimeout(()=>m.classList.add("on"),(t-.4)*1000));
+  wordEls.forEach((el,i)=>{
+    cue(t,"氣音 soft whoosh：字進");
+    if(el._flags.key){cue(t+.55,"清脆 tick：底線劃出");}
+    setTimeout(()=>{el.classList.add("on");
+      if(el._flags.key)setTimeout(()=>el.classList.add("uline"),550);
+    },t*1000);
+    t+=T.stagger*(el._flags.key?1.6:1);});
+  cue(t+.5,"氣音：註腳浮現");
+  setTimeout(()=>$("#note").classList.add("on"),(t+.5)*1000);});
+</script>
+</body>
+</html>

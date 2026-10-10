@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>Editorial 雜誌 — Tacky Templates (exploration)</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700;1,900&family=Noto+Serif+TC:wght@400;600;900&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#f7f3ec;--ink:#1a1815;--soft:#a39c8f;--accent:#5f6a3a;--hair:#1a1815}
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:100%;height:100%;background:#111;overflow:hidden}
+  #fit{position:absolute}
+  #stage{position:relative;overflow:hidden;background:var(--bg)}
+  .landscape #stage{width:1920px;height:1080px}
+  .portrait  #stage{width:1080px;height:1920px}
+  #camera{position:absolute;inset:0;will-change:transform,opacity}
+
+  /* ---------- ghost issue numeral (fashion-cover furniture) ---------- */
+  #ghost{position:absolute;left:50%;top:50%;transform:translate(-50%,-53%);
+    font-family:'Playfair Display',serif;font-weight:900;font-style:italic;
+    color:transparent;-webkit-text-stroke:2px rgba(26,24,21,.09);
+    opacity:0;transition:opacity 2.4s ease;user-select:none;pointer-events:none}
+  .landscape #ghost{font-size:840px;letter-spacing:-.04em}
+  .portrait  #ghost{font-size:620px}
+  #ghost.on{opacity:1}
+
+  /* ---------- kicker: hairlines draw outward from tracked caps ---------- */
+  #kicker{position:absolute;left:50%;transform:translateX(-50%);display:flex;
+    align-items:center;gap:34px;white-space:nowrap}
+  .landscape #kicker{top:172px}.portrait #kicker{top:420px}
+  #kicker .txt{font-family:'Playfair Display','Noto Serif TC',serif;font-weight:700;
+    font-size:27px;color:var(--ink);text-transform:uppercase;
+    letter-spacing:.55em;text-indent:.55em;opacity:0;
+    transition:letter-spacing 1.4s cubic-bezier(.2,.8,.2,1),opacity 1.2s ease}
+  #kicker.on .txt{letter-spacing:.34em;text-indent:.34em;opacity:1}
+  #kicker .hair{width:120px;height:1px;background:var(--hair);opacity:.85;
+    transform:scaleX(0);transition:transform 1.1s cubic-bezier(.2,.8,.2,1) .25s}
+  #kicker .hair.l{transform-origin:right}#kicker .hair.r{transform-origin:left}
+  #kicker.on .hair{transform:scaleX(1)}
+
+  /* ---------- headline: mask-reveal lines, baseline scale drama ---------- */
+  #headWrap{position:absolute;left:0;right:0;display:flex;flex-direction:column;
+    align-items:center}
+  .landscape #headWrap{top:50%;transform:translateY(-50%);gap:.10em}
+  .portrait  #headWrap{top:50%;transform:translateY(-52%);gap:.14em}
+  .hline{display:flex;align-items:baseline;white-space:nowrap;
+    overflow:hidden;padding:.06em .1em}          /* the mask */
+  .landscape .hline{font-size:118px}
+  .portrait  .hline{font-size:92px}
+  .word{font-family:'Noto Serif TC','Playfair Display',serif;font-weight:600;
+    color:var(--ink);display:inline-block;padding:0 .045em;font-size:1em;
+    line-height:1.34;transform:translateY(118%);will-change:transform}
+  .portrait .word{line-height:1.38}
+  .word.on{animation:settle 1.05s cubic-bezier(.16,.84,.22,1) forwards}
+  @keyframes settle{0%{transform:translateY(118%)}100%{transform:translateY(0)}}
+
+  /* key:true — the fashion move: oversized oblique serif, sweeps to oxblood */
+  .word.keyword{font-size:1.52em;font-weight:900;line-height:1.06;
+    position:relative;z-index:2}
+  .word.keyword .obl{display:inline-block;transform:skewX(-6deg);
+    transition:color 1s cubic-bezier(.3,.1,.2,1)}
+  .word.keyword.lit .obl{color:var(--accent)}
+  .word.keyword sup{font-family:'Playfair Display',serif;font-style:italic;
+    font-weight:700;font-size:.34em;color:var(--accent);vertical-align:.9em;
+    margin-left:.06em;opacity:0;transform:scale(.4) rotate(-30deg);display:inline-block;
+    transition:opacity .5s ease,transform .5s cubic-bezier(.2,1.4,.3,1)}
+  .word.keyword.lit sup{opacity:1;transform:scale(1) rotate(0deg)}
+
+  /* cut:true — proofreader's hairline strike, word recedes to gray */
+  .word.cut{position:relative;transition:color .9s ease .15s}
+  .word.cut::after{content:"";position:absolute;left:.02em;right:.02em;top:54%;
+    height:2px;background:var(--ink);transform:scaleX(0);transform-origin:left;
+    transition:transform .7s cubic-bezier(.2,.8,.2,1)}
+  .word.cut.struck{color:var(--soft)}
+  .word.cut.struck::after{transform:scaleX(1)}
+
+  /* ---------- deck (magazine standfirst) ---------- */
+  #deck{position:absolute;left:50%;transform:translateX(-50%);display:flex;
+    flex-direction:column;align-items:center;gap:24px;opacity:0;
+    transition:opacity 1.1s ease}
+  .landscape #deck{bottom:178px}.portrait #deck{bottom:430px}
+  #deck.on{opacity:1}
+  #deck .hair{width:1px;height:44px;background:var(--hair);opacity:.7}
+  #deck .txt{font-family:'Noto Serif TC',serif;font-weight:400;font-size:31px;
+    color:var(--ink);letter-spacing:.1em;white-space:nowrap}
+  #deck .txt .mark{font-family:'Playfair Display',serif;font-style:italic;
+    font-weight:700;color:var(--accent);margin-right:.45em}
+
+  /* ---------- folio corners + page number ---------- */
+  .meta{position:absolute;font-family:'Playfair Display','Noto Serif TC',serif;
+    font-weight:700;font-size:19px;letter-spacing:.24em;color:var(--ink);
+    text-transform:uppercase;opacity:0;transition:opacity 1.4s}
+  .meta.on{opacity:.72}
+  .landscape #metaTL{top:96px;left:104px}.landscape #metaBR{bottom:92px;right:104px}
+  .portrait #metaTL{top:104px;left:76px}.portrait #metaBR{bottom:100px;right:76px}
+  #folio{position:absolute;left:50%;transform:translateX(-50%);
+    font-family:'Playfair Display',serif;font-style:italic;font-weight:400;
+    font-size:21px;color:var(--ink);opacity:0;transition:opacity 1.4s}
+  #folio.on{opacity:.6}
+  .landscape #folio{bottom:88px}.portrait #folio{bottom:96px}
+
+  /* record helpers */
+  #cd{position:absolute;inset:0;z-index:20;display:none;align-items:center;justify-content:center;background:var(--bg)}
+  #cd span{font-family:'Playfair Display',serif;font-weight:400;font-style:italic;font-size:300px;color:var(--ink)}
+  #cues{position:absolute;right:24px;top:24px;z-index:21;display:none;background:rgba(26,24,21,.94);
+    color:#f7f3ec;font-family:monospace;font-size:15px;line-height:1.75;
+    padding:14px 18px;max-height:70%;overflow:auto}
+
+  /* O = outro: the page turns — content drifts up + dissolves, rules retract */
+  .outro #camera{transition:transform 1.1s cubic-bezier(.5,0,.7,.4),opacity 1.1s;
+    transform:translateY(-26px);opacity:0}
+  .outro #kicker .hair{transition:transform .7s ease;transform:scaleX(0)}
+</style>
+</head>
+<body>
+<div id="fit"><div id="stage">
+  <div id="camera">
+    <div id="ghost"></div>
+    <div id="kicker"><div class="hair l"></div><div class="txt"></div><div class="hair r"></div></div>
+    <div id="headWrap"></div>
+    <div id="deck"><div class="hair"></div><div class="txt"></div></div>
+    <div class="meta" id="metaTL"></div><div class="meta" id="metaBR"></div>
+    <div id="folio"></div>
+  </div>
+</div></div>
+
+<script>
+/* ============================================================
+   CONFIG — Editorial 雜誌 (fashion-magazine spread · EXPLORATION)
+   word flags: key:true (oversized oblique serif → sweeps oxblood,
+                         footnote * links to the deck line below)
+               cut:true (proofreader hairline strike, recedes gray)
+   Typographic poise: mask-reveals, drawing hairlines, scale drama.
+   No ink, no texture, no camera, no shake.
+   ============================================================ */
+const CONFIG = {
+  orientation: "landscape",
+  kicker: "The Taste Issue",
+  ghost: "07",                              // huge outlined issue numeral, "" = off
+  lines: [
+    [ {t:"質感不是"}, {t:"預算問題", cut:true} ],
+    [ {t:"是"}, {t:"品味", key:true}, {t:"的選擇"} ]
+  ],
+  deck: "用一支手機，也能拍出雜誌感——關鍵在構圖與留白",
+  metaTL: "VOL. 07 · 質感專題",
+  metaBR: "Taipei · Jul 2026",
+  folio: "— 128 —",
+  timing: { start: 1.15, stagger: 0.24 },
+  accent: ""                                // e.g. "#8a6d1f" gold; default oxblood
+};
+/* ============================================================ */
+const $=q=>document.querySelector(q);
+const stagePx=()=>CONFIG.orientation==="portrait"?[1080,1920]:[1920,1080];
+document.body.parentElement.className=CONFIG.orientation;
+if(CONFIG.accent) document.documentElement.style.setProperty("--accent",CONFIG.accent);
+function fit(){const[W,H]=stagePx();const s=Math.min(innerWidth/W,innerHeight/H);
+  $("#fit").style.cssText=`position:absolute;left:50%;top:50%;width:${W}px;height:${H}px;`+
+  `transform:translate(-50%,-50%) scale(${s});`;}
+addEventListener("resize",fit);fit();
+
+/* record helpers: R = 3·2·1 restart · S = SFX cue sheet · O = outro */
+const CUES=[];const cue=(t,l)=>CUES.push([t,l]);
+(function(){const st=document.getElementById("stage");
+ const cd=document.createElement("div");cd.id="cd";cd.innerHTML="<span></span>";st.appendChild(cd);
+ const cp=document.createElement("div");cp.id="cues";st.appendChild(cp);
+ addEventListener("keydown",e=>{
+  if(e.key==="r"||e.key==="R"){let n=3;cd.style.display="flex";
+    const s=cd.querySelector("span");s.textContent=n;
+    const iv=setInterval(()=>{n--;if(n<1){clearInterval(iv);location.reload();}else s.textContent=n;},700);}
+  if(e.key==="o"||e.key==="O"){document.getElementById("stage").classList.add("outro");}
+  if(e.key==="s"||e.key==="S"){
+    cp.innerHTML="<b>SFX CUE SHEET（秒）</b><br>"+CUES.slice().sort((a,b)=>a[0]-b[0])
+      .map(c=>c[0].toFixed(2)+"s — "+c[1]).join("<br>");
+    cp.style.display=cp.style.display==="block"?"none":"block";}});})();
+
+/* build */
+const wrap=$("#headWrap");const wordEls=[];
+CONFIG.lines.forEach(line=>{const div=document.createElement("div");div.className="hline";
+  line.forEach(w=>{const s=document.createElement("span");s.className="word";
+    if(w.key){s.classList.add("keyword");
+      const o=document.createElement("span");o.className="obl";o.textContent=w.t;
+      const sup=document.createElement("sup");sup.textContent="*";
+      s.appendChild(o);s.appendChild(sup);}
+    else s.textContent=w.t;
+    if(w.cut)s.classList.add("cut");
+    s._flags=w;div.appendChild(s);wordEls.push(s);});
+  wrap.appendChild(div);});
+$("#kicker .txt").textContent=CONFIG.kicker;
+$("#ghost").textContent=CONFIG.ghost;
+const deckTxt=$("#deck .txt");
+if(document.querySelector(".word.keyword")){
+  const m=document.createElement("span");m.className="mark";m.textContent="*";
+  deckTxt.appendChild(m);}
+deckTxt.appendChild(document.createTextNode(CONFIG.deck));
+$("#metaTL").textContent=CONFIG.metaTL;$("#metaBR").textContent=CONFIG.metaBR;
+$("#folio").textContent=CONFIG.folio;
+
+document.fonts.ready.then(()=>{fit();
+  const T=CONFIG.timing;let t=T.start;
+  cue(.35,"翻頁聲 page flip（很輕）：開場");
+  setTimeout(()=>$("#kicker").classList.add("on"),350);
+  if(CONFIG.ghost)setTimeout(()=>$("#ghost").classList.add("on"),650);
+  document.querySelectorAll(".meta").forEach(m=>setTimeout(()=>m.classList.add("on"),800));
+  setTimeout(()=>$("#folio").classList.add("on"),900);
+  let keyEl=null,lastCutT=0;
+  wordEls.forEach(el=>{
+    cue(t,"布料摩擦 soft swish：字升起");
+    setTimeout(()=>el.classList.add("on"),t*1000);
+    if(el._flags.cut){lastCutT=t+1.15;
+      cue(lastCutT,"鉛筆劃線 pencil rule：校對刪除線");
+      setTimeout(()=>el.classList.add("struck"),lastCutT*1000);}
+    if(el._flags.key)keyEl=el;
+    t+=T.stagger*(el._flags.key?1.7:1);});
+  const tKey=Math.max(t+.55,lastCutT+.7);
+  if(keyEl){cue(tKey,"低沉墨染 ink bloom：關鍵字轉緋紅＋星號");
+    setTimeout(()=>keyEl.classList.add("lit"),tKey*1000);}
+  cue(tKey+.75,"氣音：註解浮現");
+  setTimeout(()=>$("#deck").classList.add("on"),(tKey+.75)*1000);});
+</script>
+</body>
+</html>

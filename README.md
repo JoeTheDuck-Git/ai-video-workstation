@@ -5,16 +5,15 @@
 - Node.js 22（從 Node.js 官方發行檔下載並驗證 SHA-256）
 - FFmpeg／FFprobe（優先沿用既有安裝，缺少時使用系統套件管理器）
 - HyperFrames CLI 與核心 Skills
-- 即夢畫布 `dreamina-canvas` CLI／Skill（執行即夢官方安裝器）
 - 獨立的 `canvas-video` 確定性 Canvas／Three.js renderer
-- `canvas-video-pipeline` Skill，串接即夢、Canvas motion、HyperFrames 與 QC
-- 本倉庫附帶的 `video-delivery-qc` 社群影片交付檢查 Skill
-- 可選擇從使用者合法持有的 Hello Irene 套件導入 `footage-sifter`、
-  `caption-doctor` 與 `subtitle-translator`；私人原始碼不會提交到本倉庫
-- 第二階段可另外導入 `beat-cut-editor`；Canvas Skill 內建原創、確定性的
-  B-roll 效果 API，不複製私有 HTML 模板
+- `canvas-video-pipeline` 與 `video-delivery-qc` Skills
+- 預設內建 `footage-sifter`、`caption-doctor` 與 `subtitle-translator`
+- Canvas Skill 內建確定性的 B-roll 效果 API，
+  並隨附重新命名為 **Tacky Templates** 的 10 種動態風格、31 個 HTML 模板與
+  31 效果展示頁
 
-第三方程式與第三方 Skills 不直接收進本倉庫，而是在安裝時從官方來源取得。登入憑證、Cookie、API Key、生成素材與影片也不會進入 Git。
+執行環境與 HyperFrames 會在安裝時從官方來源取得。登入憑證、Cookie、API Key、生成素材與影片不會進入 Git。
+基本安裝不會安裝、登入或驗證任何生成式媒體供應商；可直接使用本機素材、授權素材庫，或另外安裝使用者自行選擇的生成工具。
 
 ## 快速安裝
 
@@ -24,32 +23,10 @@ cd ai-video-workstation
 ./install.sh
 ```
 
-若本機已有合法取得的 `hello-irene-codex` 資料夾，可在安裝時只導入三個互補 Skill：
-
-```bash
-./install.sh --irene-source "$HOME/Downloads/hello-irene-codex"
-```
-
-已完成主安裝時，也可以獨立導入：
-
-```bash
-./scripts/import-irene-skills.sh "$HOME/Downloads/hello-irene-codex"
-```
-
-導入器會先確認三個 `SKILL.md` 存在，將既有同名 Skill 備份，再複製到
-`~/.codex/skills/`。字幕所需的 `opencc` 與 `jieba` 安裝在隔離的
-`~/.irene/venv`，不會修改系統 Python。
-
-第二階段導入節拍剪輯（會保留本機來源內的音樂／音效，但不會把它們提交到本倉庫）：
-
-```bash
-./scripts/import-irene-stage2.sh "$HOME/Downloads/hello-irene-codex"
-# 或連同主安裝一起：
-./install.sh --irene-stage2-source "$HOME/Downloads/hello-irene-codex"
-```
-
-核心剪輯依賴會放在 `~/.irene/venv`。Whisper 語音模型與自帶歌曲分析所需的
-`faster-whisper`／`librosa` 採需要時才安裝，避免首次安裝先下載大型模型。
+安裝器預設把五個內建 Skill 同時複製到 `~/.codex/skills/` 與
+`~/.claude/skills/`，並在
+`~/.local/share/ai-video-workstation/python-venv/` 建立隔離 Python 環境來安裝
+OpenCC 與 jieba，不會修改系統 Python。
 
 若要一次安裝 HyperFrames 發布的完整 Skill 集合：
 
@@ -57,16 +34,17 @@ cd ai-video-workstation
 ./install.sh --all-hyperframes-skills
 ```
 
-安裝完畢後進行即夢登入：
+若只使用其中一個 AI 工具：
+
+```bash
+./install.sh --codex-only
+./install.sh --claude-only
+```
+
+若需要 HyperFrames／HeyGen 的選配雲端功能，可另外登入：
 
 ```bash
 ./scripts/login.sh
-```
-
-若也需要 HyperFrames／HeyGen 的雲端功能授權：
-
-```bash
-./scripts/login.sh --with-hyperframes
 ```
 
 隨時重新檢查環境：
@@ -105,15 +83,9 @@ npm install -g --prefix "$HOME/.local" hyperframes@latest
 
 預設執行 `hyperframes skills update`，安裝／更新核心 Skills。傳入 `--all-hyperframes-skills` 時會執行 `hyperframes skills`，安裝官方發布的完整集合。
 
-### 即夢畫布
+### 媒體來源
 
-安裝器會先把官方腳本下載到暫存檔，再交給 Bash 執行：
-
-```text
-https://jimeng.jianying.com/canvas-cli/install.sh
-```
-
-帳號登入刻意與安裝分開；請在自己的互動式終端執行 `./scripts/login.sh`，依瀏覽器畫面完成授權。
+本安裝包不綁定生成式媒體供應商，也不執行供應商登入或額度驗證。可以使用相機素材、授權素材庫、既有成品，或由使用者明確指定並另行安裝的生成工具。Canvas renderer 只讀取已經完成並存放在本機專案中的媒體。
 
 ### Canvas Video Pipeline
 
@@ -140,6 +112,20 @@ split-flap 等確定性 Canvas helper，並包含 kinetic type、shape morph、p
 infinite zoom、parallax、timeline path、exploded view、預先計算音訊包絡、Bento 與 match cut。
 每次以 `time` 明確驅動，適合做可重現的標題卡與透明疊加層。
 
+完整動態版型收在 `canvas-video-pipeline/assets/tacky-templates/`，安裝時會為每個已選擇的
+AI 工具建立隔離的模板 renderer；不與 Canvas 或 HyperFrames 共用 `node_modules`。
+`canvas-video` 會自動解析 Codex 或 Claude Code 的 Skill 位置：
+
+```bash
+canvas-video tacky list
+canvas-video tacky gallery
+canvas-video tacky copy-template vox ./title-card.html
+canvas-video tacky render-template ./title-card.html ./title-card.mp4 --dur=8 --ffmpeg=ffmpeg
+```
+
+`assets/tacky-scenes/` 只保留 31 項通用動效展示，用於挑選並重建當前故事需要的
+動效；不把展示頁當成完成場景直接交付。
+
 ### 社群影片 QC Skill
 
 `skills/video-delivery-qc` 是本套件隨附的 Skill。它會檢查影片解碼、黑畫面／凍結／靜音、容器與編碼、畫面比例、字幕時間、語音同步抽查提示及社群交付音量等項目。
@@ -147,6 +133,7 @@ infinite zoom、parallax、timeline path、exploded view、預先計算音訊包
 範例：
 
 ```bash
+# Codex 安裝使用 ~/.codex/skills；Claude Code 安裝改用 ~/.claude/skills
 python3 ~/.codex/skills/video-delivery-qc/scripts/video_qc.py \
   path/to/video.mp4 \
   --srt path/to/subtitles.srt \
@@ -160,15 +147,13 @@ python3 ~/.codex/skills/video-delivery-qc/scripts/video_qc.py \
 1. Node.js 主版本是否至少為 22。
 2. npm、FFmpeg、FFprobe 是否可執行。
 3. HyperFrames 版本、`doctor` 與 Skill 狀態。
-4. 即夢 CLI 版本與登入狀態。
-5. `canvas-video` renderer 與 Playwright Chromium 是否可執行。
-6. `canvas-video-pipeline` 和 `video-delivery-qc` Skills 是否可載入。
-
-未登入即夢不會被當成安裝失敗；驗證結果會清楚提示下一步。
+4. `canvas-video` renderer 與 Playwright Chromium 是否可執行。
+5. 指定的 Codex／Claude Code 端是否都已安裝五個內建 Skills。
+6. OpenCC、jieba、Tacky Templates 清單與隔離 renderer 是否完整。
 
 ## 更新
 
-重新執行安裝器即可更新 Node.js 22、HyperFrames、HyperFrames Skills、即夢 CLI／Skill、Canvas runtime 與 QC Skill：
+重新執行安裝器即可更新 Node.js 22、HyperFrames、HyperFrames Skills、Canvas runtime 與 QC Skill：
 
 ```bash
 ./install.sh
@@ -176,9 +161,9 @@ python3 ~/.codex/skills/video-delivery-qc/scripts/video_qc.py \
 
 ## 安全與隱私
 
-- 不要把 `~/.heygen`、即夢登入資料、Cookie、API Key 或 `.env` 提交到 Git。
+- 不要把 `~/.heygen`、任何供應商登入資料、Cookie、API Key 或 `.env` 提交到 Git。
 - 安裝器不會讀取或輸出登入憑證。
-- Node.js 下載會做 SHA-256 驗證；即夢官方安裝器目前沒有由本專案維護的固定 checksum，因此每次由官方 HTTPS 網址取得。
+- Node.js 下載會做 SHA-256 驗證。
 - 建議在執行前先閱讀 `install.sh` 與 `THIRD_PARTY.md`。
 
 ## 官方資料
@@ -191,4 +176,4 @@ python3 ~/.codex/skills/video-delivery-qc/scripts/video_qc.py \
 
 ## 支援範圍
 
-目前自動安裝器已針對 macOS／Linux 設計。Windows 可依即夢官方 PowerShell／CMD 安裝命令處理；Windows 的 Node.js、FFmpeg 與 HyperFrames 整合腳本尚未納入這個版本，避免提供未實機驗證的一鍵流程。
+本倉庫的自動安裝器針對 macOS／Linux；Windows 使用獨立的 `ai-video-workstation-windows` 倉庫。
