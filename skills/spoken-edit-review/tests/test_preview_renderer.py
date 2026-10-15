@@ -32,6 +32,7 @@ class RendererUnitTests(unittest.TestCase):
         probe.start();self.addCleanup(probe.stop)
         enc=patch.object(r.export,'available_encoders',return_value={'libx264','libx265','aac'});enc.start();self.addCleanup(enc.stop)
 
+        option=patch.object(r,'filter_file_option',return_value='-/filter_complex');option.start();self.addCleanup(option.stop)
         original=subprocess.run
         def no_encoder(cmd,*args,**kwargs):
             if Path(cmd[0]).name=='ffmpeg':raise AssertionError('Test must never execute encoder')
@@ -65,6 +66,13 @@ class RendererUnitTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'new directory'):self.prepare(output_dir=self.dest.parent)
         self.dest.mkdir(parents=True)
         with self.assertRaisesRegex(ValueError,'new directory'):self.prepare()
+    def test_resolved_link_cannot_escape_project(self):
+        self.dest.parent.mkdir(parents=True)
+        outside=self.tmp/'outside';outside.mkdir()
+        link=self.dest.parent/'linked'
+        try:link.symlink_to(outside,target_is_directory=True)
+        except OSError:self.skipTest('Host does not grant directory symlink privilege')
+        with self.assertRaisesRegex(ValueError,'new directory'):self.prepare(output_dir=link/'output')
     def test_no_resume_no_encode_or_output_creation(self):
         j=self.prepare();f=self.tmp/'job.json';a=self.tmp/'auth.json';r.g.write(f,j);r.g.write(a,{'render_authorized':False})
         with self.assertRaisesRegex(ValueError,'resume instruction'):r.render(f,a)

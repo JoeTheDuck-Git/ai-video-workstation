@@ -90,9 +90,15 @@ def validate_job(path):
     return job
 
 
+def filter_file_option():
+    # Older FFmpeg uses a dedicated script option; newer versions removed it.
+    help_text=subprocess.check_output(['ffmpeg','-hide_banner','-h','full'],text=True,encoding='utf-8',errors='replace',stderr=subprocess.DEVNULL)
+    return '-filter_complex_script' if '-filter_complex_script' in help_text else '-/filter_complex'
+
+
 def ffmpeg_command(job,filter_path,output):
     c=job['compiled'];e=job['export_settings']
-    return ['ffmpeg','-v','warning','-nostdin','-n','-i',job['source']['path'],'-filter_complex_script',str(filter_path),
+    return ['ffmpeg','-v','warning','-nostdin','-n','-i',job['source']['path'],filter_file_option(),str(filter_path),
       '-map','[vout]','-map','[aout]','-c:v',e['video_encoder'],'-preset','fast','-b:v',str(e['video_bitrate_target']),
       '-pix_fmt','yuv420p','-fps_mode','cfr','-c:a',e['audio_codec'],'-b:a',str(e['audio_bitrate_target']),'-ar',str(c['audio_sample_rate']),
       '-ac',str(c['audio_channels']),'-movflags','+faststart',str(output)]

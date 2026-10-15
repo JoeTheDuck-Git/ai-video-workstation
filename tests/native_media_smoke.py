@@ -24,7 +24,11 @@ with tempfile.TemporaryDirectory(prefix='native-') as tmp:
  graph=d/'濾鏡 script.txt';graph.write_text(compiled['filter_graph'],encoding='utf-8')
  output=d/'剪輯 成片.mp4'
  job={'source':{'path':str(source)},'compiled':compiled,'export_settings':settings}
- run(r.ffmpeg_command(job,graph,output))
+ command=r.ffmpeg_command(job,graph,output)
+ run(command)
+ before=output.read_bytes()
+ refusal=subprocess.run(command,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+ assert output.read_bytes()==before and b'already exists' in refusal.stderr, 'Existing output must never be overwritten'
  run(['ffmpeg','-v','error','-xerror','-i',str(output),'-f','null','-'])
  qa=r.export.measured(output,settings);assert qa['spec_pass'],qa
  probe=r.export.probe(output);v=next(s for s in probe['streams'] if s['codec_type']=='video');a=next(s for s in probe['streams'] if s['codec_type']=='audio')
