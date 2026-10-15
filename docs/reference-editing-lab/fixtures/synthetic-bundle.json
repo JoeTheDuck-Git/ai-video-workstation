@@ -1,0 +1,204 @@
+{
+  "schema_version": "0.1-draft",
+  "synthetic": true,
+  "media": [
+    {
+      "id": "synthetic-reference",
+      "version": "fixture-v1",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "provenance": "synthetic",
+      "uri": "synthetic://reference-no-file",
+      "duration_ticks": 90000,
+      "timebase": {
+        "numerator": 1,
+        "denominator": 30000
+      },
+      "fps": {
+        "numerator": 30000,
+        "denominator": 1001
+      },
+      "frame_mode": "CFR",
+      "width": 1080,
+      "height": 1920,
+      "codec": "synthetic-h264-label",
+      "audio": true,
+      "metadata_evidence": "synthetic://fixture-spec-not-ffprobe",
+      "rights": "synthetic",
+      "privacy": "synthetic",
+      "external_upload_allowed": false
+    },
+    {
+      "id": "synthetic-heldout",
+      "version": "fixture-v1",
+      "sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+      "provenance": "synthetic",
+      "uri": "synthetic://heldout-no-file",
+      "duration_ticks": 90000,
+      "timebase": {
+        "numerator": 1,
+        "denominator": 30000
+      },
+      "fps": {
+        "numerator": 30000,
+        "denominator": 1001
+      },
+      "frame_mode": "CFR",
+      "width": 1080,
+      "height": 1920,
+      "codec": "synthetic-h264-label",
+      "audio": true,
+      "metadata_evidence": "synthetic://fixture-spec-not-ffprobe",
+      "rights": "synthetic",
+      "privacy": "synthetic",
+      "external_upload_allowed": false
+    }
+  ],
+  "evidence": [
+    {
+      "id": "reference-frames",
+      "span": {
+        "media_id": "synthetic-reference",
+        "start_tick": 0,
+        "end_tick": 60060
+      },
+      "modality": "frames",
+      "frame_ticks": [
+        0,
+        30030,
+        59059
+      ],
+      "artifact_refs": [
+        "synthetic://not-real-frames"
+      ]
+    },
+    {
+      "id": "heldout-frames",
+      "span": {
+        "media_id": "synthetic-heldout",
+        "start_tick": 0,
+        "end_tick": 60060
+      },
+      "modality": "frames",
+      "frame_ticks": [
+        0,
+        30030,
+        59059
+      ],
+      "artifact_refs": [
+        "synthetic://not-real-frames"
+      ]
+    }
+  ],
+  "annotations": [
+    {
+      "id": "annotation-1",
+      "span": {
+        "media_id": "synthetic-reference",
+        "start_tick": 0,
+        "end_tick": 60060
+      },
+      "category": "narrative-role",
+      "description": "SYNTHETIC: product insert may demonstrate the stated feature; not real analysis.",
+      "knowledge": "inferred",
+      "confidence": 0.6,
+      "evidence_ids": [
+        "reference-frames"
+      ],
+      "approval": {
+        "status": "pending",
+        "reviewer": null,
+        "reviewed_at": null
+      }
+    }
+  ],
+  "profile": {
+    "id": "example-style",
+    "version": 1,
+    "parent_version": null,
+    "rules": [
+      {
+        "id": "rule-1",
+        "instruction": "Prefer a relevant product insert when a feature needs visual evidence; do not copy exact source cut timing.",
+        "scope": "product explainers",
+        "exceptions": [
+          "Do not replace an essential spoken explanation without adequate coverage."
+        ],
+        "annotation_ids": [
+          "annotation-1"
+        ],
+        "approval": {
+          "status": "pending",
+          "reviewer": null,
+          "reviewed_at": null
+        }
+      }
+    ],
+    "approval": {
+      "status": "pending",
+      "reviewer": null,
+      "reviewed_at": null
+    }
+  },
+  "plan": {
+    "id": "example-cut",
+    "status": "draft",
+    "profile_id": "example-style",
+    "profile_version": 1,
+    "timebase": {
+      "numerator": 1,
+      "denominator": 30000
+    },
+    "duration_ticks": 60060,
+    "clips": [
+      {
+        "id": "clip-1",
+        "source": {
+          "media_id": "synthetic-heldout",
+          "start_tick": 0,
+          "end_tick": 60060
+        },
+        "timeline_start_tick": 0,
+        "timeline_duration_ticks": 60060,
+        "track": 0,
+        "speed": {
+          "numerator": 1,
+          "denominator": 1
+        },
+        "narrative_role": "demonstration",
+        "match_reason": "SYNTHETIC: candidate match only, no real footage examined.",
+        "evidence_ids": [
+          "heldout-frames"
+        ],
+        "rule_ids": [
+          "rule-1"
+        ],
+        "effects": [
+          {
+            "type": "custom-thermal-glow",
+            "parameters": {
+              "color": "orange"
+            },
+            "support": "manual",
+            "implementation": null,
+            "validation_evidence": null,
+            "alternative": "Use a reviewed static label if the custom effect is unavailable.",
+            "approval": {
+              "status": "pending",
+              "reviewer": null,
+              "reviewed_at": null
+            }
+          }
+        ]
+      }
+    ],
+    "unresolved": [
+      "Synthetic case only; human review and real media required.",
+      "Thermal effect is not supported by an implemented adapter."
+    ],
+    "approval": {
+      "status": "pending",
+      "reviewer": null,
+      "reviewed_at": null
+    }
+  }
+}

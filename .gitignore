@@ -10,3 +10,10 @@ cookies/
 __pycache__/
 *.pyc
 node_modules/
+
+# Local editing inputs, private evidence, and generated artifacts
+productions/
+evidence/
+deliverables/
+mouth-noise-review/
+.venv/

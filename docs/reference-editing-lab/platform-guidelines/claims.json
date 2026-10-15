@@ -1,0 +1,115 @@
+{
+  "schema_version": "0.1-draft",
+  "research_status": "official_research_integrated",
+  "recommendation_eligibility": [
+    {
+      "id": "originality",
+      "title": "Helping creators find new audiences",
+      "url": "https://about.fb.com/br/news/2024/04/ajudando-o-criador-de-conteudo-a-encontrar-novos-publicos/",
+      "published_at": "2024-04-30",
+      "updated_at": null,
+      "checked_at": "2026-10-12",
+      "verification": "Official-source research supplied by primary task; not independently re-fetched by this preparation worker",
+      "summary": "合資格原創且無可見浮水印的內容可先向小批受眾展示，再依表現擴散；相同內容優先原創。",
+      "limits": "可發布不等於可推薦；加字幕或裁切不自動取得原創身份，需保留權利與來源。",
+      "evidence_level": "official-policy-explanation"
+    }
+  ],
+  "organic_guidance": [
+    {
+      "id": "hook-watchtime",
+      "title": "Reels trending audio and gifts updates",
+      "url": "https://about.fb.com/news/2023/04/instagram-reels-trending-audio-and-gifts-updates/",
+      "published_at": "2023-04-14",
+      "updated_at": "2023-10-19",
+      "checked_at": "2026-10-12",
+      "verification": "Official-source research supplied by primary task; not independently re-fetched by this preparation worker",
+      "summary": "官方引用創作者@sckachi以觀看時間測不同hook，當時總觀看時間含重播。",
+      "limits": "不是科技案例，沒有成長百分比；舊文公式不是現行API定義，沒有官方3秒硬規則。",
+      "evidence_level": "official-creator-example"
+    },
+    {
+      "id": "edits-skip",
+      "title": "Introducing Edits",
+      "url": "https://about.fb.com/news/2025/04/introducing-edits-streamlined-video-creation-app/",
+      "published_at": "2025-04-22",
+      "updated_at": "2025-12-17",
+      "checked_at": "2026-10-12",
+      "verification": "Official-source research supplied by primary task; not independently re-fetched by this preparation worker",
+      "summary": "Edits提供skip rate等回饋，skip rate可能影響分發；匯出不新增浮水印。",
+      "limits": "使用Edits或AI特效本身沒有被證實享有排名特權。",
+      "evidence_level": "official-product-guidance"
+    },
+    {
+      "id": "trial-reels",
+      "title": "Trial Reels",
+      "url": "https://about.fb.com/news/2024/12/trial-reels-try-content-non-followers-first-see-what-perfoms-best/",
+      "published_at": "2024-12-10",
+      "updated_at": "2025-06-26",
+      "checked_at": "2026-10-12",
+      "verification": "Official-source research supplied by primary task; not independently re-fetched by this preparation worker",
+      "summary": "可先向非粉絲展示，約24小時看views/likes/comments/shares；可手動分享所有人，或選擇依72小時觀看表現自動分享。",
+      "limits": "需帳號可用；不是隨機A/B；本準備包不發文、不更改自動分享設定。",
+      "evidence_level": "official-product-guidance"
+    },
+    {
+      "id": "trial-observation",
+      "title": "Inspiring creativity",
+      "url": "https://about.fb.com/news/2025/06/inspiring-creativity-that-brings-people-together/",
+      "published_at": "2025-06-12",
+      "updated_at": "2025-06-26",
+      "checked_at": "2026-10-12",
+      "verification": "Official-source research supplied by primary task; not independently re-fetched by this preparation worker",
+      "summary": "Meta報告40%創作者增加發布頻率；在這些人中，80%非粉觸及增加，觀察逾40萬人使用前後各一個月並控制混淆。",
+      "limits": "不是觸及提升80%；非保證效果，也不能推論提高頻率就是因果。",
+      "evidence_level": "official-observational-study"
+    }
+  ],
+  "ads_case_study": [
+    {
+      "id": "reels-ads",
+      "title": "Facebook and Instagram Reels ads",
+      "url": "https://www.facebook.com/business/ads/facebook-instagram-reels-ads",
+      "published_at": null,
+      "updated_at": null,
+      "checked_at": "2026-10-12",
+      "verification": "Official-source research supplied by primary task; not independently re-fetched by this preparation worker",
+      "summary": "9:16、音訊與safe zone的組合，在15個Reels-only付費活動中，相比靜態圖每成果成本低34.5%。",
+      "limits": "僅付費廣告案例；不可套到自然觸及，或把任一製作元素單獨視為原因；未明示發布日期。",
+      "evidence_level": "official-paid-ad-case"
+    }
+  ],
+  "experiment_hypothesis": [
+    {
+      "id": "result-first",
+      "label": "成果先行",
+      "status": "hypothesis-not-official-case",
+      "story": "先呈現結果／可見成果，再用操作證據解釋怎麼做到。",
+      "test": "比較不同成果表述，維持主題／片長／受眾盡量相近。"
+    },
+    {
+      "id": "measured-comparison",
+      "label": "實測比較",
+      "status": "hypothesis-not-official-case",
+      "story": "先提出可比問題，交代條件、展示證據、最後說限制。",
+      "test": "檢查單位／型號／条件，不把單次實測推成所有產品結論。"
+    },
+    {
+      "id": "pitfall-explainer",
+      "label": "避坑解說",
+      "status": "hypothesis-not-official-case",
+      "story": "先說具體問題，再展示錯誤與修正，結尾給可執行步驟。",
+      "test": "比較問題陳述方式；不製造假危險或誤導鉤子。"
+    }
+  ],
+  "unverified": [
+    "當前watchtime/likes/sends相對權重",
+    "完播／重播獨立權重",
+    "超過3分鐘推薦限制"
+  ],
+  "prohibited_inferences": [
+    "通用最佳長度",
+    "發布頻率必爆",
+    "分享X倍或完播Y%必推"
+  ]
+}
