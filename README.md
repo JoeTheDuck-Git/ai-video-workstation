@@ -216,3 +216,33 @@ git pull --ff-only origin main
 短句字幕與可配置附件大小流程見 `WORKSTATION_PROMPTS.md`。技術通過、實際視覺檢查、實際聽辨分開紀錄；整體正面回饋不自動關閉個別待核對專名或音訊問題。
 
 開發驗證：`.github/workflows/skills.yml` 列出測試命令。安裝測試在暫存目錄實際執行 `--codex-only --skills-only`，驗證九個Skill、備份與完整工具快照；不修改實際使用者安裝。私有影片回歸未分發，公開測試使用合成媒體。
+
+### Native Windows: update the same nine Skills
+
+With an existing Python 3.11+ environment, use native PowerShell from this checkout:
+
+```powershell
+.\install-skills.ps1
+# Optional isolated destination / explicit interpreter:
+.\install-skills.ps1 -SkillsRoot 'C:\My Projects\Codex skills' -StateDir 'C:\My Projects\Skill snapshots' -Python 'C:\Python311\python.exe'
+```
+
+This is a **Skills-only** updater, not a full Windows workstation bootstrap. It uses
+`skills-manifest.json`, the same nine Skills and independent runtime snapshot as the
+Mac installer, backing up replaced Skills under the new snapshot's `backups`.
+Restore custom rules selectively; do not copy old bundled tools over new ones.
+Open a new Codex conversation after updating. Python, FFmpeg/ffprobe and the Python
+dependencies must already be available. The separate Windows workstation installer
+has its own release lifecycle; it is not evidence that its bundled Skills match main.
+For native Python commands use `python -X utf8` to read Unicode project data consistently.
+
+Preview preparation now accepts required `--project-root PATH`: `--output-dir` must
+resolve to a new descendant of that project, including through symlinks/junctions.
+No existing output directory is overwritten. Use a user project outside the installed
+runtime snapshot. Existing prepared jobs must be prepared again after updating tools.
+
+CI runs the test suites on standard Ubuntu, native Windows and macOS runners. It uses
+public generated test patterns and tones, installs into paths containing spaces and
+Chinese text, and records runtime versions, H264/AAC 480p specifications, full decode,
+A/V timing, size and caption formatting in the job summary. This does not certify
+human lip-sync/listening, private footage, every friend's PC, or the full HyperFrames stack.

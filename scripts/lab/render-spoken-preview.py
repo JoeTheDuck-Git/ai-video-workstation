@@ -60,13 +60,14 @@ def compile_filters(plan,resolution,video,audio,settings):
       'duration_tolerance_seconds':float(1/export_fps)+.001}
 
 
-def prepare_job(map_path,expected_sha,expected_version,resolution,output_dir,export_choices=None):
+def prepare_job(map_path,expected_sha,expected_version,resolution,output_dir,export_choices=None,project_root=None):
     map_path=Path(map_path).resolve();output_dir=Path(output_dir).resolve()
     if g.digest(map_path)!=expected_sha:raise ValueError('Wrong map SHA; refusing legacy or substituted map')
     plan=planner.validate_authorized_plan(map_path,allow_preview=True)
     if plan.get('version')!=expected_version:raise ValueError('Wrong map version')
     if plan.get('review_mode')!='preview' or plan.get('source_review',{}).get('mode')!='preview':raise ValueError('Preview renderer requires preview-bound map')
-    if not output_dir.is_relative_to(ROOT/'productions') or output_dir.exists():raise ValueError('Output must be a new directory within lab productions')
+    project_root=Path(project_root).resolve() if project_root is not None else (ROOT/'productions').resolve()
+    if output_dir==project_root or not output_dir.is_relative_to(project_root) or output_dir.exists():raise ValueError('Output must be a new directory within project root')
     if sum(c['duration_frames'] for c in plan['clips'])!=plan['total_frames']:raise ValueError('Map frame total mismatch')
     if plan['total_seconds']>plan.get('target_max_seconds',float('inf')):raise ValueError('Duration budget exceeded')
     video,audio=probe_source(plan['source'])
@@ -77,21 +78,27 @@ def prepare_job(map_path,expected_sha,expected_version,resolution,output_dir,exp
       'map_content_sha256':planner.content_hash(plan),'source':g.record(plan['source']),
       'renderer':g.record(__file__),'planner':g.record(PLANNER),'settings_module':g.record(SETTINGS),'resolution':resolution,
       'export_choices':export_choices,'export_settings':settings,'source_probe':{'video':video,'audio':audio},
-      'output_dir':str(output_dir),'output_name':'preview.mp4','actual_audio_review':False,'content_status':'needs_review','final_pass':False,
+      'project_root':str(project_root),'output_dir':str(output_dir),'output_name':'preview.mp4','actual_audio_review':False,'content_status':'needs_review','final_pass':False,
       'compiled':compiled,'source_clips':[{k:c[k] for k in ['id','source_in_frame','source_out_frame','timeline_in_frame','duration_frames']} for c in plan['clips']]}
 
 
 def validate_job(path):
     job=g.read(path)
     if job.get('renderer')!=g.record(__file__) or job.get('planner')!=g.record(PLANNER) or job.get('settings_module')!=g.record(SETTINGS):raise ValueError('Renderer/planner version binding changed')
-    current=prepare_job(job['map']['path'],job['map']['sha256'],job['map_version'],job['resolution'],job['output_dir'],job.get('export_choices'))
+    current=prepare_job(job['map']['path'],job['map']['sha256'],job['map_version'],job['resolution'],job['output_dir'],job.get('export_choices'),job.get('project_root'))
     if current!=job:raise ValueError('Job settings/evidence changed; prepare again')
     return job
 
 
+def filter_file_option():
+    # Older FFmpeg uses a dedicated script option; newer versions removed it.
+    help_text=subprocess.check_output(['ffmpeg','-hide_banner','-h','full'],text=True,encoding='utf-8',errors='replace',stderr=subprocess.DEVNULL)
+    return '-filter_complex_script' if '-filter_complex_script' in help_text else '-/filter_complex'
+
+
 def ffmpeg_command(job,filter_path,output):
     c=job['compiled'];e=job['export_settings']
-    return ['ffmpeg','-v','warning','-nostdin','-n','-i',job['source']['path'],'-filter_complex_script',str(filter_path),
+    return ['ffmpeg','-v','warning','-nostdin','-n','-i',job['source']['path'],filter_file_option(),str(filter_path),
       '-map','[vout]','-map','[aout]','-c:v',e['video_encoder'],'-preset','fast','-b:v',str(e['video_bitrate_target']),
       '-pix_fmt','yuv420p','-fps_mode','cfr','-c:a',e['audio_codec'],'-b:a',str(e['audio_bitrate_target']),'-ar',str(c['audio_sample_rate']),
       '-ac',str(c['audio_channels']),'-movflags','+faststart',str(output)]
@@ -123,13 +130,13 @@ def render(job_path,authorization_path):
 def main(argv=None):
     parser=argparse.ArgumentParser(description=__doc__);sub=parser.add_subparsers(dest='command',required=True)
     p=sub.add_parser('prepare');p.add_argument('--map',required=True);p.add_argument('--expect-map-sha256',required=True);p.add_argument('--expect-version',required=True)
-    p.add_argument('--export-settings',required=True,help='JSON of explicit user export choices');p.add_argument('--resolution',choices=RESOLUTIONS,required=True);p.add_argument('--output-dir',required=True);p.add_argument('--job',required=True)
+    p.add_argument('--export-settings',required=True,help='JSON of explicit user export choices');p.add_argument('--resolution',choices=RESOLUTIONS,required=True);p.add_argument('--project-root',required=True,help='User project directory; output must be a new descendant');p.add_argument('--output-dir',required=True);p.add_argument('--job',required=True)
     p=sub.add_parser('validate');p.add_argument('job')
     p=sub.add_parser('render');p.add_argument('job');p.add_argument('--resume-authorization',required=True)
     args=parser.parse_args(argv)
     try:
         if args.command=='prepare':
-            job=prepare_job(args.map,args.expect_map_sha256,args.expect_version,args.resolution,args.output_dir,g.read(args.export_settings))
+            job=prepare_job(args.map,args.expect_map_sha256,args.expect_version,args.resolution,args.output_dir,g.read(args.export_settings),args.project_root)
             with Path(args.job).open('x') as f:json.dump(job,f,ensure_ascii=False,indent=2)
             print('Prepared only; no rendering: '+args.job)
         elif args.command=='validate':validate_job(args.job);print('Bound job valid; no rendering')
