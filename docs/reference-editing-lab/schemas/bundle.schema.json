@@ -1,0 +1,670 @@
+{
+  "$defs": {
+    "Annotation": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "span": {
+          "$ref": "#/$defs/Span"
+        },
+        "category": {
+          "enum": [
+            "shot",
+            "narrative-role",
+            "caption",
+            "transition",
+            "speed",
+            "crop",
+            "sound",
+            "effect"
+          ],
+          "title": "Category",
+          "type": "string"
+        },
+        "description": {
+          "title": "Description",
+          "type": "string"
+        },
+        "knowledge": {
+          "enum": [
+            "observed",
+            "inferred",
+            "unknown"
+          ],
+          "title": "Knowledge",
+          "type": "string"
+        },
+        "confidence": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Confidence"
+        },
+        "evidence_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Evidence Ids",
+          "type": "array"
+        },
+        "approval": {
+          "$ref": "#/$defs/Approval"
+        }
+      },
+      "required": [
+        "id",
+        "span",
+        "category",
+        "description",
+        "knowledge",
+        "evidence_ids",
+        "approval"
+      ],
+      "title": "Annotation",
+      "type": "object"
+    },
+    "Approval": {
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "default": "pending",
+          "enum": [
+            "pending",
+            "approved",
+            "rejected"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "reviewer": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reviewer"
+        },
+        "reviewed_at": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reviewed At"
+        }
+      },
+      "title": "Approval",
+      "type": "object"
+    },
+    "Clip": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "source": {
+          "$ref": "#/$defs/Span"
+        },
+        "timeline_start_tick": {
+          "minimum": 0,
+          "title": "Timeline Start Tick",
+          "type": "integer"
+        },
+        "timeline_duration_ticks": {
+          "exclusiveMinimum": 0,
+          "title": "Timeline Duration Ticks",
+          "type": "integer"
+        },
+        "track": {
+          "minimum": 0,
+          "title": "Track",
+          "type": "integer"
+        },
+        "speed": {
+          "$ref": "#/$defs/Rational"
+        },
+        "narrative_role": {
+          "title": "Narrative Role",
+          "type": "string"
+        },
+        "match_reason": {
+          "title": "Match Reason",
+          "type": "string"
+        },
+        "evidence_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Evidence Ids",
+          "type": "array"
+        },
+        "rule_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Rule Ids",
+          "type": "array"
+        },
+        "effects": {
+          "items": {
+            "$ref": "#/$defs/Effect"
+          },
+          "title": "Effects",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "source",
+        "timeline_start_tick",
+        "timeline_duration_ticks",
+        "track",
+        "speed",
+        "narrative_role",
+        "match_reason",
+        "evidence_ids",
+        "rule_ids",
+        "effects"
+      ],
+      "title": "Clip",
+      "type": "object"
+    },
+    "Effect": {
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "title": "Type",
+          "type": "string"
+        },
+        "parameters": {
+          "additionalProperties": true,
+          "title": "Parameters",
+          "type": "object"
+        },
+        "support": {
+          "enum": [
+            "verified",
+            "candidate",
+            "manual",
+            "unsupported"
+          ],
+          "title": "Support",
+          "type": "string"
+        },
+        "implementation": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Implementation"
+        },
+        "validation_evidence": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Validation Evidence"
+        },
+        "alternative": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Alternative"
+        },
+        "approval": {
+          "$ref": "#/$defs/Approval"
+        }
+      },
+      "required": [
+        "type",
+        "parameters",
+        "support",
+        "approval"
+      ],
+      "title": "Effect",
+      "type": "object"
+    },
+    "Evidence": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "span": {
+          "$ref": "#/$defs/Span"
+        },
+        "modality": {
+          "enum": [
+            "frames",
+            "audio",
+            "both"
+          ],
+          "title": "Modality",
+          "type": "string"
+        },
+        "frame_ticks": {
+          "items": {
+            "type": "integer"
+          },
+          "title": "Frame Ticks",
+          "type": "array"
+        },
+        "artifact_refs": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Artifact Refs",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "span",
+        "modality",
+        "artifact_refs"
+      ],
+      "title": "Evidence",
+      "type": "object"
+    },
+    "Media": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "version": {
+          "title": "Version",
+          "type": "string"
+        },
+        "sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        },
+        "provenance": {
+          "enum": [
+            "synthetic",
+            "probed"
+          ],
+          "title": "Provenance",
+          "type": "string"
+        },
+        "uri": {
+          "title": "Uri",
+          "type": "string"
+        },
+        "duration_ticks": {
+          "exclusiveMinimum": 0,
+          "title": "Duration Ticks",
+          "type": "integer"
+        },
+        "timebase": {
+          "$ref": "#/$defs/Rational"
+        },
+        "fps": {
+          "$ref": "#/$defs/Rational"
+        },
+        "frame_mode": {
+          "enum": [
+            "CFR",
+            "VFR"
+          ],
+          "title": "Frame Mode",
+          "type": "string"
+        },
+        "width": {
+          "exclusiveMinimum": 0,
+          "title": "Width",
+          "type": "integer"
+        },
+        "height": {
+          "exclusiveMinimum": 0,
+          "title": "Height",
+          "type": "integer"
+        },
+        "codec": {
+          "title": "Codec",
+          "type": "string"
+        },
+        "audio": {
+          "title": "Audio",
+          "type": "boolean"
+        },
+        "metadata_evidence": {
+          "title": "Metadata Evidence",
+          "type": "string"
+        },
+        "rights": {
+          "enum": [
+            "owned",
+            "licensed",
+            "unknown",
+            "synthetic"
+          ],
+          "title": "Rights",
+          "type": "string"
+        },
+        "privacy": {
+          "enum": [
+            "private-local",
+            "approved-external",
+            "synthetic"
+          ],
+          "title": "Privacy",
+          "type": "string"
+        },
+        "external_upload_allowed": {
+          "default": false,
+          "title": "External Upload Allowed",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "version",
+        "sha256",
+        "provenance",
+        "uri",
+        "duration_ticks",
+        "timebase",
+        "fps",
+        "frame_mode",
+        "width",
+        "height",
+        "codec",
+        "audio",
+        "metadata_evidence",
+        "rights",
+        "privacy"
+      ],
+      "title": "Media",
+      "type": "object"
+    },
+    "Plan": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "draft",
+            "approved"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "profile_id": {
+          "title": "Profile Id",
+          "type": "string"
+        },
+        "profile_version": {
+          "title": "Profile Version",
+          "type": "integer"
+        },
+        "timebase": {
+          "$ref": "#/$defs/Rational"
+        },
+        "duration_ticks": {
+          "exclusiveMinimum": 0,
+          "title": "Duration Ticks",
+          "type": "integer"
+        },
+        "clips": {
+          "items": {
+            "$ref": "#/$defs/Clip"
+          },
+          "title": "Clips",
+          "type": "array"
+        },
+        "unresolved": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Unresolved",
+          "type": "array"
+        },
+        "approval": {
+          "$ref": "#/$defs/Approval"
+        }
+      },
+      "required": [
+        "id",
+        "status",
+        "profile_id",
+        "profile_version",
+        "timebase",
+        "duration_ticks",
+        "clips",
+        "unresolved",
+        "approval"
+      ],
+      "title": "Plan",
+      "type": "object"
+    },
+    "Profile": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "version": {
+          "exclusiveMinimum": 0,
+          "title": "Version",
+          "type": "integer"
+        },
+        "parent_version": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Parent Version"
+        },
+        "rules": {
+          "items": {
+            "$ref": "#/$defs/Rule"
+          },
+          "title": "Rules",
+          "type": "array"
+        },
+        "approval": {
+          "$ref": "#/$defs/Approval"
+        }
+      },
+      "required": [
+        "id",
+        "version",
+        "rules",
+        "approval"
+      ],
+      "title": "Profile",
+      "type": "object"
+    },
+    "Rational": {
+      "additionalProperties": false,
+      "properties": {
+        "numerator": {
+          "exclusiveMinimum": 0,
+          "title": "Numerator",
+          "type": "integer"
+        },
+        "denominator": {
+          "exclusiveMinimum": 0,
+          "title": "Denominator",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "numerator",
+        "denominator"
+      ],
+      "title": "Rational",
+      "type": "object"
+    },
+    "Rule": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "instruction": {
+          "title": "Instruction",
+          "type": "string"
+        },
+        "scope": {
+          "title": "Scope",
+          "type": "string"
+        },
+        "exceptions": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Exceptions",
+          "type": "array"
+        },
+        "annotation_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Annotation Ids",
+          "type": "array"
+        },
+        "approval": {
+          "$ref": "#/$defs/Approval"
+        }
+      },
+      "required": [
+        "id",
+        "instruction",
+        "scope",
+        "exceptions",
+        "annotation_ids",
+        "approval"
+      ],
+      "title": "Rule",
+      "type": "object"
+    },
+    "Span": {
+      "additionalProperties": false,
+      "properties": {
+        "media_id": {
+          "title": "Media Id",
+          "type": "string"
+        },
+        "start_tick": {
+          "minimum": 0,
+          "title": "Start Tick",
+          "type": "integer"
+        },
+        "end_tick": {
+          "exclusiveMinimum": 0,
+          "title": "End Tick",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "media_id",
+        "start_tick",
+        "end_tick"
+      ],
+      "title": "Span",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "0.1-draft",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "synthetic": {
+      "title": "Synthetic",
+      "type": "boolean"
+    },
+    "media": {
+      "items": {
+        "$ref": "#/$defs/Media"
+      },
+      "title": "Media",
+      "type": "array"
+    },
+    "evidence": {
+      "items": {
+        "$ref": "#/$defs/Evidence"
+      },
+      "title": "Evidence",
+      "type": "array"
+    },
+    "annotations": {
+      "items": {
+        "$ref": "#/$defs/Annotation"
+      },
+      "title": "Annotations",
+      "type": "array"
+    },
+    "profile": {
+      "$ref": "#/$defs/Profile"
+    },
+    "plan": {
+      "$ref": "#/$defs/Plan"
+    }
+  },
+  "required": [
+    "schema_version",
+    "synthetic",
+    "media",
+    "evidence",
+    "annotations",
+    "profile",
+    "plan"
+  ],
+  "title": "Bundle",
+  "type": "object"
+}

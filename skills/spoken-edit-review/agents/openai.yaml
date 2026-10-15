@@ -1,0 +1,6 @@
+interface:
+  display_name: "口播漏剪審查"
+  short_description: "檢查口播粗剪的重講、口誤與吞字，區分技術通過與內容審查覆蓋率"
+  default_prompt: "Use $spoken-edit-review to review this entire talking-head rough cut for missed retakes and speech-edit defects, including the user's reported timecodes."
+policy:
+  allow_implicit_invocation: true

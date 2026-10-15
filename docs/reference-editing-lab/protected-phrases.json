@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "scope": "This user's talking-head edits in this independent project; persist until changed by user",
+  "source": "User provided approximate wording on 2026-10-14",
+  "match_mode": "semantic_and_position; verify original audio, not exact ASR spelling",
+  "default_occurrences": "At least one complete natural take per requested unit in its opening/closing position",
+  "priority": "Above generic shortening, introduction removal and CTA deduplication",
+  "phrases": [
+    {
+      "id": "opening",
+      "position": "opening introduction, preserve its relative source order",
+      "user_wording": "嗨，我是 Tacky，歡迎回到 Tacky 科技快報。喜歡這類科技新聞，先訂閱起來，才不會錯過。",
+      "required_units": ["問候及自我介紹 Tacky", "歡迎回到 Tacky 科技快報", "喜歡這類科技新聞的訂閱提醒與不錯過的理由"]
+    },
+    {
+      "id": "closing",
+      "position": "closing",
+      "user_wording": "留言告訴我。覺得有用，也分享給愛看球賽的朋友。我是 Tacky，我們下隻影片見，bye bye",
+      "required_units": ["留言告訴我", "覺得有用及分享給爱看球賽朋友的提醒", "我是 Tacky", "我們下隻影片見及 bye bye"]
+    }
+  ],
+  "source_variant_policy": "Preserve matching original spoken wording; greeting/interjection differences and ASR Tacky/Techie confusion are not grounds for deletion. Do not synthesize new narration to match examples.",
+  "duration_conflict": "Shorten unprotected material first; report unavoidable conflict instead of silently dropping protected units",
+  "existing_v4_status": "Rules saved; protected introductions and sharing reminder have not yet been restored in existing video"
+}

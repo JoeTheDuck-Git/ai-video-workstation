@@ -1,3 +1,5 @@
+> 本獨立副本的參考剪輯／口播粗剪入口：[WORKSTATION_PROMPTS.md](WORKSTATION_PROMPTS.md)。上游安裝說明不代表本次允許安裝或更新。
+
 # AI Video Workstation Bootstrap
 
 把本機 AI 影片工作環境用一個可重複執行的安裝流程建立起來。這個套件目前以 macOS／Linux 為主，會安裝或設定：
@@ -177,3 +179,18 @@ python3 ~/.codex/skills/video-delivery-qc/scripts/video_qc.py \
 ## 支援範圍
 
 本倉庫的自動安裝器針對 macOS／Linux；Windows 使用獨立的 `ai-video-workstation-windows` 倉庫。
+
+## Talking-head editing skills
+
+Start with [WORKSTATION_PROMPTS.md](WORKSTATION_PROMPTS.md). The workflow asks for the duration limit, optional transcript/timeline preview, and export resolution including **480p (草稿)**. The checked-in protected phrases and pacing preferences belong to this project user; replace them for another speaker.
+
+The source review, cut planner, preview renderer and delivery gate are available under `skills/spoken-edit-review/` and `scripts/lab/`. They require Python 3.10+, locally installed FFmpeg/ffprobe, and host-provided independent review. Mouth-noise analysis additionally uses NumPy and Matplotlib. No ASR service or listening capability is installed by these scripts. Evidence-only review permits a labelled preview, never a final listening pass.
+
+Run the portable checks with:
+
+```sh
+python3 -m unittest discover -s skills/spoken-edit-review/tests -v
+python3 -m unittest discover -s docs/reference-editing-lab/tests -v
+```
+
+Private-media regression cases are explicitly skipped when their local artifacts are absent. The optional historical map fixture belongs at `productions/private-regression/planned-preview.json.map.json`; it must have valid local evidence bindings. Public tests do not establish audible quality. Historical case references describe lessons, not bundled media or reusable cut points.

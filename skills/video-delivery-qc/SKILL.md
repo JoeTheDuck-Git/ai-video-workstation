@@ -12,8 +12,17 @@ Run an evidence-backed quality gate without treating unmeasured properties as pa
 - For a HyperFrames project, run its owning HyperFrames checks first, then inspect the rendered artifact with this skill.
 - For an existing video file, start with the deterministic technical scan.
 - When the user reports a story, character, prop, scene, or subtitle mismatch, also run semantic continuity review.
+- For talking-head rough-cut delivery or reported retakes, repetitions, false starts or clipped speech, also read [spoken-edit-review](../spoken-edit-review/SKILL.md). Keep its speech-edit result and coverage separate from technical QC; inspect retained clip interiors, not just splice boundaries. Unresolved reported speech defects prevent claiming editorial completion.
 
 ## Technical scan
+
+### This user's export choice
+
+Before rendering a new preview or final export, ask this user which delivery resolution they want. Show selectable options in this order: `480p (草稿)`, `720p`, `1080p`, `4K`, `原始解析度`. With `request_user_input_async`, include `480p (草稿)` directly in the options array; do not offer it only through free text or explanatory text. Use the exact label `480p (草稿)` and store the selected renderer resolution as `480p`. The draft label describes output resolution/purpose, not permission to skip editing or review checks. An explicit choice already made for the current export satisfies this step; do not ask again. A question about whether 4K is possible is not a request to start a 4K render. While the user is tuning the editing skill, keep the agreed lightweight preview and do not launch additional high-resolution renders.
+
+Inspect source dimensions, orientation, rational frame rate, bit depth and color metadata before rendering. Preserve aspect ratio; explain the actual pixel dimensions of the selected option. Original/source resolution means rendering the approved source-to-timeline map from the original media at its native dimensions and frame rate, not enlarging a proxy. It does not mean bit-identical or lossless original quality after re-encoding. Disclose material codec, bit-depth or color changes. If the selected resolution exceeds the source, explain that enlargement cannot recover detail and resolve that choice before upscaling. For mixed-resolution sources, disclose the master canvas choice.
+
+Record the selected master resolution separately from any phone preview, including source/map versions and encoding settings. Verify the delivered streams against that choice; label a smaller preview clearly. Do not let the default social profile override the user's chosen resolution.
 
 Use the `social` profile by default when the user says 社群影片, 短影音, Reels, Shorts, TikTok, or does not name another delivery destination. Read [references/social-profile.md](references/social-profile.md) for the profile contract and platform-specific overrides.
 
