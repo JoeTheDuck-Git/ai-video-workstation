@@ -121,10 +121,10 @@ else
 fi
 
 printf '\n-- Shared subtitle runtime --\n'
-if [[ -x "$MANAGED_PYTHON" ]] && "$MANAGED_PYTHON" -c 'import opencc, jieba' >/dev/null 2>&1; then
-  ok "subtitle dependencies (opencc, jieba)"
+if [[ -x "$MANAGED_PYTHON" ]] && "$MANAGED_PYTHON" -c 'import opencc, jieba, numpy, matplotlib, PIL, pydantic; assert int(pydantic.__version__.split(".")[0]) == 2' >/dev/null 2>&1; then
+  ok "subtitle and review dependencies"
 else
-  fail "managed subtitle dependencies are missing"
+  fail "managed subtitle/review dependencies are missing"
 fi
 
 printf '\n'

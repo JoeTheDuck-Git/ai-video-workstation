@@ -174,7 +174,7 @@ install_python_tools() {
   fi
   log "Installing subtitle dependencies"
   "${PYTHON_VENV}/bin/python3" -m pip install --disable-pip-version-check \
-    'opencc-python-reimplemented>=0.1.7' 'jieba>=0.42' 'numpy>=1.24' 'matplotlib>=3.7' 'Pillow>=10'
+    'opencc-python-reimplemented>=0.1.7' 'jieba>=0.42' 'numpy>=1.24' 'matplotlib>=3.7' 'Pillow>=10' 'pydantic>=2,<3'
 }
 
 install_hyperframes() {

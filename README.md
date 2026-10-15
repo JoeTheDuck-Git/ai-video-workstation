@@ -28,7 +28,7 @@ cd ai-video-workstation
 安裝器預設把九個內建 Skill 同時複製到 `~/.codex/skills/` 與
 `~/.claude/skills/`，並在
 `~/.local/share/ai-video-workstation/python-venv/` 建立隔離 Python 環境來安裝
-OpenCC、jieba、NumPy、Matplotlib 與 Pillow，不會修改系統 Python。
+OpenCC、jieba、NumPy、Matplotlib、Pillow 與 Pydantic 2，不會修改系統 Python。
 
 若要一次安裝 HyperFrames 發布的完整 Skill 集合：
 
