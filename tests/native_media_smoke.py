@@ -3,7 +3,9 @@ import importlib.util,json,os,platform,subprocess,sys,tempfile
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 def run(cmd):
- return subprocess.check_output(cmd,stderr=subprocess.STDOUT,text=True,encoding='utf-8')
+ try:return subprocess.check_output(cmd,stderr=subprocess.STDOUT,text=True,encoding='utf-8')
+ except subprocess.CalledProcessError as e:
+  print(e.output,flush=True);raise
 def load(name,path):
  spec=importlib.util.spec_from_file_location(name,path);m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m);return m
 with tempfile.TemporaryDirectory(prefix='native-') as tmp:
