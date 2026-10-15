@@ -15,7 +15,7 @@ r=importlib.util.module_from_spec(spec);spec.loader.exec_module(r)
 class RendererUnitTests(unittest.TestCase):
     def setUp(self):
         tmp=tempfile.TemporaryDirectory();self.addCleanup(tmp.cleanup);self.tmp=Path(tmp.name)
-        self.dest=ROOT/'productions'/('test-never-render-'+self.tmp.name)
+        self.dest=self.tmp/'新 專案'/'output'
         # Only downstream renderer behavior is isolated here. The real source-review
         # gates are exercised separately below and in test_preview_mode.py.
         source=self.tmp/'synthetic-source';source.write_bytes(b'not media: unit fixture only')
@@ -38,7 +38,7 @@ class RendererUnitTests(unittest.TestCase):
             return original(cmd,*args,**kwargs)
         p=patch.object(r.subprocess,'run',side_effect=no_encoder);p.start();self.addCleanup(p.stop)
     def prepare(self,res='480p',**kw):
-        args=dict(map_path=self.map,expected_sha=r.g.digest(self.map),expected_version='synthetic-renderer-fixture',resolution=res,output_dir=self.dest,export_choices={'resolution':res,'frame_rate':'30000/1001','video_codec':'h264','audio_bitrate':128000,'video_bitrate':650000,'rate_control':'vbr'});args.update(kw)
+        args=dict(project_root=self.tmp/'新 專案',map_path=self.map,expected_sha=r.g.digest(self.map),expected_version='synthetic-renderer-fixture',resolution=res,output_dir=self.dest,export_choices={'resolution':res,'frame_rate':'30000/1001','video_codec':'h264','audio_bitrate':128000,'video_bitrate':650000,'rate_control':'vbr'});args.update(kw)
         return r.prepare_job(**args)
     def test_four_span_fixture_compiles_native_samples(self):
         j=self.prepare();c=j['compiled']
@@ -60,6 +60,11 @@ class RendererUnitTests(unittest.TestCase):
         changed=copy.deepcopy(j);changed['renderer']['sha256']='wrong';r.g.write(f,changed)
         with self.assertRaisesRegex(ValueError,'version binding'):r.validate_job(f)
         with self.assertRaisesRegex(ValueError,'new directory'):self.prepare(output_dir=self.tmp)
+    def test_output_escape_and_existing_directory_blocked(self):
+        with self.assertRaisesRegex(ValueError,'new directory'):self.prepare(output_dir=self.tmp/'outside')
+        with self.assertRaisesRegex(ValueError,'new directory'):self.prepare(output_dir=self.dest.parent)
+        self.dest.mkdir(parents=True)
+        with self.assertRaisesRegex(ValueError,'new directory'):self.prepare()
     def test_no_resume_no_encode_or_output_creation(self):
         j=self.prepare();f=self.tmp/'job.json';a=self.tmp/'auth.json';r.g.write(f,j);r.g.write(a,{'render_authorized':False})
         with self.assertRaisesRegex(ValueError,'resume instruction'):r.render(f,a)

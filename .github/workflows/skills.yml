@@ -2,17 +2,31 @@ name: Skills checks
 on: [push, pull_request]
 jobs:
   test:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    env:
+      PYTHONUTF8: '1'
+      PYTHONIOENCODING: utf-8
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - if: runner.os == 'Windows'
+        run: choco install ffmpeg --yes --no-progress
+      - if: runner.os == 'macOS'
+        run: brew install ffmpeg
       - run: python -m pip install numpy matplotlib Pillow opencc-python-reimplemented jieba "pydantic>=2,<3"
-      - run: bash -n install.sh scripts/verify.sh
+      - if: runner.os != 'Windows'
+        run: bash -n install.sh scripts/verify.sh
       - run: python -m unittest discover -s tests -v
       - run: python -m unittest discover -s skills/caption-doctor/tests -v
       - run: python -m unittest discover -s skills/video-delivery-qc/tests -v
       - run: python -m unittest discover -s skills/spoken-edit-review/tests -v
       - run: python -m unittest discover -s docs/reference-editing-lab/tests -v
+      - run: python tests/native_media_smoke.py
