@@ -3,6 +3,9 @@ name: video-delivery-qc
 description: Inspect a social video before export or delivery, including technical integrity, social-ready encoding, audio loudness, subtitle-to-speech timing, shot structure, and character/prop/scene continuity. Use for final video QC, social delivery checks, subtitle verification, or diagnosing a rendered video; do not invoke for ordinary video creation that has not reached a review or delivery stage.
 ---
 
+Installed package: when `runtime-root.json` is present beside this file, use its `runtime_root` for repository-relative `scripts/lab`, `docs`, and `WORKSTATION_PROMPTS.md` references. The snapshot contains independent copies of the public tools. Store user media, profiles and outputs in the user's writable project, never inside the installed package.
+
+
 # Video Delivery QC
 
 Run an evidence-backed quality gate without treating unmeasured properties as passed. Preserve the approved creative intent: inspect first, then fix or render only when the user's request authorizes it.
@@ -16,9 +19,12 @@ Run an evidence-backed quality gate without treating unmeasured properties as pa
 
 ## Technical scan
 
-### This user's export choice
+### Export choices
 
-Before rendering a new preview or final export, ask this user which delivery resolution they want. Show selectable options in this order: `480p (草稿)`, `720p`, `1080p`, `4K`, `原始解析度`. With `request_user_input_async`, include `480p (草稿)` directly in the options array; do not offer it only through free text or explanatory text. Use the exact label `480p (草稿)` and store the selected renderer resolution as `480p`. The draft label describes output resolution/purpose, not permission to skip editing or review checks. An explicit choice already made for the current export satisfies this step; do not ask again. A question about whether 4K is possible is not a request to start a 4K render. While the user is tuning the editing skill, keep the agreed lightweight preview and do not launch additional high-resolution renders.
+Before preparing an AI-edit render, read [export choices and capabilities](references/export-choices.md). Show original ffprobe specifications, collect the unanswered resolution/FPS, codec, audio bitrate and video VBR target choices together, and persist them. Resolution alone no longer authorizes hidden FPS/codec/bitrate defaults; the reference defines supported settings and limitations.
+
+
+Before rendering a new preview or final export, ask the user which delivery resolution they want. Show selectable options in this order: `480p (草稿)`, `720p`, `1080p`, `4K`, `原始解析度`. With `request_user_input_async`, include `480p (草稿)` directly in the options array; do not offer it only through free text or explanatory text. Use the exact label `480p (草稿)` and store the selected renderer resolution as `480p`. The draft label describes output resolution/purpose, not permission to skip editing or review checks. An explicit choice already made for the current export satisfies this step; do not ask again. A question about whether 4K is possible is not a request to start a 4K render. While the user is tuning the editing skill, keep the agreed lightweight preview and do not launch additional high-resolution renders.
 
 Inspect source dimensions, orientation, rational frame rate, bit depth and color metadata before rendering. Preserve aspect ratio; explain the actual pixel dimensions of the selected option. Original/source resolution means rendering the approved source-to-timeline map from the original media at its native dimensions and frame rate, not enlarging a proxy. It does not mean bit-identical or lossless original quality after re-encoding. Disclose material codec, bit-depth or color changes. If the selected resolution exceeds the source, explain that enlargement cannot recover detail and resolve that choice before upscaling. For mixed-resolution sources, disclose the master canvas choice.
 
@@ -38,6 +44,8 @@ The social profile is a creator-safe master target, not a claim that every platf
 The script returns JSON with measured streams, decode status, black/freeze/silence observations, loudness when available, sampled frames, and findings. Explicit user or platform requirements override the profile. A missing measurement is `not_checked` or `null`, never a pass. Treat decode failure, a missing required stream, or a material explicit-spec mismatch as blocking.
 
 ## Subtitle and speech alignment
+
+For subtitle-only exports from an approved cut, also use [edited-preview caption QA](../caption-doctor/references/edited-preview-captions.md). Verify unchanged edit duration/frame sequence and audio payload/timing separately from the newly rendered subtitle track. A previous rough-cut check does not validate new caption wording, glyphs, layout or timing.
 
 When captions or narration matter:
 
@@ -66,3 +74,7 @@ Classify findings:
 Report exact timecodes and evidence. Separate deterministic measurements from model inferences. If the user asked only to inspect, stop after the report. If they asked to export, do not call the artifact final while blocking findings remain; correct in-scope problems, re-run the affected checks, and verify the final file by full decode plus `ffprobe`.
 
 Never claim that a contact sheet proves audio synchronization or that a technical metric proves narrative correctness. VMAF/SSIM require a valid reference video and do not detect wrong characters or dialogue.
+
+## Size-limited mobile sharing
+
+Read [references/mobile-share.md](references/mobile-share.md) for attachment-budget derivatives. Keep the higher-quality export and prefer audio stream copy; a successful small-file example is not an official platform limit.

@@ -95,7 +95,7 @@ verify_skills_root() {
   else
     fail "${agent_name}: video-delivery-qc is missing or could not be loaded"
   fi
-  for skill_name in canvas-video-pipeline footage-sifter caption-doctor subtitle-translator; do
+  for skill_name in canvas-video-pipeline footage-sifter caption-doctor subtitle-translator reference-edit-analyzer editing-style-profile reference-guided-cut-planner spoken-edit-review; do
     skill_path="${skills_root}/${skill_name}/SKILL.md"
     if [[ -f "$skill_path" ]]; then
       ok "${agent_name}: ${skill_name}"
@@ -121,10 +121,10 @@ else
 fi
 
 printf '\n-- Shared subtitle runtime --\n'
-if [[ -x "$MANAGED_PYTHON" ]] && "$MANAGED_PYTHON" -c 'import opencc, jieba' >/dev/null 2>&1; then
-  ok "subtitle dependencies (opencc, jieba)"
+if [[ -x "$MANAGED_PYTHON" ]] && "$MANAGED_PYTHON" -c 'import opencc, jieba, numpy, matplotlib, PIL, pydantic; assert int(pydantic.__version__.split(".")[0]) == 2' >/dev/null 2>&1; then
+  ok "subtitle and review dependencies"
 else
-  fail "managed subtitle dependencies are missing"
+  fail "managed subtitle/review dependencies are missing"
 fi
 
 printf '\n'

@@ -23,6 +23,7 @@ Usage:
 """
 import argparse, re, os
 from pathlib import Path
+from caption_style import format_technology_caption
 
 # ---- Traditional Taiwan conversion (smart: only convert Simplified) --------------
 try:
@@ -54,13 +55,13 @@ def sec_to_srt(x):
     return f"{h:02d}:{m:02d}:{s:02d},{ms:03d}"
 
 def parse_srt(path):
-    txt=open(path,encoding="utf-8-sig").read(); segs=[]
+    txt=Path(path).read_text(encoding="utf-8-sig"); segs=[]
     for b in re.split(r"\n\s*\n", txt.strip()):
         lines=[l for l in b.splitlines() if l.strip()]
         tc=next((l for l in lines if "-->" in l), None)
         if not tc: continue
         i=lines.index(tc); a,bb=tc.split("-->")
-        raw=re.sub(r"<[^>]+>","", " ".join(lines[i+1:])).strip()
+        raw=re.sub(r"<[^>]+>","", "\n".join(lines[i+1:])).strip()
         segs.append({"start":to_sec(a),"end":to_sec(bb),"text":raw})
     return segs
 
@@ -73,7 +74,7 @@ def pangu(s):
     """Add a space between Chinese and Latin letters/digits (先用Codex -> 先用 Codex; Pocket 3跟 -> Pocket 3 跟)."""
     s=re.sub(r"([一-鿿])([A-Za-z0-9])", r"\1 \2", s)
     s=re.sub(r"([A-Za-z0-9])([一-鿿])", r"\1 \2", s)
-    return re.sub(r"  +", " ", s).strip()
+    return "\n".join(line.strip(" \t") for line in s.split("\n"))
 def is_lone_filler(text):
     t=re.sub(r"[，。！？、,.!?…\s]","",text)
     return t in FILLER_SOLO or (len(t)<=1 and t in FILLER_SOLO)
@@ -145,7 +146,7 @@ def report(caps, maxlen, max_cps, min_dur):
     for c in caps:
         n=len(c["text"]); dur=c["end"]-c["start"]; cps=n/dur if dur else 99
         why=[]
-        if n>maxlen: why.append(f">{maxlen} chars")
+        if max((len(line) for line in c["text"].splitlines()), default=0)>maxlen: why.append(f">{maxlen} chars/line (advisory)")
         if dur<min_dur-1e-3: why.append("short")
         if cps>max_cps: why.append(f"{cps:.1f}cps")
         if why: issues+=1; print(f"  ! [{c['text']}] {', '.join(why)}")
@@ -155,12 +156,14 @@ def report(caps, maxlen, max_cps, min_dur):
 def main():
     ap=argparse.ArgumentParser()
     ap.add_argument("srt"); ap.add_argument("--out", default="clean.srt")
-    ap.add_argument("--maxlen", type=int, default=12, help="max characters per caption line")
+    ap.add_argument("--maxlen", type=int, default=12, help="advisory characters per line; hard target only in estimated --reflow mode")
     ap.add_argument("--merge-gap", type=float, default=0.6)
     ap.add_argument("--min-dur", type=float, default=0.8, help="minimum on-screen seconds")
     ap.add_argument("--min-gap", type=float, default=0.08, help="gap between captions (~2 frames)")
     ap.add_argument("--max-cps", type=float, default=9.0, help="reading-speed flag (chars/sec)")
     ap.add_argument("--drop-fillers", action="store_true")
+    ap.add_argument("--technology-style", action="store_true",
+                    help="Final punctuation style: comma -> two ASCII spaces, preserve thousands; no cue retiming")
     ap.add_argument("--reflow", action="store_true",
                     help="ADVANCED: re-chunk lines to --maxlen. This RE-TIMES sub-cards by estimate "
                          "(no word-level data) and can drift from the audio. Off by default so the "
@@ -168,6 +171,8 @@ def main():
     ap.add_argument("--fix", default="", help='corrections applied before AND after conversion: "a=>b; c=>d"')
     ap.add_argument("--fix-file", help="UTF-8 glossary with one wrong=>right pair per line")
     a=ap.parse_args()
+    if a.technology_style and a.reflow:
+        ap.error("--technology-style requires actual word-timed semantic cues; do not use estimated --reflow")
     raw_fixes = [p for p in a.fix.split(";") if "=>" in p]
     if a.fix_file:
         glossary = Path(a.fix_file).expanduser()
@@ -186,6 +191,10 @@ def main():
         caps=reflow(segs, a.maxlen, a.merge_gap, a.min_dur, a.min_gap, a.drop_fillers)
     else:
         caps=preserve(segs, a.drop_fillers)
+    if a.technology_style:
+        for c in caps:
+            c["text"]=format_technology_caption(c["text"])
+        caps=[c for c in caps if c["text"].strip()]
     write_srt(caps, a.out)
     print(f"Mode: {'REFLOW (re-timed)' if a.reflow else 'PRESERVE (original timing kept)'}")
     print(f"In {len(segs)} lines -> out {len(caps)} caption lines. Wrote {a.out}")

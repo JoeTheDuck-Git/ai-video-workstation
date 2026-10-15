@@ -25,10 +25,10 @@ cd ai-video-workstation
 ./install.sh
 ```
 
-安裝器預設把五個內建 Skill 同時複製到 `~/.codex/skills/` 與
+安裝器預設把九個內建 Skill 同時複製到 `~/.codex/skills/` 與
 `~/.claude/skills/`，並在
 `~/.local/share/ai-video-workstation/python-venv/` 建立隔離 Python 環境來安裝
-OpenCC 與 jieba，不會修改系統 Python。
+OpenCC、jieba、NumPy、Matplotlib、Pillow 與 Pydantic 2，不會修改系統 Python。
 
 若要一次安裝 HyperFrames 發布的完整 Skill 集合：
 
@@ -150,7 +150,7 @@ python3 ~/.codex/skills/video-delivery-qc/scripts/video_qc.py \
 2. npm、FFmpeg、FFprobe 是否可執行。
 3. HyperFrames 版本、`doctor` 與 Skill 狀態。
 4. `canvas-video` renderer 與 Playwright Chromium 是否可執行。
-5. 指定的 Codex／Claude Code 端是否都已安裝五個內建 Skills。
+5. 指定的 Codex／Claude Code 端是否都已安裝九個內建 Skills。
 6. OpenCC、jieba、Tacky Templates 清單與隔離 renderer 是否完整。
 
 ## 更新
@@ -194,3 +194,25 @@ python3 -m unittest discover -s docs/reference-editing-lab/tests -v
 ```
 
 Private-media regression cases are explicitly skipped when their local artifacts are absent. The optional historical map fixture belongs at `productions/private-regression/planned-preview.json.map.json`; it must have valid local evidence bindings. Public tests do not establish audible quality. Historical case references describe lessons, not bundled media or reusable cut points.
+
+## 更新剪輯與字幕 Skills（Codex）
+
+首次安裝：先閱讀本檔與安裝腳本，再執行 `./install.sh --codex-only`。
+已有可用執行環境，只更新內建規則與工具：
+
+```sh
+git status --short
+# 僅在工作樹乾淨且目前為 main 時：
+git pull --ff-only origin main
+./install.sh --codex-only --skills-only
+```
+
+若有本機修改，先另存備份並處理衝突，不使用 reset --hard。安裝器依 `skills-manifest.json` 安裝九個 Skill，包含 caption-doctor、reference-guided-cut-planner、spoken-edit-review 與 video-delivery-qc，以及它們所需的 scripts/lab 和通用契約。更新時把原有同名 Skill 完整移至該次快照的 backups；自訂規則不自動合併，可從備份選擇性恢復。無關 Skill 不變。
+
+每次安裝建立獨立檔案快照於 `~/.local/share/ai-video-workstation/skill-releases/`。各已安裝 Skill 的 `runtime-root.json` 記錄完整工具根目錄及來源commit；即使移動下載repo，工具仍可使用。使用者固定句清單預設為空，請在自己的專案設定。不要把素材、密鑰或個人profile寫入安裝快照。
+
+`--skills-only` 不下載依賴、不更新Node/FFmpeg/HyperFrames、不執行影片渲染。它需要現有Python3；缺執行依賴時改用完整安裝。完整環境檢查：`./scripts/verify.sh --codex-only`。更新後開新Codex對話以重新發現Skills。
+
+短句字幕與可配置附件大小流程見 `WORKSTATION_PROMPTS.md`。技術通過、實際視覺檢查、實際聽辨分開紀錄；整體正面回饋不自動關閉個別待核對專名或音訊問題。
+
+開發驗證：`.github/workflows/skills.yml` 列出測試命令。安裝測試在暫存目錄實際執行 `--codex-only --skills-only`，驗證九個Skill、備份與完整工具快照；不修改實際使用者安裝。私有影片回歸未分發，公開測試使用合成媒體。

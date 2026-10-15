@@ -3,6 +3,9 @@ name: editing-style-profile
 description: Distill reviewed reference-edit annotations into a human-reviewed, versioned editing style profile. Use to separate reusable style preferences from the story of an individual video.
 ---
 
+Installed package: when `runtime-root.json` is present beside this file, use its `runtime_root` for repository-relative `scripts/lab`, `docs`, and `WORKSTATION_PROMPTS.md` references. The snapshot contains independent copies of the public tools. Store user media, profiles and outputs in the user's writable project, never inside the installed package.
+
+
 # editing-style-profile
 
 Status: project-local draft; no autonomous analysis/render service is implemented.

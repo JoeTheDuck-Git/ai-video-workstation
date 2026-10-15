@@ -10,6 +10,9 @@ description: >-
   animation that should live inside a HyperFrames composition; route that to hyperframes.
 ---
 
+Installed package: when `runtime-root.json` is present beside this file, use its `runtime_root` for repository-relative `scripts/lab`, `docs`, and `WORKSTATION_PROMPTS.md` references. The snapshot contains independent copies of the public tools. Store user media, profiles and outputs in the user's writable project, never inside the installed package.
+
+
 # Canvas Video Pipeline
 
 Use `canvas-video` as an isolated deterministic renderer. Do not merge its dependencies or `node_modules` with HyperFrames.
