@@ -12,6 +12,9 @@ description: >-
   Mandarin (繁體中文) but works in English too.
 ---
 
+Installed package: when `runtime-root.json` is present beside this file, use its `runtime_root` for repository-relative `scripts/lab`, `docs`, and `WORKSTATION_PROMPTS.md` references. The snapshot contains independent copies of the public tools. Store user media, profiles and outputs in the user's writable project, never inside the installed package.
+
+
 # Caption Doctor
 
 Auto-captions and subtitles from **any source** (CapCut, DaVinci, YouTube, Premiere, Whisper,
@@ -30,12 +33,14 @@ spacing, filler-drop, SRT output — while preserving the original timecodes.
    context (homophones, brand/tech names, Taiwanese slang). Passed to the tool as `--fix`.
 2. **Traditional Mandarin** — Simplified is converted with OpenCC **`s2twp`** (Taiwan vocab);
    already-Traditional lines are left untouched so domain words like **腳本** aren't mangled.
-3. **Line breaks** — mid-phrase fragments are merged, then re-split into readable lines of
-   `--maxlen` characters, re-timed by character share. (Short-form: 12–14 chars reads best.)
+3. **Line breaks** — preserve authored semantic line breaks by default. For this user's technology
+   talking-head captions, use the [short-phrase rules](references/edited-preview-captions.md#short-phrase-technology-captions)
+   and actual word timing to author successive cues. Character-count reflow is an optional estimated mode, not this workflow.
    For English/bilingual delivery, follow Subtitle Translator's
    `references/english-caption-layout.md`: one semantic cue, one line when possible, and only wrap
    to two lines when the rendered width genuinely cannot fit.
-4. **Timing** — enforces a minimum on-screen duration and removes overlaps.
+4. **Timing** — preserve supplied times and report readability warnings by default; validate overlaps separately.
+   Estimated reflow is not a substitute for speech alignment.
 
 ## Language mode — DEFAULT: all Traditional Mandarin (Taiwan)
 The finished caption track should be **one language: Traditional Mandarin (繁體中文, Taiwan)**.
@@ -79,6 +84,8 @@ On every later run, pass the glossary with `--fix-file <project>/.ai-video-works
 preferences automatically. The skill gets smarter each time it's used.
 
 ## Step 1 — Get the raw captions (any source)
+
+For captions on an already edited preview, read [Edited-preview timing and burn-in](references/edited-preview-captions.md). Use final-audio word timing or the approved source-to-output map; preserving source SRT timestamps would be incorrect after cuts. This mode can create semantic cues from timed words and an editable SRT/ASS without changing the approved edit.
 Any `.srt` works — the tool only needs a valid SRT. Common exports:
 - **CapCut**: Captions → Auto captions → Export as SRT.
 - **DaVinci**: Create Subtitles from Audio / AutoSubs → export SRT.
@@ -128,6 +135,10 @@ by default, because shortening a line means re-timing its pieces by guesswork (t
 word-level timing), which trades away CapCut's correct sync for a styling preference. Line length /
 wrapping is CapCut's job; the word-by-word "karaoke" look is **CapCut's built-in word-by-word
 captions** (they carry real word timings). Don't rebuild those here.
+
+### This user’s technology caption punctuation
+
+After authoring short semantic cues with actual word timing, use `--technology-style` for this user’s punctuation preference: phrase commas become two U+0020 spaces, thousands separators remain, and cue/line edges are trimmed. It preserves timing and semantic line breaks; it does not split a long transcript automatically. Do not combine it with estimated `--reflow`. Use the same `caption_style.format_technology_caption` text for SRT and ASS; no later whitespace collapsing. See the linked edited-preview reference for examples and QA.
 
 ### Advanced only: `--reflow`
 `--reflow --maxlen 8` re-chunks long lines (word-aware, via jieba). **It re-times split cards by

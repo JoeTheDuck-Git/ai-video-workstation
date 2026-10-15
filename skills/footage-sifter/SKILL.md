@@ -11,6 +11,9 @@ description: >-
   the user runs the (reviewed) rename script.
 ---
 
+Installed package: when `runtime-root.json` is present beside this file, use its `runtime_root` for repository-relative `scripts/lab`, `docs`, and `WORKSTATION_PROMPTS.md` references. The snapshot contains independent copies of the public tools. Store user media, profiles and outputs in the user's writable project, never inside the installed package.
+
+
 # Footage Sifter
 
 The "ruthless cull → selects" pass is mandatory and hated. Footage Sifter turns a raw clip

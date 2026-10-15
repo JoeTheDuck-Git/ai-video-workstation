@@ -3,6 +3,9 @@ name: reference-edit-analyzer
 description: Analyze an edited reference video into evidence-linked shot, pacing, caption and effect annotations. Use for understanding an existing edit, not raw-footage selection or recovering an editable project.
 ---
 
+Installed package: when `runtime-root.json` is present beside this file, use its `runtime_root` for repository-relative `scripts/lab`, `docs`, and `WORKSTATION_PROMPTS.md` references. The snapshot contains independent copies of the public tools. Store user media, profiles and outputs in the user's writable project, never inside the installed package.
+
+
 # reference-edit-analyzer
 
 Status: project-local draft; no autonomous analysis/render service is implemented.

@@ -7,6 +7,8 @@ LOCAL_BIN="${HOME}/.local/bin"
 NODE_LINK="${STATE_DIR}/node22-current"
 PYTHON_VENV="${STATE_DIR}/python-venv"
 ALL_HYPERFRAMES_SKILLS=0
+SKILLS_ONLY=0
+SKILLS_ROOT_OVERRIDE=""
 INSTALL_CODEX=1
 INSTALL_CLAUDE=1
 INSTALL_TARGET_MODE="both"
@@ -16,8 +18,11 @@ die() { printf '\nERROR: %s\n' "$*" >&2; exit 1; }
 
 usage() {
   cat <<'EOF'
-Usage: ./install.sh [--all-hyperframes-skills] [--codex-only|--claude-only]
+Usage: ./install.sh [--all-hyperframes-skills] [--codex-only|--claude-only] [--skills-only]
 
+  --skills-root PATH       Override Skill destination (skills-only, single target).
+  --state-dir PATH         Override snapshot state directory.
+  --skills-only            Offline bundled Skill update; keep existing runtimes.
   --all-hyperframes-skills  Install every published HyperFrames skill.
                             The default installs/updates the core set.
   --codex-only              Install bundled Skills only for Codex.
@@ -27,6 +32,9 @@ EOF
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
+    --skills-root) [[ $# -ge 2 ]] || die "--skills-root requires a path"; SKILLS_ROOT_OVERRIDE="$2"; shift 2 ;;
+    --state-dir) [[ $# -ge 2 ]] || die "--state-dir requires a path"; STATE_DIR="$2"; shift 2 ;;
+    --skills-only) SKILLS_ONLY=1; shift ;;
     --all-hyperframes-skills) ALL_HYPERFRAMES_SKILLS=1; shift ;;
     --codex-only)
       [[ "$INSTALL_TARGET_MODE" != "claude" ]] || die "--codex-only and --claude-only cannot be combined."
@@ -38,6 +46,10 @@ while [[ $# -gt 0 ]]; do
     *) die "Unknown option: ${1}" ;;
   esac
 done
+
+if [[ -n "$SKILLS_ROOT_OVERRIDE" ]]; then
+  [[ "$SKILLS_ONLY" -eq 1 && "$INSTALL_TARGET_MODE" != "both" ]] || die "--skills-root requires --skills-only and one target."
+fi
 
 command -v curl >/dev/null 2>&1 || die "curl is required."
 command -v tar >/dev/null 2>&1 || die "tar is required."
@@ -54,7 +66,8 @@ case "$(uname -m)" in
   *) die "Unsupported CPU architecture: $(uname -m)" ;;
 esac
 
-mkdir -p "$STATE_DIR" "$LOCAL_BIN"
+mkdir -p "$STATE_DIR"
+[[ "$SKILLS_ONLY" -eq 1 ]] || mkdir -p "$LOCAL_BIN"
 
 install_node22() {
   log "Installing the latest Node.js 22 release from nodejs.org"
@@ -161,7 +174,7 @@ install_python_tools() {
   fi
   log "Installing subtitle dependencies"
   "${PYTHON_VENV}/bin/python3" -m pip install --disable-pip-version-check \
-    'opencc-python-reimplemented>=0.1.7' 'jieba>=0.42'
+    'opencc-python-reimplemented>=0.1.7' 'jieba>=0.42' 'numpy>=1.24' 'matplotlib>=3.7' 'Pillow>=10'
 }
 
 install_hyperframes() {
@@ -197,15 +210,13 @@ install_bundled_skills() {
 
   for target in "${targets[@]}"; do
     agent_name="${target%%|*}"
-    skills_root="${target#*|}"
+    skills_root="${SKILLS_ROOT_OVERRIDE:-${target#*|}}"
     log "Installing bundled Skills for ${agent_name}"
     mkdir -p "$skills_root"
-    for skill_name in video-delivery-qc canvas-video-pipeline footage-sifter caption-doctor subtitle-translator; do
-      destination="${skills_root}/${skill_name}"
-      mkdir -p "$destination"
-      cp -R "${ROOT_DIR}/skills/${skill_name}/." "$destination/"
-      find "$destination" -type d -name __pycache__ -prune -exec rm -rf {} +
-    done
+    python3 "${ROOT_DIR}/scripts/install_skills.py" --skills-root "$skills_root" --state-dir "${STATE_DIR}/skill-releases"
+    if [[ "$SKILLS_ONLY" -eq 1 ]]; then
+      continue
+    fi
 
     tacky_engine="${skills_root}/canvas-video-pipeline/assets/tacky-templates/engine"
     if [[ -f "${tacky_engine}/package-lock.json" ]]; then
@@ -218,6 +229,13 @@ install_bundled_skills() {
     fi
   done
 }
+
+if [[ "$SKILLS_ONLY" -eq 1 ]]; then
+  command -v python3 >/dev/null 2>&1 || die "Python 3 is required for the offline Skill installer."
+  install_bundled_skills
+  log "Skills updated; runtimes unchanged. Open a new Codex conversation to discover them."
+  exit 0
+fi
 
 install_node22
 configure_path

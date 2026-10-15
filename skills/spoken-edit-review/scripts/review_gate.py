@@ -114,8 +114,18 @@ def media_duration(path):
     return duration
 
 
+def runtime_root():
+    locator = Path(__file__).resolve().parents[1] / 'runtime-root.json'
+    if locator.exists():
+        root = Path(json.loads(locator.read_text())['runtime_root']).resolve()
+        if not (root / 'WORKSTATION_PROMPTS.md').is_file():
+            raise ValueError('Installed runtime snapshot missing; reinstall Skills')
+        return root
+    return Path(__file__).resolve().parents[3]
+
+
 def required_versions():
-    root = Path(__file__).resolve().parents[3]
+    root = runtime_root()
     return [root / x for x in [
         'skills/spoken-edit-review/SKILL.md',
         'skills/spoken-edit-review/references/independent-review.md',
@@ -191,7 +201,7 @@ def evidence_preview_check(report,duration,issues,decision_key):
 
 def source_review_blockers(packet,mode="final"):
     import importlib.util
-    path = Path(__file__).resolve().parents[3]/'scripts/lab/plan-spoken-cut.py'
+    path = runtime_root()/'scripts/lab/plan-spoken-cut.py'
     spec = importlib.util.spec_from_file_location('source_plan_check', path)
     module = importlib.util.module_from_spec(spec); spec.loader.exec_module(module)
     try:

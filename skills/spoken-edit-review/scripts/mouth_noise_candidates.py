@@ -94,7 +94,7 @@ def main():
     if not all(unchanged.values()): raise ValueError('Inputs changed during analysis')
     report={'kind':'mouth_noise_navigation_not_classifier','inputs':before,'inputs_unchanged':unchanged,'actual_audio_review':False,'content_status':'needs_review','final_pass':False,'analyzed_output_range':[0,duration],'listening_coverage_seconds':0,'parameters':{'sample_rate':24000,'frame_ms':20,'hop_ms':10,'local_percentile':25,'local_radius_ms':300,'min_rise_db':9,'min_crest_db':7,'min_rms_dbfs':-70,'max_event_seconds':.35,'word_guard_ms':80},'limitations':['No calibrated swallowing detector. False positives and missed events expected.','Mono/24k analysis may miss channel-specific or high-frequency events.','ASR gaps are uncertain; protected events must not be deleted.','Only top 12 navigation events have context artifacts; no actual listening performed.','No media edits, no render and no external calls.'],'event_count':len(events),'sampled_ids':[e['id'] for e in ranked],'events':events}
     (out/'report.json').write_text(json.dumps(report,ensure_ascii=False,indent=2))
-    lines=['# DJI 0044 v2: unconfirmed audio-event candidates','', 'Numerical analysis only; listening coverage: 0. No audio has been changed.','', '|ID|Export seconds|Source seconds|Status|Local rise dB|','|---|---|---|---|---|']
+    lines=['# Unconfirmed audio-event candidates','', 'Numerical analysis only; listening coverage: 0. No audio has been changed.','', '|ID|Export seconds|Source seconds|Status|Local rise dB|','|---|---|---|---|---|']
     for e in ranked:
         src='; '.join(f"{p['source_start']:.3f}–{p['source_end']:.3f}" for p in e['source_pieces'])
         lines.append(f"|{e['id']}|{e['start']:.3f}–{e['end']:.3f}|{src}|{e['status']}|{e['local_rise_db']:.1f}|")

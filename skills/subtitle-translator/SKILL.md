@@ -10,6 +10,9 @@ description: >-
   Caption Doctor (clean once, publish in every language). Handles any encoding; outputs UTF-8 SRT.
 ---
 
+Installed package: when `runtime-root.json` is present beside this file, use its `runtime_root` for repository-relative `scripts/lab`, `docs`, and `WORKSTATION_PROMPTS.md` references. The snapshot contains independent copies of the public tools. Store user media, profiles and outputs in the user's writable project, never inside the installed package.
+
+
 # Subtitle Translator
 
 Turns one clean SRT into subtitle tracks for other languages, **preserving the original timecodes

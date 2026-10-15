@@ -95,7 +95,7 @@ verify_skills_root() {
   else
     fail "${agent_name}: video-delivery-qc is missing or could not be loaded"
   fi
-  for skill_name in canvas-video-pipeline footage-sifter caption-doctor subtitle-translator; do
+  for skill_name in canvas-video-pipeline footage-sifter caption-doctor subtitle-translator reference-edit-analyzer editing-style-profile reference-guided-cut-planner spoken-edit-review; do
     skill_path="${skills_root}/${skill_name}/SKILL.md"
     if [[ -f "$skill_path" ]]; then
       ok "${agent_name}: ${skill_name}"
