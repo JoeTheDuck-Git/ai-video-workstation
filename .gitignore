@@ -17,3 +17,6 @@ evidence/
 deliverables/
 mouth-noise-review/
 .venv/
+
+# Machine-specific external output preference
+.local/
