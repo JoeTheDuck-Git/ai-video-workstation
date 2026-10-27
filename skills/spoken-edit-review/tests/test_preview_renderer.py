@@ -80,6 +80,19 @@ class RendererUnitTests(unittest.TestCase):
         r.g.write(a,{'render_authorized':True,'instruction':'Synthetic test only','job_sha256':'stale','map_sha256':j['map']['sha256'],'renderer_sha256':j['renderer']['sha256'],'resolution':'480p'})
         with self.assertRaisesRegex(ValueError,'resume instruction'):r.render(f,a)
         self.assertFalse(self.dest.exists())
+    def test_external_policy_routes_prepared_job_and_rechecks_mount(self):
+        mount=self.tmp/'mounted-drive';root=mount/'exports';root.mkdir(parents=True)
+        cfg=self.tmp/'output-policy.json';cfg.write_text(json.dumps({'mount_path':str(mount),'output_root':str(root)}))
+        with patch.object(r.locations.os.path,'ismount',return_value=True):
+            policy=r.locations.policy(cfg)
+            job=self.prepare(output_dir='film/v2',output_policy=policy)
+            self.assertEqual(Path(job['output_dir']),root.resolve()/'film/v2')
+            f=self.tmp/'external-job.json';r.g.write(f,job)
+            self.assertEqual(r.validate_job(f),job)
+        with patch.object(r.locations.os.path,'ismount',return_value=False):
+            with self.assertRaisesRegex(ValueError,'not mounted'):r.validate_job(f)
+        self.assertFalse((root/'film').exists())
+
     def test_command_no_overwrite_and_uses_job_source(self):
         j=self.prepare();cmd=r.ffmpeg_command(j,self.tmp/'filters',self.tmp/'output.mp4')
         self.assertIn('-n',cmd);self.assertNotIn('-y',cmd);self.assertEqual(cmd[cmd.index('-i')+1],j['source']['path'])

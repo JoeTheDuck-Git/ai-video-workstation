@@ -22,6 +22,14 @@ spec=importlib.util.spec_from_file_location('export_settings',SETTINGS)
 export=importlib.util.module_from_spec(spec);spec.loader.exec_module(export)
 
 
+OUTPUT_LOCATION=Path(__file__).with_name('output-location.py')
+spec=importlib.util.spec_from_file_location('output_location',OUTPUT_LOCATION)
+locations=importlib.util.module_from_spec(spec);spec.loader.exec_module(locations)
+
+DRAFT_CHOICE=Path(__file__).with_name('draft-package-choice.py')
+spec=importlib.util.spec_from_file_location('draft_choice',DRAFT_CHOICE)
+draft_choice=importlib.util.module_from_spec(spec);spec.loader.exec_module(draft_choice)
+
 def probe_source(path):
     return export.source_streams(path)
 
@@ -60,8 +68,9 @@ def compile_filters(plan,resolution,video,audio,settings):
       'duration_tolerance_seconds':float(1/export_fps)+.001}
 
 
-def prepare_job(map_path,expected_sha,expected_version,resolution,output_dir,export_choices=None,project_root=None):
-    map_path=Path(map_path).resolve();output_dir=Path(output_dir).resolve()
+def prepare_job(map_path,expected_sha,expected_version,resolution,output_dir,export_choices=None,project_root=None,output_policy=None):
+    map_path=Path(map_path).resolve()
+    output_dir,project_root=locations.destination(output_dir,project_root or ROOT/'productions',output_policy)
     if g.digest(map_path)!=expected_sha:raise ValueError('Wrong map SHA; refusing legacy or substituted map')
     plan=planner.validate_authorized_plan(map_path,allow_preview=True)
     if plan.get('version')!=expected_version:raise ValueError('Wrong map version')
@@ -74,18 +83,22 @@ def prepare_job(map_path,expected_sha,expected_version,resolution,output_dir,exp
     settings=export.resolve(export_choices,resolution,video,audio,plan['fps'],export.available_encoders())
     compiled=compile_filters(plan,resolution,video,audio,settings)
     settings.update(width=compiled['width'],height=compiled['height'])
+    draft=draft_choice.resolve(draft_choice.from_export_choices(export_choices),output_dir)
     return {'schema':1,'mode':'preview','map':g.record(map_path),'map_version':expected_version,
       'map_content_sha256':planner.content_hash(plan),'source':g.record(plan['source']),
       'renderer':g.record(__file__),'planner':g.record(PLANNER),'settings_module':g.record(SETTINGS),'resolution':resolution,
       'export_choices':export_choices,'export_settings':settings,'source_probe':{'video':video,'audio':audio},
+      'draft_package':draft,'draft_choice_module':g.record(DRAFT_CHOICE),
+      'output_policy':output_policy,'output_location_module':g.record(OUTPUT_LOCATION),
       'project_root':str(project_root),'output_dir':str(output_dir),'output_name':'preview.mp4','actual_audio_review':False,'content_status':'needs_review','final_pass':False,
       'compiled':compiled,'source_clips':[{k:c[k] for k in ['id','source_in_frame','source_out_frame','timeline_in_frame','duration_frames']} for c in plan['clips']]}
 
 
 def validate_job(path):
     job=g.read(path)
-    if job.get('renderer')!=g.record(__file__) or job.get('planner')!=g.record(PLANNER) or job.get('settings_module')!=g.record(SETTINGS):raise ValueError('Renderer/planner version binding changed')
-    current=prepare_job(job['map']['path'],job['map']['sha256'],job['map_version'],job['resolution'],job['output_dir'],job.get('export_choices'),job.get('project_root'))
+    if job.get('renderer')!=g.record(__file__) or job.get('planner')!=g.record(PLANNER) or job.get('settings_module')!=g.record(SETTINGS) or job.get('output_location_module')!=g.record(OUTPUT_LOCATION):raise ValueError('Renderer/planner version binding changed')
+    if job.get('draft_choice_module')!=g.record(DRAFT_CHOICE):raise ValueError('Draft choice version binding changed')
+    current=prepare_job(job['map']['path'],job['map']['sha256'],job['map_version'],job['resolution'],job['output_dir'],job.get('export_choices'),job.get('project_root'),job.get('output_policy'))
     if current!=job:raise ValueError('Job settings/evidence changed; prepare again')
     return job
 
@@ -111,6 +124,7 @@ def render(job_path,authorization_path):
         auth.get('job_sha256')!=g.digest(job_path) or auth.get('map_sha256')!=job['map']['sha256'] or
         auth.get('renderer_sha256')!=job['renderer']['sha256'] or auth.get('resolution')!=job['resolution']):
         raise ValueError('Explicit bound resume instruction required; render remains on hold')
+    draft_choice.require_video_render(job['draft_package'])
     dest=Path(job['output_dir']);dest.mkdir(parents=True,exist_ok=False)
     graph=dest/'render-filter.txt';graph.write_text(job['compiled']['filter_graph'])
     g.write(dest/'render-job.json',job);g.write(dest/'resume-authorization.json',auth)
@@ -123,6 +137,7 @@ def render(job_path,authorization_path):
     g.write(dest/'export-spec-qa.json',export.measured(output,job['export_settings']))
     g.write(dest/'render-result.json',{'render_complete':True,'export':g.record(output),'map':g.record(dest/'source-timeline-map.json'),
       'renderer':g.record(__file__),'job':g.record(job_path),'actual_audio_review':False,'content_status':'needs_review','final_pass':False,'delivery_allowed':False,
+      'draft_package':job['draft_package'],
       'pending':['Technical QC bound to export/map hashes','Independent post-export evidence review','Preview delivery gate']})
     return output
 
@@ -130,15 +145,16 @@ def render(job_path,authorization_path):
 def main(argv=None):
     parser=argparse.ArgumentParser(description=__doc__);sub=parser.add_subparsers(dest='command',required=True)
     p=sub.add_parser('prepare');p.add_argument('--map',required=True);p.add_argument('--expect-map-sha256',required=True);p.add_argument('--expect-version',required=True)
-    p.add_argument('--export-settings',required=True,help='JSON of explicit user export choices');p.add_argument('--resolution',choices=RESOLUTIONS,required=True);p.add_argument('--project-root',required=True,help='User project directory; output must be a new descendant');p.add_argument('--output-dir',required=True);p.add_argument('--job',required=True)
+    p.add_argument('--export-settings',required=True,help='JSON of explicit user export choices');p.add_argument('--resolution',choices=RESOLUTIONS,required=True);p.add_argument('--project-root',required=True,help='User project directory; output must be a new descendant');p.add_argument('--output-dir',required=True,help='With local output policy: relative job subdirectory or absolute path inside external output root');p.add_argument('--output-location-config',default=str(locations.DEFAULT_CONFIG));p.add_argument('--job',required=True)
     p=sub.add_parser('validate');p.add_argument('job')
     p=sub.add_parser('render');p.add_argument('job');p.add_argument('--resume-authorization',required=True)
     args=parser.parse_args(argv)
     try:
         if args.command=='prepare':
-            job=prepare_job(args.map,args.expect_map_sha256,args.expect_version,args.resolution,args.output_dir,g.read(args.export_settings),args.project_root)
+            job=prepare_job(args.map,args.expect_map_sha256,args.expect_version,args.resolution,args.output_dir,g.read(args.export_settings),args.project_root,locations.policy(args.output_location_config))
             with Path(args.job).open('x') as f:json.dump(job,f,ensure_ascii=False,indent=2)
             print('Prepared only; no rendering: '+args.job)
+            print('草稿包：'+job['draft_package']['status']+'；exporter 尚未支援，不會自動生成')
         elif args.command=='validate':validate_job(args.job);print('Bound job valid; no rendering')
         else:print(render(args.job,args.resume_authorization))
         return 0

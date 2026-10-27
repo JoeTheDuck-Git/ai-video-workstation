@@ -246,3 +246,11 @@ public generated test patterns and tones, installs into paths containing spaces 
 Chinese text, and records runtime versions, H264/AAC 480p specifications, full decode,
 A/V timing, size and caption formatting in the job summary. This does not certify
 human lip-sync/listening, private footage, every friend's PC, or the full HyperFrames stack.
+
+### 草稿包選項（Mac／Windows 共用 Skills）
+
+剪輯前會詢問是否需要草稿包；選是後再選「剪映／CapCut／兩者都要」。各產品獨立記錄目標版本、平台、支援及驗證狀態。未回答會暫停交付，選否可繼續已授權的影片流程；選是時不會默默改成影片渲染。
+
+此版完成選項、阻擋規則和中立時間線小樣本結構工具，**尚無可交付的原生草稿 exporter**。Mac、Windows 安裝測試不代表任一編輯器實機相容；剪映與 CapCut 均需分別試開、儲存及重開。詳見 `skills/video-delivery-qc/references/export-choices.md`。
+
+兩平台共用 `skills-manifest.json`：Mac 使用 `bash install.sh --codex-only --skills-only`；Windows 使用 `./install-skills.ps1`。更新前先取得本次發布分支，兩者均建立獨立安裝快照並備份被替換的 Skills。個人 `.local` 輸出設定不隨 Git 發布或安裝快照傳送；有外接輸出政策的工作站需在其實際 runtime 明確設定，不得默認改存內建磁碟。

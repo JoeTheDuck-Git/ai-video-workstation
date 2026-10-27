@@ -21,7 +21,9 @@ Run an evidence-backed quality gate without treating unmeasured properties as pa
 
 ### Export choices
 
-Before preparing an AI-edit render, read [export choices and capabilities](references/export-choices.md). Show original ffprobe specifications, collect the unanswered resolution/FPS, codec, audio bitrate and video VBR target choices together, and persist them. Resolution alone no longer authorizes hidden FPS/codec/bitrate defaults; the reference defines supported settings and limitations.
+Before creating a new video or audio deliverable, apply the local output-location policy in the export reference; a missing external drive blocks output instead of falling back to internal storage.
+
+Before preparing an AI-edit render, read [export choices and capabilities](references/export-choices.md). Show original ffprobe specifications, collect the unanswered resolution/FPS, codec, audio quality mode/bitrate and video VBR target choices together, and persist them. Resolution alone no longer authorizes hidden FPS/codec/bitrate defaults; the reference defines supported settings and limitations.
 
 
 Before rendering a new preview or final export, ask the user which delivery resolution they want. Show selectable options in this order: `480p (草稿)`, `720p`, `1080p`, `4K`, `原始解析度`. With `request_user_input_async`, include `480p (草稿)` directly in the options array; do not offer it only through free text or explanatory text. Use the exact label `480p (草稿)` and store the selected renderer resolution as `480p`. The draft label describes output resolution/purpose, not permission to skip editing or review checks. An explicit choice already made for the current export satisfies this step; do not ask again. A question about whether 4K is possible is not a request to start a 4K render. While the user is tuning the editing skill, keep the agreed lightweight preview and do not launch additional high-resolution renders.
@@ -42,6 +44,8 @@ python3 scripts/video_qc.py VIDEO \
 The social profile is a creator-safe master target, not a claim that every platform has one permanent upload specification. It uses MP4/H.264 High Profile/AAC-LC, progressive 4:2:0 SDR, common native frame rates, 48 kHz audio, a common social aspect ratio, and 1080-class output as its preferred technical shape. It sets a production loudness target of `-16 LUFS ±2` and true peak at or below `-1 dBTP`; these audio values are workflow targets because major social platforms do not publish one shared loudness requirement.
 
 The script returns JSON with measured streams, decode status, black/freeze/silence observations, loudness when available, sampled frames, and findings. Explicit user or platform requirements override the profile. A missing measurement is `not_checked` or `null`, never a pass. Treat decode failure, a missing required stream, or a material explicit-spec mismatch as blocking.
+
+Use the single two-stage [draft-package question](references/export-choices.md#draft-package-choice): yes/no, then Jianying / CapCut / both. Keep unanswered choices pending; record each selected product’s platform/version, support and validation status independently. Both exporters are currently unsupported; do not substitute movie rendering or claim that a renamed package supports both products.
 
 ## Subtitle and speech alignment
 
