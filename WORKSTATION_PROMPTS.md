@@ -3,7 +3,7 @@
 先讀 docs/reference-editing-lab/EDITING_PROMPT.md。所有設定以本次任務及使用者自己的專案 profile 為準，沒有預設講者、片長、固定口號或付費服務授權。
 
 - 剪輯：skills/reference-guided-cut-planner/SKILL.md；輸出前 skills/spoken-edit-review/SKILL.md。
-- 字幕：skills/caption-doctor/SKILL.md → references/edited-preview-captions.md。短語意、優先單行最多兩行；依實際詞錨點換張。科技字幕模式把語句逗號轉為兩個 U+0020，保留千分位。
+- 字幕：skills/caption-doctor/SKILL.md → references/edited-preview-captions.md。短語意、優先單行最多兩行；依實際詞錨點換張。產生／匯出／燒錄字幕前必問本次標點選項：① 無標點，所有標點（含小數點與千分位）改兩個半形空格；② 現有規則（逗號改兩空格、去句尾句號，保留問號、驚嘆號、小數點與千分位等）。未回答先不產生字幕；本次已明確選擇則不重問，舊 profile 不代替本次回答。記錄 caption_punctuation_style: no-punctuation|existing。
 - 匯出：skills/video-delivery-qc/references/export-choices.md；手機附件另見 references/mobile-share.md。
 - 參考片分析與風格：skills/reference-edit-analyzer、skills/editing-style-profile。
 

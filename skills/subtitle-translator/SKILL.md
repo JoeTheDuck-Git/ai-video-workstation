@@ -31,6 +31,10 @@ correct but too many characters for the card's duration → unreadable. Subtitle
 
 **Shared profile folder:** resolve `<project>/.ai-video-workstation/creator/`; create it in the writable project when missing. Read `editing-setup.md` and `creator-profile.md` before asking anything. If `editing-setup.md` lists regular publishing languages, offer those without asking. Never write profile data into the installed Skill.
 
+## Subtitle punctuation choice
+
+Before generating/exporting a translated subtitle track, ask the two choices in [Caption Doctor](../caption-doctor/SKILL.md#required-punctuation-choice-before-generating-subtitles): no punctuation (all punctuation → two ASCII spaces), or the existing punctuation rules. Reuse an explicit choice from this task, not an old profile. Record `caption_punctuation_style`; wait for the answer before producing subtitle files. After translation/layout, run Caption Doctor on the translated SRT with `--punctuation-style no-punctuation|existing`, preserving timing, before importing or creating ASS/burn-in. Do not collapse its double spaces afterward. No-punctuation mode also removes numeric punctuation and apostrophes; show this distinction in the choice.
+
 ## Workflow
 1. Start from a clean SRT (run **Caption Doctor** first if it's raw auto-captions).
 2. **The AI agent reads the source SRT and translates each card** into the target language:

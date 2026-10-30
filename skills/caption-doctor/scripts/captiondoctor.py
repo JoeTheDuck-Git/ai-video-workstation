@@ -23,7 +23,7 @@ Usage:
 """
 import argparse, re, os
 from pathlib import Path
-from caption_style import format_technology_caption
+from caption_style import format_caption
 
 # ---- Traditional Taiwan conversion (smart: only convert Simplified) --------------
 try:
@@ -162,7 +162,10 @@ def main():
     ap.add_argument("--min-gap", type=float, default=0.08, help="gap between captions (~2 frames)")
     ap.add_argument("--max-cps", type=float, default=9.0, help="reading-speed flag (chars/sec)")
     ap.add_argument("--drop-fillers", action="store_true")
-    ap.add_argument("--technology-style", action="store_true",
+    style_group = ap.add_mutually_exclusive_group()
+    style_group.add_argument("--punctuation-style", choices=("no-punctuation", "existing"),
+                             help="Explicit subtitle punctuation choice; preserves cue timing")
+    style_group.add_argument("--technology-style", action="store_true",
                     help="Final punctuation style: comma -> two ASCII spaces, preserve thousands; no cue retiming")
     ap.add_argument("--reflow", action="store_true",
                     help="ADVANCED: re-chunk lines to --maxlen. This RE-TIMES sub-cards by estimate "
@@ -171,8 +174,9 @@ def main():
     ap.add_argument("--fix", default="", help='corrections applied before AND after conversion: "a=>b; c=>d"')
     ap.add_argument("--fix-file", help="UTF-8 glossary with one wrong=>right pair per line")
     a=ap.parse_args()
-    if a.technology_style and a.reflow:
-        ap.error("--technology-style requires actual word-timed semantic cues; do not use estimated --reflow")
+    punctuation_style = "existing" if a.technology_style else a.punctuation_style
+    if punctuation_style and a.reflow:
+        ap.error("Caption punctuation styles require actual word-timed semantic cues; do not use estimated --reflow")
     raw_fixes = [p for p in a.fix.split(";") if "=>" in p]
     if a.fix_file:
         glossary = Path(a.fix_file).expanduser()
@@ -191,9 +195,9 @@ def main():
         caps=reflow(segs, a.maxlen, a.merge_gap, a.min_dur, a.min_gap, a.drop_fillers)
     else:
         caps=preserve(segs, a.drop_fillers)
-    if a.technology_style:
+    if punctuation_style:
         for c in caps:
-            c["text"]=format_technology_caption(c["text"])
+            c["text"]=format_caption(c["text"], punctuation_style)
         caps=[c for c in caps if c["text"].strip()]
     write_srt(caps, a.out)
     print(f"Mode: {'REFLOW (re-timed)' if a.reflow else 'PRESERVE (original timing kept)'}")

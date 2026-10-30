@@ -72,7 +72,7 @@ anything genuinely new.
    - Traditional Taiwan? (default yes)
    - Spoken English → translate to Mandarin (default) or keep bilingual?
    - Drop filler cards 嗯/呃? (default yes)
-   - Any punctuation or line-style preference?
+   - Any line-style preference? Ask the required punctuation choice below for this task.
 
 **Save the answers** so the user never repeats them:
 - `.ai-video-workstation/creator/caption-glossary.txt` — one `wrong=>right` per line (`#` comments allowed). Grows over time:
@@ -136,9 +136,16 @@ word-level timing), which trades away CapCut's correct sync for a styling prefer
 wrapping is CapCut's job; the word-by-word "karaoke" look is **CapCut's built-in word-by-word
 captions** (they carry real word timings). Don't rebuild those here.
 
-### This user’s technology caption punctuation
+### Required punctuation choice before generating subtitles
 
-After authoring short semantic cues with actual word timing, use `--technology-style` for this user’s punctuation preference: phrase commas become two U+0020 spaces, thousands separators remain, and cue/line edges are trimmed. It preserves timing and semantic line breaks; it does not split a long transcript automatically. Do not combine it with estimated `--reflow`. Use the same `caption_style.format_technology_caption` text for SRT and ASS; no later whitespace collapsing. See the linked edited-preview reference for examples and QA.
+Before generating, restyling, exporting or burning in a subtitle track, present these two choices (in Chinese for this user):
+
+1. **無標點：全部標點改成兩個半形空格** — `--punctuation-style no-punctuation`. Replace all Unicode punctuation and ASCII punctuation with exactly two U+0020 spaces per consecutive punctuation/separator run, including commas, periods, question/exclamation marks, quotes, brackets, ellipses, numeric thousands commas and decimal points. Example: `售價 1,234 元，提升 1.5 倍！` → `售價 1  234 元  提升 1  5 倍`. Trim line/cue edges and omit punctuation-only empty cues. Do not remove words inside quotation/bracket marks, including uncertainty text.
+2. **現有標點規則：保留有意義的標點** — `--punctuation-style existing`. Phrase commas become two U+0020 spaces; ordinary terminal periods are removed. Preserve question/exclamation marks, quotations, ellipses, decimal points and numeric thousands separators. `--technology-style` remains a compatibility alias for this choice.
+
+Ask: **「這次字幕標點要用哪一種？① 無標點，全部改成兩個半形空格；② 現有規則，保留問號、驚嘆號等有意義標點。」** Wait for an answer before subtitle generation/export/burn-in. A selected UI default or an old project preference is not an answer for a new task; an explicit choice already made in the current task need not be asked again. Record `caption_punctuation_style: no-punctuation|existing` in the task's settings. The old profile shortcut does not bypass this choice. Continue independent transcription/alignment while awaiting it.
+
+Apply `caption_style.format_caption(text, selected_style)` after glossary/language/spacing edits, before writing both SRT and ASS. Do not collapse whitespace afterward. Preserve word-timed semantic cues, line breaks and timing; do not combine with estimated `--reflow`. The cleaner without a style flag remains available for spelling-only cleanup, but does not fulfill the required choice for subtitle generation. For translations, format the final translated track too. See [edited-preview captions](references/edited-preview-captions.md) for layout and QA.
 
 ### Advanced only: `--reflow`
 `--reflow --maxlen 8` re-chunks long lines (word-aware, via jieba). **It re-times split cards by

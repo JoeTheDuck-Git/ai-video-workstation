@@ -11,6 +11,15 @@ Use when the user requests subtitles on an existing cut, including a low-resolut
 - Preserve spoken meaning, negation and quantities. Use the creator's confirmed name/glossary. Numbers, dates or English names that disagree across transcripts remain `needs_review`; include their exact times in an uncertainty list and visibly mark uncertain wording in a draft when appropriate. Do not fact-correct the speaker or invent wording.
 - Keep the farewell subtitle through the actual last word without extending beyond the media. Subtitle gaps are separate from audio pauses: do not alter audio to satisfy caption spacing.
 
+## Required punctuation selection
+
+Before creating/exporting/burning in subtitles, ask the two-choice question in [Caption Doctor](../SKILL.md#required-punctuation-choice-before-generating-subtitles). Do not infer a new task's answer from an old profile. Save `caption_punctuation_style` as `no-punctuation` or `existing` in this task's caption settings; use the same choice for SRT, ASS and burn-in.
+
+- **no-punctuation:** replace all Unicode/ASCII punctuation, including question/exclamation marks, quotes, brackets, ellipses and numeric commas/decimal points, with two U+0020 spaces per consecutive separator run. Trim cue/line edges; keep enclosed words and uncertainty wording. Example: `真的嗎？提升 1.5 倍！` → `真的嗎  提升 1  5 倍`.
+- **existing:** the comma/terminal-period and meaningful-punctuation rules below remain unchanged. They apply only when this option is selected.
+
+The remaining short-phrase timing/layout rules apply to both choices.
+
 ## Short-phrase technology captions
 
 The optional technology talking-head style uses short semantic captions, not an entire transcript paragraph on screen. Apply this preference when authoring new cues or when the user requests this restyling; do not silently re-time an existing SRT supplied only for spelling corrections.
@@ -18,7 +27,7 @@ The optional technology talking-head style uses short semantic captions, not an 
 - Prefer one line. If the current semantic phrase genuinely needs more width, wrap at a meaningful boundary into at most two lines. Readability and complete meaning take priority over a fixed character count. Measure the actual font width; do not mechanically cut every N characters.
 - One spoken sentence may become several successive cues. Place each new cue at that phrase's actual speech onset and keep enough time to read it. Do not reveal the rest of a long sentence while the speaker is still on its first phrase. Use existing word anchors, not character-share duration estimates. If timing evidence is insufficient, flag it rather than invent precision.
 - A line break within one cue shows both lines simultaneously and keeps one start/end pair. A new cue changes text later on the timeline and needs its own speech anchors. Do not treat these as interchangeable ways of shortening a line.
-- Replace phrase commas (both `，` and `,`) with exactly two U+0020 half-width spaces between phrases. Preserve conventional numeric thousands separators (for example `1,234,567`); ambiguous numeric grouping remains for review. Usually omit ordinary terminal full stops. Retain question marks, exclamation marks and meaningful punctuation such as decimal points, quotations, list marks and uncertainty markers `〔待核對〕`; do not globally strip punctuation.
+- In **existing** mode, replace phrase commas (both `，` and `,`) with exactly two U+0020 half-width spaces between phrases. Preserve conventional numeric thousands separators (for example `1,234,567`); ambiguous numeric grouping remains for review. Usually omit ordinary terminal full stops. Retain question marks, exclamation marks and meaningful punctuation such as decimal points, quotations, list marks and uncertainty markers `〔待核對〕`; do not globally strip punctuation.
 - Keep personal names, product names, English proper nouns, numbers and their units together within a line and cue. Retain negation and qualifiers with what they modify. A long protected name can justify a longer line or a two-line cue rather than splitting the name itself.
 - Avoid one-word flashes, rapid successive cards and over-fragmentation. When a proposed phrase is too short to read, combine it with the adjacent semantically connected phrase if their speech timing supports that. Do not fix readability by showing unrelated later words early, overlapping cues, deleting meaningful words or changing the audio.
 
@@ -36,7 +45,7 @@ The optional technology talking-head style uses short semantic captions, not an 
 
 ### Formatter order and boundaries
 
-Author semantic cues first. Run `scripts/caption_style.py::format_technology_caption` after glossary/language/spacing normalization, then serialize that same text to SRT and ASS (`ass_text` preserves spaces and only encodes line breaks). Do not run whitespace collapsing afterward. The SRT cleaner exposes this as `--technology-style`; it rejects estimated `--reflow` in this mode. It does not invent short-phrase timing. The current preview builder uses the same formatter before measuring widths and writing both formats.
+Author semantic cues first. Run `scripts/caption_style.py::format_caption(text, selected_style)` after glossary/language/spacing normalization, then serialize that same text to SRT and ASS (`ass_text` preserves spaces and only encodes line breaks). Do not run whitespace collapsing afterward. The SRT cleaner exposes the choices as `--punctuation-style no-punctuation|existing` (`--technology-style` aliases `existing`); it rejects estimated `--reflow` in this mode. It does not invent short-phrase timing. The current preview builder uses the same formatter before measuring widths and writing both formats.
 
 At line or cue boundaries, trim the replacement spaces: a comma ending a line/cue disappears rather than leaving trailing spaces or indenting the next line. A punctuation-only line is dropped; the cleaner omits an empty cue, while the preview builder flags it for the author to resolve before rendering. These are display changes only; preserve speech timing. Consecutive phrase commas collapse to one two-space separator. Reapplying the formatter must preserve those two spaces. A new render requires fresh caption review because old subtitle files and review hashes describe the old style.
 
@@ -46,7 +55,7 @@ At line or cue boundaries, trim the replacement spaces: a comma ending a line/cu
 - [ ] One line preferred, maximum two; line wrapping and timed cue replacement are explicitly distinguished.
 - [ ] Cue changes use the corresponding spoken phrase's word timing; later clauses are not prematurely revealed.
 - [ ] Names, product models, numbers/units, negation and qualifiers are intact.
-- [ ] Phrase commas become exactly two U+0020 spaces; numeric thousands commas remain. Cue/line edges are trimmed; ordinary terminal full stops are usually omitted. Meaningful punctuation and uncertainty markers remain.
+- [ ] The current task has an explicit punctuation selection. In no-punctuation mode all punctuation becomes two ASCII spaces; in existing mode phrase commas become exactly two U+0020 spaces; numeric thousands commas remain. Cue/line edges are trimmed; ordinary terminal full stops are usually omitted. Meaningful punctuation and uncertainty markers remain.
 - [ ] No fixed-character hard cuts, flashing cards or excessive fragmentation; duration and reading-speed warnings are reviewed in context.
 - [ ] Final-output alignment, scalable font/safe margins, rendered glyph/width checks and uncertainty review below still pass. Record visual checks separately from actual listening.
 

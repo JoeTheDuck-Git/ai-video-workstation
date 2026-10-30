@@ -3,6 +3,8 @@
 Semantic cue splitting remains the author's job using real word times.
 """
 import re
+import string
+import unicodedata
 
 
 def format_technology_caption(text):
@@ -32,6 +34,45 @@ def format_technology_caption(text):
         if line:
             lines.append(line)
     return '\n'.join(lines)
+
+
+def format_no_punctuation_caption(text):
+    """Replace punctuation runs with two ASCII spaces; trim each display line.
+
+    Includes numeric punctuation and ASCII punctuation; never edits timecodes.
+    Keep semantic line breaks and non-punctuation symbols such as emoji.
+    """
+    text = text.replace('\r\n', '\n').replace('\r', '\n')
+    lines = []
+    for line in text.split('\n'):
+        parts = []
+        in_separator = False
+        for original in line:
+            is_punctuation = unicodedata.category(original).startswith('P') or original in string.punctuation
+            if is_punctuation:
+                if not in_separator:
+                    while parts and parts[-1] in (' ', '\t'):
+                        parts.pop()
+                    parts.append('  ')
+                in_separator = True
+            elif in_separator and original in (' ', '\t'):
+                continue
+            else:
+                parts.append(original)
+                in_separator = False
+        result = ''.join(parts).strip(' \t')
+        if result:
+            lines.append(result)
+    return '\n'.join(lines)
+
+
+def format_caption(text, punctuation_style):
+    """Apply the user's explicit selection to shared SRT/ASS display text."""
+    if punctuation_style == 'no-punctuation':
+        return format_no_punctuation_caption(text)
+    if punctuation_style == 'existing':
+        return format_technology_caption(text)
+    raise ValueError('Select no-punctuation or existing')
 
 
 def ass_text(text):

@@ -1,7 +1,7 @@
 import sys,tempfile,unittest,subprocess
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts'))
-from caption_style import format_technology_caption as fmt, ass_text
+from caption_style import format_technology_caption as fmt, ass_text, format_caption
 from captiondoctor import parse_srt,write_srt,pangu,preserve
 
 class TechnologyStyle(unittest.TestCase):
@@ -46,5 +46,28 @@ class TechnologyStyle(unittest.TestCase):
  def test_reject_estimated_reflow(self):
   p=subprocess.run([sys.executable,str(Path(__file__).resolve().parents[1]/'scripts/captiondoctor.py'),'unused.srt','--technology-style','--reflow'],capture_output=True)
   self.assertEqual(p.returncode,2)
+
+class PunctuationChoices(unittest.TestCase):
+ def test_no_punctuation_unicode_numeric_and_runs(self):
+  self.assertEqual(format_caption('「售價 1,234 元」，提升 1.5 倍？！', 'no-punctuation'), '售價 1  234 元  提升 1  5 倍')
+  self.assertEqual(format_caption('甲  ，！？  乙；丙：丁、戊……己...庚', 'no-punctuation'), '甲  乙  丙  丁  戊  己  庚')
+ def test_lines_uncertainty_and_idempotence(self):
+  text=format_caption('，甲？\n〔待核對〕：乙！\n？！？', 'no-punctuation')
+  self.assertEqual(text, '甲\n待核對  乙')
+  self.assertEqual(format_caption(text, 'no-punctuation'), text)
+  self.assertEqual(ass_text(text), r'甲\N待核對  乙')
+ def test_existing_is_unchanged(self):
+  text='金額 1,234 元，成長 1.5 倍！'
+  self.assertEqual(format_caption(text,'existing'),fmt(text))
+ def test_cli_choices_preserve_times(self):
+  script=Path(__file__).resolve().parents[1]/'scripts/captiondoctor.py'
+  with tempfile.TemporaryDirectory() as d:
+   src=Path(d)/'in.srt'; out=Path(d)/'out.srt'
+   write_srt([{'start':1.2,'end':3.4,'text':'甲？乙，金額 1,234 元。'},{'start':4.,'end':5.,'text':'，'}], src)
+   for mode,expected in [('no-punctuation','甲  乙  金額 1  234 元'),('existing','甲？乙  金額 1,234 元')]:
+    subprocess.run([sys.executable,str(script),str(src),'--out',str(out),'--punctuation-style',mode],check=True,capture_output=True)
+    self.assertEqual(parse_srt(out),[{'start':1.2,'end':3.4,'text':expected}])
+   p=subprocess.run([sys.executable,str(script),str(src),'--punctuation-style','no-punctuation','--reflow'],capture_output=True)
+   self.assertEqual(p.returncode,2)
 
 if __name__=='__main__':unittest.main()
