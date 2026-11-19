@@ -2,7 +2,15 @@
 
 狀態：草稿，待討論。標「假設」的項目尚未與使用者確認。
 參考對象：phasyn/phasyn-studio（僅讀過 README 與安裝文件，未讀原始碼，細節為推測）。
-路線：A（本地 GPU 自架）。
+路線：~~A（本地 NVIDIA GPU）~~ → **C（Mac 優先的混合）**。使用者環境為 Mac mini（macOS，無 CUDA），LLM 走雲端 API 或 Claude 桌面 App；Phasyn 的 CUDA／SGLang 架構無法直接在 Mac 執行。
+
+## 0. 已確認的決定（v0.2）
+
+- 平台：macOS（Mac mini，晶片與記憶體待確認）。
+- 用途：短影音、說明動畫、口語剪輯 B-roll 都要。
+- LLM：雲端 API，或透過 Claude 桌面 App 協作。
+- 音訊：要，含配音與音效。
+- 結論：以 programmatic（程式碼動畫）和 imported 為核心，generative 與音訊以可替換的 Provider 接雲端；本地 Mac 模型與遠端 CUDA Node 列為選配。
 
 ## 1. 目標
 
@@ -43,7 +51,9 @@
 - FR4 時間軸：排列、修剪、基本轉場、文字、音樂軌。
 - FR5 匯出：選解析度（含 480p 草稿）、fps、編碼、音訊；沿用 `skills/video-delivery-qc/references/export-choices.md`。
 - FR6 programmatic Shot：以提示詞請 LLM 產生動畫原始碼，預覽、編輯、重新渲染。
-- FR7 Node 設定檢查（類似 doctor）：GPU、驅動、FFmpeg、模型路徑。
+- FR7 環境檢查（類似 doctor）：晶片、記憶體、FFmpeg、瀏覽器、已設定的 Provider 與金鑰是否可用。
+- FR8 音訊：配音（文字轉語音，可選聲音）、音效與音樂軌；每個 Clip 可掛音訊；輸出前依 export-choices 的音訊品質選項處理。
+- FR9 成本與用量記錄：每次雲端呼叫記錄 Provider、參數與估計費用，生成前可預覽與確認。
 
 ### 之後
 - 字幕整合（沿用 caption-doctor 的標點選項與詞錨點規則）。
@@ -62,7 +72,12 @@
 ```
 
 - 儲存：SQLite 加專案目錄（媒體檔不進資料庫）。
-- Provider 介面：`generate(params) -> media`，Node 以此抽象實作；之後可換模型或接雲端，上層不變。
+- Provider 介面：`generate(params) -> media`，上層只認這個介面。實作依序為：
+  1. 雲端 API Provider（影片、圖片、配音、音效；MVP 預設）。
+  2. Mac 本地 Provider（Apple Silicon，MLX／Metal；選配，能跑哪些模型與速度未驗證）。
+  3. 遠端 CUDA Node（若日後有 NVIDIA 機器，沿用 Phasyn 式 Controller/Node；選配）。
+- Controller 與 Renderer 在 Mac 上執行；programmatic 渲染用無頭瀏覽器，不需 GPU 推論。
+- API 金鑰存在本機設定，不寫進專案或版本庫。
 - 輸出位置：遵守 `.local/output-location.json` 與 `scripts/lab/output-location.py` 的既有規則。
 - 原始素材不修改；匯出由原檔回套，不放大代理片。
 
@@ -91,8 +106,11 @@
 
 ## 9. 待決問題
 
-1. GPU 型號與 VRAM？決定能用哪些模型與解析度。
-2. 主要用途：短影音、說明動畫、還是配合現有口語剪輯的 B-roll？
-3. LLM 從哪裡來：呼叫雲端 API，還是本地模型？（影響 programmatic Shot 的品質與離線需求。）
-4. 是否需要生成音訊（配音、音效）？
-5. 作業系統：Linux 或 Windows／macOS？（macOS 沒有 CUDA，路線 A 不適用。）
+已回答：用途（三者皆要）、LLM（雲端）、音訊（要）、作業系統（macOS）。
+
+仍待決：
+1. Mac mini 的晶片與統一記憶體大小？決定本地 Provider 是否值得做。
+2. 雲端 Provider 選哪幾家（影片、圖片、配音、音效）？需比較品質、價格、授權與地區限制。
+3. 預算上限（每支片或每月）？
+4. 配音語言（繁中、英文、其他）與是否需要口型同步？
+5. 「用 Claude 桌面 App」是指日常手動協作產生動畫程式碼，還是希望工具自動呼叫 API？
