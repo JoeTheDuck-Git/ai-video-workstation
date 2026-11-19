@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<title>M0 test animation</title>
+<style>
+  :root { --bg:#0f172a; --fg:#f8fafc; --accent:#38bdf8; --accent2:#f472b6; }
+  * { box-sizing:border-box; margin:0; }
+  html, body { width:100%; height:100%; overflow:hidden; background:var(--bg); }
+  body { font-family:"PingFang TC","Noto Sans CJK TC","Noto Sans TC","Microsoft JhengHei","WenQuanYi Zen Hei",system-ui,sans-serif; color:var(--fg); }
+  #stage { position:relative; width:100vw; height:100vh; }
+  .abs { position:absolute; }
+  #title { left:6vw; top:8vh; font-size:7.5vh; font-weight:700; letter-spacing:.02em; white-space:nowrap; }
+  #subtitle { left:6vw; top:19vh; font-size:3.6vh; opacity:.85; white-space:nowrap; }
+  #chart { left:6vw; top:34vh; width:46vw; height:50vh; }
+  .bar { position:absolute; bottom:0; width:7vw; border-radius:.8vh .8vh 0 0; background:linear-gradient(var(--accent), #0ea5e9); }
+  .bar-label { position:absolute; bottom:-4.5vh; width:7vw; text-align:center; font-size:2.6vh; }
+  .bar-value { position:absolute; width:7vw; text-align:center; font-size:3vh; font-weight:600; }
+  #orbit { left:60vw; top:34vh; width:34vw; height:50vh; }
+  #dot { position:absolute; width:6vh; height:6vh; border-radius:50%; background:var(--accent2); }
+  #ring { position:absolute; left:50%; top:50%; width:30vh; height:30vh; margin:-15vh 0 0 -15vh; border:.5vh solid rgba(248,250,252,.25); border-radius:50%; }
+  #counter { left:60vw; top:84vh; font-size:5vh; font-variant-numeric:tabular-nums; }
+  #title, #subtitle, .bar, .bar-value, #dot { will-change:transform, opacity; }
+  #progress { left:0; bottom:0; height:1vh; background:var(--accent2); width:0; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="title" class="abs">程式碼動畫測試 Programmatic Motion</div>
+  <div id="subtitle" class="abs">逐幀擷取，同一時間必得同一畫面 — deterministic frames</div>
+  <div id="chart" class="abs"></div>
+  <div id="orbit" class="abs"><div id="ring"></div><div id="dot"></div></div>
+  <div id="counter" class="abs"></div>
+  <div id="progress" class="abs"></div>
+</div>
+<script>
+  // 所有畫面狀態只由 t（秒）決定：不使用 requestAnimationFrame、CSS animation、Date、Math.random。
+  const DURATION = 5;
+  const DATA = [["一月 Jan", 42], ["二月 Feb", 68], ["三月 Mar", 55], ["四月 Apr", 91]];
+  const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+  const easeOutCubic = x => 1 - Math.pow(1 - x, 3);
+  const easeInOut = x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+
+  const chart = document.getElementById("chart");
+  const bars = DATA.map(([label, value], i) => {
+    const bar = document.createElement("div"); bar.className = "bar"; bar.style.left = (i * 11) + "vw";
+    const lab = document.createElement("div"); lab.className = "bar-label"; lab.style.left = (i * 11) + "vw"; lab.textContent = label;
+    const val = document.createElement("div"); val.className = "bar-value"; val.style.left = (i * 11) + "vw";
+    chart.append(bar, lab, val);
+    return { bar, val, value };
+  });
+  const title = document.getElementById("title");
+  const subtitle = document.getElementById("subtitle");
+  const dot = document.getElementById("dot");
+  const orbit = document.getElementById("orbit");
+  const counter = document.getElementById("counter");
+  const progress = document.getElementById("progress");
+
+  window.__duration = DURATION;
+  window.renderFrame = function (t) {
+    const tIn = easeOutCubic(clamp(t / 0.8));
+    title.style.opacity = tIn;
+    title.style.transform = `translateY(${(1 - tIn) * 4}vh)`;
+    const sIn = easeOutCubic(clamp((t - 0.4) / 0.8));
+    subtitle.style.opacity = sIn * .85;
+    subtitle.style.transform = `translateY(${(1 - sIn) * 3}vh)`;
+
+    bars.forEach((b, i) => {
+      const p = easeOutCubic(clamp((t - 0.8 - i * 0.25) / 1.0));
+      const h = (b.value / 100) * 44 * p;           // vh
+      b.bar.style.height = h + "vh";
+      b.val.style.bottom = (h + 1) + "vh";
+      b.val.textContent = Math.round(b.value * p);
+      b.val.style.opacity = p;
+    });
+
+    const w = orbit.clientWidth, h = orbit.clientHeight;
+    const angle = easeInOut(clamp(t / DURATION)) * Math.PI * 4;
+    const r = Math.min(w, h) * 0.30;
+    const d = dot.clientWidth;
+    dot.style.left = (w / 2 + Math.cos(angle) * r - d / 2) + "px";
+    dot.style.top = (h / 2 + Math.sin(angle) * r - d / 2) + "px";
+
+    counter.textContent = "t = " + t.toFixed(2) + " s";
+    progress.style.width = (clamp(t / DURATION) * 100) + "%";
+  };
+
+  window.__ready = document.fonts.ready.then(() => { window.renderFrame(0); return true; });
+</script>
+</body>
+</html>
